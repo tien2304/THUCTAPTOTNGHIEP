@@ -1,0 +1,166 @@
+{% extends 'GiaoVu/home.html' %}
+{% load static %}
+{% block title %}Kỳ thực tập – Giáo Vụ{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'GiaoVu/css/ky_thuc_tap.css' %}">
+{% endblock %}
+{% block content %}
+<!-- Toast messages -->
+{% if messages %}
+<div class="toast-container" id="toastContainer">
+    {% for msg in messages %}
+    <div class="toast toast-{{ msg.tags }}">
+        {{ msg }}
+        <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Quản lý Kỳ thực tập</h1>
+        <button class="btn-primary" id="btnThemKy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Thêm kỳ thực tập
+        </button>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <table class="ky-table">
+            <thead>
+                <tr>
+                    <th>TÊN KỲ THỰC TẬP</th>
+                    <th>NGÀY BẮT ĐẦU</th>
+                    <th>NGÀY KẾT THÚC</th>
+                    <th>THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ky in page_obj %}
+                <tr>
+                    <td class="ky-name">{{ ky.ten_ky }}</td>
+                    <td>{{ ky.ngay_bat_dau|date:"d/m/Y" }}</td>
+                    <td>{{ ky.ngay_ket_thuc|date:"d/m/Y" }}</td>
+                    <td>
+                        <button class="btn-edit" title="Chỉnh sửa">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="empty-row">Chưa có kỳ thực tập nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination-bar">
+            <!-- Info text -->
+            <span class="pagination-info">Hiển thị {{ page_obj.start_index }} – {{ page_obj.end_index }} trong tổng số {{ page_obj.paginator.count }} kỳ thực tập</span>
+            {% else %}
+            <span class="pagination-info">Không có dữ liệu</span>
+            {% endif %}
+
+            <!-- Buttons -->
+            <div class="pagination-btns">
+                <!-- Nút lùi -->
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="pg-btn pg-prev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                </a>
+                {% else %}
+                <button class="pg-btn pg-prev" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                </button>
+                {% endif %}
+
+                <!-- Số trang -->
+                {% for num in page_obj.paginator.page_range %}{% if num == page_obj.number %}<span class="pg-btn pg-active">{{ num }}</span>{% else %}<a href="?page={{ num }}" class="pg-btn">{{ num }}</a>{% endif %}{% endfor %}
+
+                <!-- Nút tiến -->
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="pg-btn pg-next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                </a>
+                {% else %}
+                <button class="pg-btn pg-next" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL THÊM KỲ THỰC TẬP ===== -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Thêm kỳ thực tập mới</h2>
+            <button class="modal-close" id="modalClose" type="button">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'GiaoVu:giaovu_kythuctap' %}" id="formThemKy">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="tenKy">Tên kỳ thực tập</label>
+                    <input type="text" class="form-input" id="tenKy" name="ten"
+                        placeholder="Học kỳ 1 - Năm học 2026-2027" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="ngayBatDau">Ngày bắt đầu</label>
+                        <input type="date" class="form-input" id="ngayBatDau" name="bat_dau" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ngayKetThuc">Ngày kết thúc</label>
+                        <input type="date" class="form-input" id="ngayKetThuc" name="ket_thuc" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" id="btnHuy" type="button">Hủy</button>
+            <button class="btn-save" type="submit" form="formThemKy">Lưu</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const overlay = document.getElementById('modalOverlay');
+    const btnThem = document.getElementById('btnThemKy');
+    const btnClose = document.getElementById('modalClose');
+    const btnHuy = document.getElementById('btnHuy');
+
+    function openModal() { overlay.classList.add('active'); }
+    function closeModal() { overlay.classList.remove('active'); }
+
+    btnThem.addEventListener('click', openModal);
+    btnClose.addEventListener('click', closeModal);
+    btnHuy.addEventListener('click', closeModal);
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+    });
+</script>
+
+{% endblock %}

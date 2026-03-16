@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f0f2f7;
+        }
+
+        .card {
+            background: #fff;
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #1e293b;
+        }
+
+        p {
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>👋 Xin chào, {{ request.user.username }}!</h1>
+        <p>Bạn đã đăng nhập thành công vào hệ thống.</p>
+        <a href="{% url 'logout' %}">Đăng xuất</a>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,81 @@
+{% extends 'SinhVien/home.html' %}
+{% load static %}
+{% block title %}Trang Chủ - MIS{% endblock %}
+{% block content %}
+<div class="dashboard-container">
+    <div class="info-grid">
+        <div class="card instructor-card">
+            <h3>Giảng viên hướng dẫn</h3>
+            <div class="card-body">
+                <h2 class="name">{% if giang_vien %}{{ giang_vien.ho_ten }}{% else %}Chưa cập nhật{% endif %}</h2>
+                <p class="phone">📞 {{ giang_vien.sdt|default:"--" }}</p>
+            </div>
+        </div>
+
+        <div class="card company-card">
+            <div class="card-header-flex">
+                <div class="company-info">
+                    <p class="label">ĐƠN VỊ THỰC TẬP HIỆN TẠI</p>
+                    <h2 class="company-name">{% if cong_ty %}{{ cong_ty.ten }}{% else %}Chưa cập nhật{% endif %}</h2>
+                    <p class="position">{{ cong_ty.vi_tri|default:"--" }}</p>
+                    <p class="location">📍 {{ cong_ty.dia_chi|default:"--" }}</p>
+                </div>
+                <div class="company-icon">🏢</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-container">
+        <div class="section-header">
+            <h3>Nhiệm vụ sắp tới <span style="color: #ffa500;">●</span></h3>
+            <a href="{% url 'nhiem_vu_page' %}" class="view-all">Xem tất cả nhiệm vụ</a>
+        </div>
+        <div class="task-list">
+            {% for nv in danh_sach_nhiem_vu %}
+            <div class="task-item">
+                <div class="task-icon-bg">📄</div>
+                <div class="task-info">
+                    <p class="task-name">{{ nv.ten }}</p>
+                    <p class="task-deadline">Hạn chót: {{ nv.han_chot }}</p>
+                </div>
+                <div class="task-status {{ nv.loai }}">CÒN {{ nv.con_lai }}</div>
+            </div>
+            {% empty %}
+            <div class="empty-msg">Hiện không có nhiệm vụ nào.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bottom-grid">
+        <div class="card doc-card">
+            <div class="section-header">
+                <h3>Tài liệu kỳ thực tập</h3>
+                <span class="icon">📂</span>
+            </div>
+            <div class="doc-list">
+                {% for doc in tai_lieu %}
+                <div class="doc-item">
+                    <div class="doc-icon-blue">📄</div>
+                    <div class="doc-text">
+                        <p class="doc-name">{{ doc.ten }}</p>
+                        <p class="doc-meta">{{ doc.mo_ta }}</p>
+                    </div>
+                    <button class="download-btn">📥</button>
+                </div>
+                {% empty %}
+                <p class="empty-text">Chưa có tài liệu.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card data-card">
+            <div class="section-header">
+                <h3>Kho dữ liệu nhận xét...</h3>
+                <span class="icon">🗄️</span>
+            </div>
+            <p class="data-desc">Truy cập toàn bộ kho dữ liệu nhận xét chi tiết về các đơn vị thực tập được tổng hợp từ sinh viên khóa trước.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

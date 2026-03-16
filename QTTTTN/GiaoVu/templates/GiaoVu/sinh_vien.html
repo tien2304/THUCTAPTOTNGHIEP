@@ -1,0 +1,413 @@
+{% extends 'GiaoVu/home.html' %}
+{% load static %}
+{% block title %}Quản lý sinh viên – Giáo Vụ{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'GiaoVu/css/sinh_vien.css' %}">
+{% endblock %}
+{% block content %}
+<div class="page-container">
+
+    <div class="page-header">
+        <h1 class="page-title">Danh sách sinh viên</h1>
+    </div>
+
+    <div class="filter-bar">
+        <label class="filter-label">Học kỳ:</label>
+        <form method="get" id="filterForm">
+            <select name="ky" class="select-ky" id="kySelect" onchange="document.getElementById('filterForm').submit()">
+                <option value="">-- Tất cả --</option>
+                {% for ky in danh_sach_ky %}
+                <option value="{{ ky.id }}">{{ ky.ten_ky }}</option>
+                {% endfor %}
+            </select>
+            {% if search_query %}
+            <input type="hidden" name="q" value="{{ search_query }}">
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="table-card">
+        <div class="table-toolbar">
+            <form method="get" class="search-form" id="searchForm">
+                {% if selected_ky %}
+                <input type="hidden" name="ky" value="{{ selected_ky }}">
+                {% endif %}
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" name="q" value="{{ search_query }}" placeholder="Tìm tên, MSSV..."
+                        class="search-input" id="searchInput" autocomplete="off">
+                </div>
+            </form>
+            <div class="toolbar-actions">
+                <button class="btn-import" id="btnImport" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    Import Excel
+                </button>
+                <button class="btn-primary" id="btnThemMoi" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Thêm mới
+                </button>
+            </div>
+        </div>
+
+        <table class="sv-table">
+            <thead>
+                <tr>
+                    <th>Mã sinh viên</th>
+                    <th>HỌ TÊN</th>
+                    <th>LỚP</th>
+                    <th>KỲ THỰC TẬP</th>
+                    <th>THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sv in page_obj %}
+                <tr>
+                    <td class="td-mssv">{{ sv.ma_sv }}</td>
+                    <td class="td-hoten">
+                        <span class="sv-name">{{ sv.ho_ten }}</span>
+                    </td>
+                    <td>{{ sv.lop }}</td>
+                    <td>{{ sv.ky_hien_tai.ten_ky|default:"—" }}</td>
+                    <td class="td-actions">
+                        <button class="btn-action btn-edit" type="button" title="Chỉnh sửa" data-ma="{{ sv.ma_sv }}"
+                            data-hoten="{{ sv.ho_ten }}" data-lop="{{ sv.lop }}"
+                            data-ky="{{ sv.ky_hien_tai.id|default:'' }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                        </button>
+                        <button class="btn-action btn-delete" type="button" title="Xóa"
+                            onclick="confirmDelete('{{ sv.ma_sv }}', '{{ sv.ho_ten }}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                                <path d="M9 6V4h6v2" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-row">Chưa có sinh viên nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination-bar">
+            {% if page_obj.paginator.count > 0 %}
+            <span class="pagination-info">Hiển thị {{ page_obj.start_index }} – {{ page_obj.end_index }} trong tổng số <strong>{{ page_obj.paginator.count }}</strong> sinh viên</span>
+            {% else %}
+            <span class="pagination-info">Không có dữ liệu</span>
+            {% endif %}
+
+            <div class="pagination-btns">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_ky %}&ky={{ selected_ky }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                    class="pg-btn pg-prev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </a>
+                {% else %}
+                <button class="pg-btn pg-prev" type="button" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                <span class="pg-btn pg-active">{{ num }}</span>
+                {% else %}
+                <a href="?page={{ num }}{% if selected_ky %}&ky={{ selected_ky }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                    class="pg-btn">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_ky %}&ky={{ selected_ky }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                    class="pg-btn pg-next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+                {% else %}
+                <button class="pg-btn pg-next" type="button" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Thêm sinh viên mới</h2>
+            <button class="modal-close" id="modalClose" type="button">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'GiaoVu:giaovu_qlsinhvien' %}" id="formThemSV">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="maSV">Mã sinh viên</label>
+                    <input type="text" class="form-input" id="maSV" name="ma_sv" placeholder="Nhập mã sinh viên"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="hoTenSV">Họ và tên</label>
+                    <input type="text" class="form-input" id="hoTenSV" name="ho_ten" placeholder="Nhập đầy đủ họ và tên"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="lopSV">Lớp</label>
+                    <input type="text" class="form-input" id="lopSV" name="lop" placeholder="VD: MIS01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="kyHienTai">Học kỳ</label>
+                    <select class="form-input" id="kyHienTai" name="ky_hien_tai">
+                        <option value="">-- Chọn kỳ thực tập --</option>
+                        {% for ky in danh_sach_ky %}
+                        <option value="{{ ky.id }}">{{ ky.ten_ky }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" id="btnHuy" type="button">Hủy</button>
+            <button class="btn-save" type="submit" form="formThemSV">Lưu</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL IMPORT EXCEL ===== -->
+<div class="modal-overlay" id="importModalOverlay">
+    <div class="modal import-modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Nhập dữ liệu từ Excel</h2>
+            <button class="modal-close" id="importModalClose" type="button">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form action="{% url 'GiaoVu:giaovu_import_sinhvien' %}" method="post" enctype="multipart/form-data"
+                id="formImportExcel">
+                {% csrf_token %}
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <div class="upload-text">Thả tệp Excel vào đây hoặc click để chọn</div>
+                    <div class="upload-hint">Hỗ trợ .xlsx, .xls</div>
+                    <input type="file" name="excel_file" id="fileInput" class="file-input-hidden" accept=".xlsx, .xls">
+                    <div class="selected-file-info" id="fileInfo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" style="width: 20px; height: 20px;">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span class="file-name" id="fileName"></span>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" id="btnHuyImport" type="button">Hủy</button>
+            <button class="btn-save" type="submit" form="formImportExcel">Tải lên</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL EDIT SINH VIEN ===== -->
+<div class="modal-overlay" id="editModalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Chỉnh sửa thông tin sinh viên</h2>
+            <button class="modal-close" id="editModalClose" type="button">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'GiaoVu:giaovu_edit_sinhvien' %}" id="formEditSV">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="editMaSV">Mã sinh viên</label>
+                    <input type="hidden" id="originalMaSV" name="original_ma_sv">
+                    <input type="text" class="form-input" id="editMaSV" name="ma_sv" placeholder="Nhập mã sinh viên"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="editHoTenSV">Họ và tên</label>
+                    <input type="text" class="form-input" id="editHoTenSV" name="ho_ten"
+                        placeholder="Nhập đầy đủ họ và tên" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="editLopSV">Lớp</label>
+                    <input type="text" class="form-input" id="editLopSV" name="lop" placeholder="Nhập lớp" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="editKyHienTai">Kỳ thực tập</label>
+                    <select class="form-input" id="editKyHienTai" name="ky_hien_tai">
+                        <option value="">-- Chọn kỳ thực tập --</option>
+                        {% for ky in danh_sach_ky %}
+                        <option value="{{ ky.id }}">{{ ky.ten_ky }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" id="btnHuyEdit" type="button">Hủy</button>
+            <button class="btn-save" type="submit" form="formEditSV">Cập nhật</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Elements for Add Student Modal
+    var overlay = document.getElementById('modalOverlay');
+    var btnThem = document.getElementById('btnThemMoi');
+    var btnClose = document.getElementById('modalClose');
+    var btnHuy = document.getElementById('btnHuy');
+
+    // Elements for Edit Student Modal
+    var editOverlay = document.getElementById('editModalOverlay');
+    var editClose = document.getElementById('editModalClose');
+    var btnHuyEdit = document.getElementById('btnHuyEdit');
+    var editForm = document.getElementById('formEditSV');
+
+    // Elements for Import Modal
+    var importOverlay = document.getElementById('importModalOverlay');
+    var btnImport = document.getElementById('btnImport');
+    var importClose = document.getElementById('importModalClose');
+    var btnHuyImport = document.getElementById('btnHuyImport');
+    var uploadZone = document.getElementById('uploadZone');
+    var fileInput = document.getElementById('fileInput');
+    var fileInfo = document.getElementById('fileInfo');
+    var fileName = document.getElementById('fileName');
+
+    // Logic: Add Student Modal
+    function openModal() {
+        overlay.classList.add('active');
+        var kyModal = document.getElementById('kyHienTai');
+        if (kyModal && kyModal.options.length > 1) {
+            kyModal.selectedIndex = 1;
+        }
+    }
+    function closeModal() { overlay.classList.remove('active'); }
+
+    btnThem.addEventListener('click', openModal);
+    btnClose.addEventListener('click', closeModal);
+    btnHuy.addEventListener('click', closeModal);
+
+    // Logic: Edit Student Modal
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.getElementById('originalMaSV').value = this.dataset.ma;
+            document.getElementById('editMaSV').value = this.dataset.ma;
+            document.getElementById('editHoTenSV').value = this.dataset.hoten;
+            document.getElementById('editLopSV').value = this.dataset.lop;
+            document.getElementById('editKyHienTai').value = this.dataset.ky;
+            editOverlay.classList.add('active');
+        });
+    });
+
+    function closeEditModal() { editOverlay.classList.remove('active'); }
+    editClose.addEventListener('click', closeEditModal);
+    btnHuyEdit.addEventListener('click', closeEditModal);
+
+    // Logic: Import Modal
+    function openImportModal() { importOverlay.classList.add('active'); }
+    function closeImportModal() {
+        importOverlay.classList.remove('active');
+        fileInput.value = '';
+        fileInfo.classList.remove('active');
+    }
+
+    btnImport.addEventListener('click', openImportModal);
+    importClose.addEventListener('click', closeImportModal);
+    btnHuyImport.addEventListener('click', closeImportModal);
+
+    // Logic: Global Close
+    window.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+        if (e.target === editOverlay) closeEditModal();
+        if (e.target === importOverlay) closeImportModal();
+    });
+
+    // Logic: Delete
+    function confirmDelete(ma, hoten) {
+        if (confirm('Bạn có chắc chắn muốn xóa sinh viên "' + hoten + '" (MSSV: ' + ma + ') không?')) {
+            window.location.href = '/giao-vu/quan-ly-sinh-vien/delete/' + ma + '/';
+        }
+    }
+
+    // Logic: Import
+    if (uploadZone) {
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; updateFileInfo(); }
+        });
+    }
+
+    if (fileInput) fileInput.addEventListener('change', updateFileInfo);
+
+    function updateFileInfo() {
+        if (fileInput.files.length > 0) {
+            fileName.textContent = fileInput.files[0].name;
+            fileInfo.classList.add('active');
+        }
+    }
+
+    // Filter and Search
+    var kySelect = document.getElementById('kySelect');
+    var selectedKy = '{{ selected_ky }}';
+    if (kySelect && selectedKy) {
+        kySelect.value = selectedKy;
+    }
+
+    var searchInput = document.getElementById('searchInput');
+    var searchTimer;
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function () {
+                document.getElementById('searchForm').submit();
+            }, 400);
+        });
+    }
+</script>
+{% endblock %}

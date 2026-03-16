@@ -1,0 +1,126 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập – Hệ Thống Quản Lý Thực Tập</title>
+    <link rel="stylesheet" href="{% static 'Home/css/login.css' %}">
+</head>
+
+<body>
+    <!-- ===== LEFT PANEL ===== -->
+    <div class="left-panel">
+        <img src="{% static 'Home/img/FSI.png' %}" alt="Logo FSI" class="fsi-logo">
+        <h1>Ngành Hệ Thống Thông Tin Quản Lý</h1>
+        <span class="subtitle">Trường Đại Học Kinh Tế – Đại Học Đà Nẵng</span>
+    </div>
+
+    <!-- ===== RIGHT PANEL ===== -->
+    <div class="right-panel">
+        <div class="form-card">
+
+            <!-- Avatar icon -->
+            <div class="avatar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+            </div>
+
+            <h2>Đăng Nhập</h2>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert-msg alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+
+                <!-- Tên đăng nhập -->
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">
+                            <!-- ID card icon -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="5" width="20" height="14" rx="2" />
+                                <path d="M16 10h.01M8 10h4M8 14h8" />
+                            </svg>
+                        </span>
+                        <input type="text" id="username" name="username" placeholder="Tên đăng nhập"
+                            value="{{ request.POST.username }}" autocomplete="username" required>
+                    </div>
+                </div>
+
+                <!-- Mật khẩu -->
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">
+                            <!-- Lock icon -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                        </span>
+                        <input type="password" id="password" name="password" placeholder="••••••••"
+                            autocomplete="current-password" required>
+                        <!-- Toggle show/hide password -->
+                        <button type="button" class="toggle-pw" id="toggleBtn" onclick="togglePassword()"
+                            title="Hiện / ẩn mật khẩu">
+                            <!-- Eye open -->
+                            <svg id="iconEye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <!-- Eye off -->
+                            <svg id="iconEyeOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ghi nhớ đăng nhập -->
+                <div class="remember-row">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Ghi nhớ đăng nhập</label>
+                </div>
+
+                <!-- Nút đăng nhập -->
+                <button type="submit" class="btn-login">Đăng nhập</button>
+
+            </form>
+
+            <div class="divider"></div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const iconEye = document.getElementById('iconEye');
+            const iconEyeOff = document.getElementById('iconEyeOff');
+            const isHidden = input.type === 'password';
+
+            input.type = isHidden ? 'text' : 'password';
+            iconEye.style.display = isHidden ? 'none' : 'inline';
+            iconEyeOff.style.display = isHidden ? 'inline' : 'none';
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,330 @@
+/* ============================================================
+   LOGIN PAGE – Hệ Thống Quản Lý Thực Tập
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap');
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    background: #F8F8FB;
+}
+
+/* ===================================================
+   LEFT PANEL
+   =================================================== */
+.left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #F8F8FB;
+    padding: 3rem 2.5rem;
+    gap: 1rem;
+}
+
+.left-panel h1 {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #1e293b;
+    text-align: center;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.left-panel .subtitle {
+    font-size: 0.97rem;
+    font-weight: 500;
+    font-style: italic;
+    color: #4f74c8;
+    text-align: center;
+}
+
+.fsi-logo {
+    width: 247px;
+    height: 247px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
+}
+
+/* ===================================================
+   RIGHT PANEL
+   =================================================== */
+.right-panel {
+    width: 490px;
+    min-height: 100vh;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 3.5rem;
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.06);
+}
+
+.form-card {
+    width: 100%;
+}
+
+/* ===================================================
+   AVATAR ICON (top of form)
+   =================================================== */
+.avatar-icon {
+    width: 64px;
+    height: 64px;
+    background: #e8ecfe;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.2rem auto;
+}
+
+.avatar-icon svg {
+    width: 34px;
+    height: 34px;
+    color: #3b5bdb;
+}
+
+/* ===================================================
+   FORM TITLE
+   =================================================== */
+.form-card h2 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin-bottom: 1.8rem;
+    letter-spacing: -0.3px;
+}
+
+/* ===================================================
+   FORM GROUPS
+   =================================================== */
+.form-group {
+    margin-bottom: 1.1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.42rem;
+}
+
+/* Input wrapper */
+.input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 13px;
+    display: flex;
+    align-items: center;
+    color: #adb5bd;
+    pointer-events: none;
+}
+
+.input-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.input-wrap input {
+    width: 100%;
+    padding: 0.76rem 2.8rem;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: #1a1a2e;
+    background: #f8f9fc;
+    outline: none;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+}
+
+.input-wrap input:focus {
+    border-color: #4361ee;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.10);
+}
+
+.input-wrap input::placeholder {
+    color: #b0b7c3;
+}
+
+/* Password toggle button */
+.toggle-pw {
+    position: absolute;
+    right: 13px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.toggle-pw:hover {
+    color: #4361ee;
+}
+
+.toggle-pw svg {
+    width: 19px;
+    height: 19px;
+}
+
+/* ===================================================
+   REMEMBER ME ROW
+   =================================================== */
+.remember-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.4rem;
+    margin-top: 0.3rem;
+}
+
+.remember-row input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #4361ee;
+    cursor: pointer;
+}
+
+.remember-row label {
+    font-size: 0.86rem;
+    color: #6b7280;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ===================================================
+   ALERTS / MESSAGES
+   =================================================== */
+.alert-msg {
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-size: 0.86rem;
+    margin-bottom: 1.2rem;
+    border: 1px solid transparent;
+    font-weight: 500;
+}
+
+.alert-error,
+.alert-danger {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #16a34a;
+}
+
+.alert-warning {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #d97706;
+}
+
+.alert-info {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #2563eb;
+}
+
+/* ===================================================
+   SUBMIT BUTTON
+   =================================================== */
+.btn-login {
+    width: 100%;
+    padding: 0.82rem;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.97rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 0.4px;
+    transition: background 0.22s, transform 0.15s, box-shadow 0.22s;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32);
+}
+
+.btn-login:hover {
+    background: #1d4ed8;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.42);
+    transform: translateY(-1px);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+/* ===================================================
+   FORGOT PASSWORD LINK
+   =================================================== */
+.forgot-link {
+    display: block;
+    text-align: right;
+    margin-top: 0.9rem;
+    font-size: 0.86rem;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.forgot-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+/* ===================================================
+   BOTTOM DIVIDER
+   =================================================== */
+.divider {
+    margin-top: 2rem;
+    height: 1px;
+    background: #f1f5f9;
+}
+
+/* ===================================================
+   RESPONSIVE
+   =================================================== */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    .left-panel {
+        min-height: 180px;
+        padding: 2rem 1.5rem 1.5rem;
+    }
+
+    .right-panel {
+        width: 100%;
+        min-height: unset;
+        box-shadow: none;
+        padding: 2rem 1.5rem 3rem;
+    }
+}

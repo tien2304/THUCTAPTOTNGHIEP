@@ -1,0 +1,17 @@
+from django.urls import path
+from . import views
+
+app_name = 'GiaoVu'
+
+urlpatterns = [
+    path('', views.home_view, name='giaovu_home'),
+    path('ky-thuc-tap/', views.ky_thuc_tap_view, name='giaovu_kythuctap'),
+    path('quan-ly-sinh-vien/import/', views.import_sinh_vien_view, name='giaovu_import_sinhvien'),
+    path('quan-ly-sinh-vien/edit/', views.edit_sinh_vien_view, name='giaovu_edit_sinhvien'),
+    path('quan-ly-sinh-vien/delete/<str:ma_sv>/', views.delete_sinh_vien_view, name='giaovu_delete_sinhvien'),
+    path('quan-ly-sinh-vien/', views.ql_sinh_vien_view, name='giaovu_qlsinhvien'),
+    path('quan-ly-giang-vien/import/', views.import_giang_vien_view, name='giaovu_import_giangvien'),
+    path('quan-ly-giang-vien/edit/', views.edit_giang_vien_view, name='giaovu_edit_giangvien'),
+    path('quan-ly-giang-vien/delete/<str:ma_gv>/', views.delete_giang_vien_view, name='giaovu_delete_giangvien'),
+    path('quan-ly-giang-vien/', views.ql_giang_vien_view, name='giaovu_qlgiangvien'),
+]
