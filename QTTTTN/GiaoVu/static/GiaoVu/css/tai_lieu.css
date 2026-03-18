@@ -1,0 +1,403 @@
+.page-container {
+    padding: 2.5rem 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.page-title svg {
+    color: #3b82f6;
+    width: 24px;
+    height: 24px;
+}
+
+.btn-add {
+    background: #3b82f6;
+    color: #ffffff;
+    border: none;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-add:hover {
+    background: #2563eb;
+}
+
+.table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.doc-table th {
+    background: #f8fafc;
+    padding: 1.25rem 2rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.doc-table td {
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid #f8fafc;
+    vertical-align: middle;
+}
+
+.doc-table tr:last-child td {
+    border-bottom: none;
+}
+
+.doc-name {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.9375rem;
+}
+
+.doc-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.color-pdf {
+    color: #ef4444;
+}
+
+.color-docx {
+    color: #3b82f6;
+}
+
+.doc-info {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.pagination-btns {
+    display: flex;
+    gap: 0.375rem;
+}
+
+.pg-btn {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.pg-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.pg-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.pg-btn.pg-active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* ========================================= */
+/* MODAL THÊM TÀI LIỆU                       */
+/* ========================================= */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+}
+
+.modal-container {
+    background: #ffffff;
+    width: 100%;
+    max-width: 440px;  /* Giảm thêm chiều ngang cho thật gọn */
+    max-height: 85vh;  /* Khống chế cứng giới hạn chiều cao ở 85% màn hình */
+    border-radius: 0.75rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1.25rem; /* Ép mỏng phần tiêu đề */
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.modal-close svg {
+    width: 20px;
+    height: 20px;
+}
+
+.modal-body {
+    padding: 1rem 1.25rem; /* Thu nhỏ khoảng trắng lề body */
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem; /* Giảm gap gắt gao giữa các mục */
+    overflow-y: auto; /* Kích hoạt thanh trượt cho nội dung dài */
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.form-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem; /* Giảm chiều cao thanh nhập text */
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    font-size: 0.875rem; /* Giảm size font nhập liệp */
+    color: #1e293b;
+    background-color: #ffffff;
+    transition: all 0.2s;
+    font-family: inherit;
+    box-sizing: border-box;
+    appearance: none;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input::placeholder {
+    color: #94a3b8;
+}
+
+textarea.form-input {
+    resize: vertical;
+    min-height: 60px; /* Hạ mức tối thiểu của khung nhập mô tả */
+}
+
+/* Tùy chỉnh Select */
+.form-select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+}
+
+/* Khu vực Upload tài liệu */
+.file-drop-area {
+    position: relative;
+    width: 100%;
+    border: 2px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    background-color: #f8fafc;
+    padding: 1rem 1.25rem; /* Thu nhỏ rất mạnh diện tích kéo thả */
+    text-align: center;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.file-drop-area:hover, .file-drop-area:focus-within {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.file-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.file-drop-content {
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem; /* Giảm gap giữa các dòng thông báo file */
+}
+
+.upload-icon {
+    width: 24px;   /* Hạ size Icon upload */
+    height: 24px;  /* Hạ size Icon upload */
+    color: #64748b;
+}
+
+.file-drop-area:hover .upload-icon {
+    color: #3b82f6;
+}
+
+.file-drop-text {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #475569;
+    margin: 0;
+}
+
+.file-drop-hint {
+    font-size: 0.8125rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.file-name-display {
+    font-size: 0.8125rem;
+    margin: 0;
+    word-break: break-all;
+}
+
+.modal-footer {
+    padding: 0.875rem 1.25rem; /* Thu gọn thanh footer cực đại */
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background-color: #f8fafc;
+}
+
+.btn-cancel, .btn-submit {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.btn-cancel {
+    background-color: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.btn-cancel:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.btn-submit {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border: 1px solid #3b82f6;
+}
+
+.btn-submit:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
