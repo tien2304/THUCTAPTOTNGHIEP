@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,7 +47,8 @@
                 </span>
                 <span class="nav-label">Kỳ thực tập</span>
             </a>
-            <a href="#" class="nav-item {% if current_page == 'tailieu' %}active{% endif %}" id="nav-tailieu">
+            <a href="{% url 'GiaoVu:giaovu_tailieu' %}"
+                class="nav-item {% if current_page == 'tailieu' %}active{% endif %}" id="nav-tailieu">
                 <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -80,7 +82,8 @@
                 </span>
                 <span class="nav-label">Quản lý giảng viên</span>
             </a>
-            <a href="#" class="nav-item {% if current_page == 'nhiemvu' %}active{% endif %}" id="nav-nhiemvu">
+            <a href="{% url 'GiaoVu:giaovu_nhiemvu' %}"
+                class="nav-item {% if current_page == 'nhiemvu' %}active{% endif %}" id="nav-nhiemvu">
                 <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">

@@ -1,0 +1,210 @@
+{% extends 'GiaoVu/home.html' %}
+{% load static %}
+
+{% block title %}Quản lý tài liệu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'GiaoVu/css/tai_lieu.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Quản lý tài liệu
+        </h1>
+        <button class="btn-add" onclick="openModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Thêm tài liệu
+        </button>
+    </div>
+
+    <div class="table-card">
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width: 70%;">TÊN TÀI LIỆU</th>
+                    <th style="width: 30%;">NGÀY CẬP NHẬT</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in page_obj %}
+                <tr>
+                    <td class="doc-name">
+                        {% if '.pdf' in doc.ten_tai_lieu|lower %}
+                        <svg class="doc-icon color-pdf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <text x="8" y="16" font-size="6" font-weight="bold" fill="currentColor" stroke="none">PDF</text>
+                            </svg>
+                            {% else %}
+                            <svg class="doc-icon color-docx" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="9" y1="13" x2="15" y2="13"></line>
+                                <line x1="9" y1="17" x2="15" y2="17"></line>
+                            </svg>
+                            {% endif %}
+                            {{ doc.ten_tai_lieu }}
+                        </td>
+                        <td class="doc-info">{{ doc.ngay_cap_nhat|date:"d/m/Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="2" style="text-align: center; padding: 3rem 1rem; color: #94a3b8;">
+                            Hiện tại hệ thống chưa có tài liệu nào. Vui lòng thêm tài liệu mới.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Bố cục phân trang -->
+        {% if page_obj.paginator.count > 0 %}
+        <div class="pagination-wrapper">
+            <span class="pagination-info">
+                Hiển thị {{ page_obj.start_index }}-{{ page_obj.end_index }} trên tổng số {{ page_obj.paginator.count }} tài liệu
+            </span>
+            <div class="pagination-btns">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="pg-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </a>
+                {% else %}
+                <a href="#" class="pg-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </a>
+                {% endif %}
+
+                {% if page_obj.paginator.num_pages %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                        <a href="?page={{ num }}" class="pg-btn pg-active">{{ num }}</a>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}" class="pg-btn">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="pg-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+                {% else %}
+                <a href="#" class="pg-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Thêm Tài Liệu -->
+<div id="addDocModal" class="modal-backdrop">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Thêm tài liệu mới</h2>
+            <button class="modal-close" type="button" onclick="closeModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form method="POST" enctype="multipart/form-data" action="{% url 'GiaoVu:giaovu_tailieu' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Tiêu đề</label>
+                    <input type="text" name="tieu_de" class="form-input" placeholder="Nhập tiêu đề tài liệu..." required autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <textarea name="mo_ta" class="form-input" rows="3" placeholder="Nhập mô tả chi tiết..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Chọn kỳ thực tập</label>
+                    <select name="ky_id" class="form-input form-select" required>
+                        <option value="">Chọn kỳ thực tập...</option>
+                        {% for ky in all_ky %}
+                        <option value="{{ ky.id }}" {% if forloop.first %}selected{% endif %}>{{ ky.ten_ky }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tệp đính kèm</label>
+                    <div class="file-drop-area">
+                        <input type="file" name="file_dinh_kem" class="file-input" required id="fileUpload" accept=".pdf,.doc,.docx,.zip">
+                        <div class="file-drop-content">
+                            <svg class="upload-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <p class="file-drop-text">Kéo thả tệp hoặc chọn từ máy tính</p>
+                            <p class="file-drop-hint">PDF, DOCX, ZIP (Tối đa 25MB)</p>
+                            <p class="file-name-display" id="fileNameDisplay"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Hủy</button>
+                <button type="submit" class="btn-submit">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal() {
+        document.getElementById('addDocModal').style.display = 'flex';
+    }
+    
+    function closeModal() {
+        document.getElementById('addDocModal').style.display = 'none';
+        document.getElementById('fileNameDisplay').textContent = '';
+        document.getElementById('fileUpload').value = '';
+    }
+    
+    // Cập nhật tên file khi người dùng chọn xong
+    document.getElementById('fileUpload').addEventListener('change', function(e) {
+        const fileDisplay = document.getElementById('fileNameDisplay');
+        if (e.target.files.length > 0) {
+            fileDisplay.textContent = 'Đã chọn: ' + e.target.files[0].name;
+            fileDisplay.style.color = '#3b82f6';
+            fileDisplay.style.fontWeight = '600';
+            fileDisplay.style.marginTop = '0.5rem';
+        } else {
+            fileDisplay.textContent = '';
+        }
+    });
+
+    // Bấm ra ngoài vùng Modal để đóng lại Popup nhanh gọn
+    document.getElementById('addDocModal').addEventListener('click', function(e) {
+        if(e.target === this) {
+            closeModal();
+        }
+    });
+</script>
+{% endblock %}

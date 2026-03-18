@@ -5,7 +5,6 @@
 <link rel="stylesheet" href="{% static 'GiaoVu/css/ky_thuc_tap.css' %}">
 {% endblock %}
 {% block content %}
-<!-- Toast messages -->
 {% if messages %}
 <div class="toast-container" id="toastContainer">
     {% for msg in messages %}
@@ -29,7 +28,6 @@
             Thêm kỳ thực tập
         </button>
     </div>
-
     <!-- Table Card -->
     <div class="table-card">
         <table class="ky-table">
@@ -42,7 +40,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for ky in page_obj %}
+                {% for ky in trang_hien_tai %}
                 <tr>
                     <td class="ky-name">{{ ky.ten_ky }}</td>
                     <td>{{ ky.ngay_bat_dau|date:"d/m/Y" }}</td>
@@ -64,20 +62,19 @@
                 {% endfor %}
             </tbody>
         </table>
-
         <!-- Pagination -->
         <div class="pagination-bar">
             <!-- Info text -->
-            <span class="pagination-info">Hiển thị {{ page_obj.start_index }} – {{ page_obj.end_index }} trong tổng số {{ page_obj.paginator.count }} kỳ thực tập</span>
+            {% if trang_hien_tai %}
+            <span class="pagination-info">Hiển thị {{ trang_hien_tai.start_index }} – {{ trang_hien_tai.end_index }} trong tổng số {{ trang_hien_tai.paginator.count }} kỳ thực tập</span>
             {% else %}
             <span class="pagination-info">Không có dữ liệu</span>
             {% endif %}
-
             <!-- Buttons -->
             <div class="pagination-btns">
                 <!-- Nút lùi -->
-                {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="pg-btn pg-prev">
+                {% if trang_hien_tai.has_previous %}
+                <a href="?page={{ trang_hien_tai.previous_page_number }}" class="pg-btn pg-prev">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="15 18 9 12 15 6" />
                     </svg>
@@ -89,13 +86,11 @@
                     </svg>
                 </button>
                 {% endif %}
-
                 <!-- Số trang -->
-                {% for num in page_obj.paginator.page_range %}{% if num == page_obj.number %}<span class="pg-btn pg-active">{{ num }}</span>{% else %}<a href="?page={{ num }}" class="pg-btn">{{ num }}</a>{% endif %}{% endfor %}
-
+                {% for num in trang_hien_tai.paginator.page_range %}{% if num == trang_hien_tai.number %}<span class="pg-btn pg-active">{{ num }}</span>{% else %}<a href="?page={{ num }}" class="pg-btn">{{ num }}</a>{% endif %}{% endfor %}
                 <!-- Nút tiến -->
-                {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="pg-btn pg-next">
+                {% if trang_hien_tai.has_next %}
+                <a href="?page={{ trang_hien_tai.next_page_number }}" class="pg-btn pg-next">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 18 15 12 9 6" />
                     </svg>
@@ -111,7 +106,6 @@
         </div>
     </div>
 </div>
-
 <!-- ===== MODAL THÊM KỲ THỰC TẬP ===== -->
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal">

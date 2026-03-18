@@ -3,17 +3,16 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Q
-from Home.models import KyThucTap, SinhVien, GiangVien
+from Home.models import KyThucTap, SinhVien, GiangVien, TaiLieu,NhiemVu
 from Home.utils import sync_user_account
-
+from datetime import datetime
 
 def home_view(request):
     """Trang chủ dành cho Giáo Vụ."""
     return render(request, 'GiaoVu/home.html', {'current_page': 'home'})
 
-
-def ky_thuc_tap_view(request):
-    """Trang Quản lý Kỳ thực tập – GET: hiển thị, POST: thêm mới."""
+# Quản lý kỳ thực tập
+def ky_thuc_tap(request):
     if request.method == 'POST':
         ten_ky   = request.POST.get('ten', '').strip()
         bat_dau  = request.POST.get('bat_dau', '')
@@ -26,12 +25,15 @@ def ky_thuc_tap_view(request):
             messages.success(request, f'Đã thêm kỳ thực tập "{ten_ky}" thành công!')
         else:
             messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
-        return redirect('GiaoVu:giaovu_kythuctap')
+        return redirect('kythuctap')
 
-    all_ky = KyThucTap.objects.all().order_by('-id')
-    paginator = Paginator(all_ky, 10)
-    page_obj  = paginator.get_page(request.GET.get('page', 1))
-    context = {'current_page': 'kythuctap', 'page_obj': page_obj}
+    tat_ca_ky = KyThucTap.objects.all().order_by('-id')
+    # paginator = Paginator(all_ky, 10)
+    so_trang = Paginator(tat_ca_ky, 10)
+    # page_obj  = paginator.get_page(request.GET.get('page', 1))
+    trang_hien_tai = so_trang.get_page(request.GET.get('page', 1))
+    # context = {'current_page': 'kythuctap', 'page_obj': page_obj}
+    context = {'current_page': 'kythuctap', 'trang_hien_tai': trang_hien_tai}
     return render(request, 'GiaoVu/ky_thuc_tap.html', context)
 
 
@@ -343,3 +345,120 @@ def delete_sinh_vien_view(request, ma_sv):
     else:
         messages.error(request, 'Không tìm thấy sinh viên để xóa.')
     return redirect('GiaoVu:giaovu_qlsinhvien')
+
+def edit_ky_thuc_tap_view(request):
+    """View xử lý việc chỉnh sửa thông tin Kỳ thực tập."""
+    if request.method == 'POST':
+        ky_id    = request.POST.get('id')
+        ten_ky   = request.POST.get('ten', '').strip()
+        bat_dau  = request.POST.get('bat_dau', '')
+        ket_thuc = request.POST.get('ket_thuc', '')
+
+        if ky_id and ten_ky and bat_dau and ket_thuc:
+            ky = KyThucTap.objects.filter(id=ky_id).first()
+            if ky:
+                ky.ten_ky = ten_ky
+                ky.ngay_bat_dau = bat_dau
+                ky.ngay_ket_thuc = ket_thuc
+                ky.save()
+                messages.success(request, f'Đã cập nhật kỳ thực tập "{ten_ky}" thành công!')
+            else:
+                messages.error(request, 'Không tìm thấy kỳ thực tập để cập nhật.')
+        else:
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
+    
+    return redirect('GiaoVu:giaovu_kythuctap')
+
+
+def ql_tai_lieu_view(request):
+    """Trang Quản lý Tài liệu – Giáo Vụ."""
+    
+    # Xử lý khi ấn nút "Lưu" (POST form thêm tài liệu)
+    if request.method == 'POST':
+        tieu_de = request.POST.get('tieu_de', '').strip()
+        mo_ta = request.POST.get('mo_ta', '').strip()
+        ky_id = request.POST.get('ky_id')
+        file_dinh_kem = request.FILES.get('file_dinh_kem')
+        
+        if tieu_de and ky_id and file_dinh_kem:
+            gv = GiangVien.objects.filter(ma_gv=request.user.username).first()
+            ky = KyThucTap.objects.filter(id=ky_id).first()
+            if gv and ky:
+                TaiLieu.objects.create(
+                    ten_tai_lieu=tieu_de,
+                    mo_ta=mo_ta,
+                    ky=ky,
+                    duong_dan_file=file_dinh_kem,
+                    gv_dang=gv
+                )
+                messages.success(request, f'Đã thêm tài liệu "{tieu_de}" thành công!')
+            else:
+                messages.error(request, 'Dữ liệu không hợp lệ (Giáo vụ sinh hoặc Kỳ thực tập không tồn tại).')
+        else:
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin và chọn tệp đính kèm.')
+            
+        return redirect('GiaoVu:giaovu_tailieu')
+
+    all_ky = KyThucTap.objects.all().order_by('-id')
+    tai_lieu_list = TaiLieu.objects.all().order_by('-ngay_cap_nhat')
+    
+    paginator = Paginator(tai_lieu_list, 10)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+    
+    context = {
+        'current_page': 'tailieu',
+        'page_obj': page_obj,
+        'all_ky': all_ky,
+    }
+    return render(request, 'GiaoVu/tai_lieu.html', context)
+
+
+def nhiem_vu_view(request):
+    """Trang Thiết lập Nhiệm vụ – Giáo Vụ."""
+    
+    if request.method == 'POST':
+        ky_id = request.POST.get('ky_id')
+        ten_nhiem_vu = request.POST.get('ten_nhiem_vu', '').strip()
+        mo_ta = request.POST.get('mo_ta', '').strip()
+        han_nop = request.POST.get('han_nop')
+        
+        if ky_id and ten_nhiem_vu and han_nop:
+            ky = KyThucTap.objects.filter(id=ky_id).first()
+            if ky:
+                try:
+                    han_nop_dt = datetime.strptime(han_nop, '%Y-%m-%dT%H:%M')
+                    NhiemVu.objects.create(
+                        ky=ky,
+                        ten_nhiem_vu=ten_nhiem_vu,
+                        han_nop=han_nop_dt,
+                        mo_ta=mo_ta
+                    )
+                    messages.success(request, f'Đã thiết lập nhiệm vụ "{ten_nhiem_vu}" thành công!')
+                except Exception as e:
+                    messages.error(request, f'Lỗi định dạng ngày giờ: {str(e)}')
+            else:
+                messages.error(request, 'Kỳ thực tập không tồn tại.')
+        else:
+            messages.error(request, 'Vui lòng điền đủ thông tin tên nhiệm vụ, mô tả và hạn nộp.')
+            
+        return redirect(f"/giao-vu/nhiem-vu/?ky_id={ky_id}" if ky_id else "GiaoVu:giaovu_nhiemvu")
+
+    all_ky = KyThucTap.objects.all().order_by('-id')
+    ky_id = request.GET.get('ky_id')
+    
+    if ky_id:
+        selected_ky = KyThucTap.objects.filter(id=ky_id).first()
+    else:
+        selected_ky = all_ky.first()
+        
+    nhiem_vu_list = []
+    if selected_ky:
+        nhiem_vu_list = NhiemVu.objects.filter(ky=selected_ky).order_by('han_nop')
+        
+    context = {
+        'current_page': 'nhiemvu',
+        'all_ky': all_ky,
+        'selected_ky': selected_ky,
+        'nhiem_vu_list': nhiem_vu_list,
+    }
+    return render(request, 'GiaoVu/nhiem_vu.html', context)
