@@ -64,34 +64,50 @@ class SinhVien_KyThucTap(models.Model):
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
     ky_thuc_tap = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
 # --- NHÓM 3: KHẢO SÁT ĐỘNG (SURVEY MODULE) ---
+import uuid
 class MauKhaoSat(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ten_form = models.CharField(max_length=255)
     ngay_tao = models.DateTimeField(auto_now_add=True)
+    public_id = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
+
+    ngay_bat_dau = models.DateField(null=True, blank=True)
+    ngay_ket_thuc = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.ten_form
 class CauHoi(models.Model):
     LOAI_CHOICES = [
         ('TEXT', 'Câu hỏi ngắn'),
         ('RADIO', 'Trắc nghiệm'),
-        ('GRID', 'Dạng lưới'),
+        ('LIKERT','Đánh giá 1-5'),
         ('SELECT', 'Menu thả xuống'),
         ('CHECKBOX', 'Hộp kiểm'),
     ]
     mau_khao_sat = models.ForeignKey(MauKhaoSat, related_name='cau_hoi', on_delete=models.CASCADE)
     noi_dung = models.TextField()
     loai_cau_hoi = models.CharField(max_length=20, choices=LOAI_CHOICES)
-    system_tag = models.CharField(max_length=50, null=True, blank=True)  # sv_mssv, sv_hoten, nganh_hoc, diem_dn
+    # system_tag = models.CharField(max_length=50, null=True, blank=True)  # sv_mssv, sv_hoten, nganh_hoc, diem_dn
     thu_tu = models.IntegerField(default=0)
+class TieuChiDanhGia(models.Model):
+
+    cau_hoi = models.ForeignKey(CauHoi,related_name="tieuchi",on_delete=models.CASCADE)
+    noi_dung = models.CharField(max_length=255)
+
 class LuaChon(models.Model):
-    OPTION_TYPE = [('NORMAL', 'Trắc nghiệm'), ('ROW', 'Hàng (Grid)'), ('COLUMN', 'Cột (Grid)')]
-    cau_hoi = models.ForeignKey(CauHoi, related_name='lua_chon', on_delete=models.CASCADE)
+
+    cau_hoi = models.ForeignKey(CauHoi,related_name="options",on_delete=models.CASCADE)
     noi_dung_option = models.CharField(max_length=255)
-    loai_option = models.CharField(max_length=10, choices=OPTION_TYPE, default='NORMAL')
 class PhieuTraLoi(models.Model):
     mau_khao_sat = models.ForeignKey(MauKhaoSat, on_delete=models.CASCADE)
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
     thoi_gian_nop = models.DateTimeField(auto_now_add=True)
 class ChiTietTraLoi(models.Model):
-    phieu_tra_loi = models.ForeignKey(PhieuTraLoi, related_name='chi_tiet', on_delete=models.CASCADE)
+    phieu_tra_loi = models.ForeignKey(PhieuTraLoi, related_name='answers', on_delete=models.CASCADE)
     cau_hoi = models.ForeignKey(CauHoi, on_delete=models.CASCADE)
     gia_tri = models.TextField()  # Lưu câu trả lời của SV hoặc điểm DN
 # --- NHÓM 4: PHÂN CÔNG & CHẤM ĐIỂM ---
