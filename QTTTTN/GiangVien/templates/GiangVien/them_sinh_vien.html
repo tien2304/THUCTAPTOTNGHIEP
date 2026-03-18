@@ -1,0 +1,32 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-8">
+
+<h2 class="text-xl font-bold mb-4">
+Thêm sinh viên vào hội đồng
+</h2>
+
+<form method="POST">
+{% csrf_token %}
+
+<div class="bg-white shadow rounded-lg p-4">
+
+{% for sv in sinhviens %}
+<label class="flex gap-2 mb-2">
+<input type="checkbox" name="sinh_vien" value="{{sv.ma_sv}}">
+<span>{{sv.ho_ten}} - {{sv.lop}}</span>
+</label>
+{% endfor %}
+
+</div>
+
+<button class="bg-blue-600 text-white px-4 py-2 mt-4 rounded">
+Thêm vào hội đồng
+</button>
+
+</form>
+
+</div>
+{% endblock %}

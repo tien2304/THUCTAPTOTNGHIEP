@@ -1,0 +1,57 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-8">
+
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-2xl font-bold">Danh sách Hội đồng bảo vệ</h1>
+
+<a href="{% url 'GiangVien:tao_hoi_dong' %}"
+class="bg-blue-600 text-white px-4 py-2 rounded-lg">
++ Tạo hội đồng mới
+</a>
+</div>
+
+<div class="bg-white rounded-xl shadow p-4">
+
+<table class="w-full text-left">
+
+<thead class="border-b">
+<tr>
+<th>Tên hội đồng</th>
+<th>Ngày</th>
+<th>Địa điểm</th>
+<th>Thao tác</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for hd in hoidongs %}
+<tr class="border-b">
+
+<td class="py-3 font-semibold">
+{{hd.ten_hoi_dong}}
+</td>
+
+<td>{{hd.ngay_bao_ve}}</td>
+
+<td>{{hd.dia_diem}}</td>
+
+<td>
+<a href="{% url 'GiangVien:hoi_dong_detail' hd.id %}"
+class="text-blue-500">Xem</a>
+</td>
+
+</tr>
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+{% endblock %}

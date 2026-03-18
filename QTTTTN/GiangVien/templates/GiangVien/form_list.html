@@ -1,0 +1,58 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6">
+
+<!-- HEADER -->
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Biểu mẫu</h1>
+</div>
+
+<!-- TEMPLATE -->
+<h2 class="text-lg font-semibold mb-4">Bắt đầu biểu mẫu mới</h2>
+
+<div class="flex gap-4 mb-10">
+
+    <!-- FORM TRỐNG -->
+    <a href="{% url 'GiangVien:tao_form' %}">
+        <div class="w-40 h-40 border rounded-xl flex items-center justify-center hover:shadow cursor-pointer">
+            <span class="text-4xl">+</span>
+        </div>
+        <p class="text-center mt-2">Biểu mẫu trống</p>
+    </a>
+
+</div>
+
+<!-- DANH SÁCH FORM -->
+<h2 class="text-lg font-semibold mb-4">Biểu mẫu gần đây</h2>
+
+<div class="grid grid-cols-4 gap-6">
+
+{% for f in forms %}
+
+<a href="{% url 'GiangVien:public_form' f.public_id %}">
+<div class="border rounded-xl p-4 hover:shadow cursor-pointer">
+
+    <div class="h-24 bg-purple-100 mb-3"></div>
+
+    <h3 class="font-semibold">{{ f.ten_form }}</h3>
+
+    <p class="text-sm text-gray-500">
+        {{ f.ngay_tao|date:"d/m/Y H:i" }}
+    </p>
+
+</div>
+</a>
+
+{% empty %}
+
+<p>Chưa có form nào</p>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+{% endblock %}

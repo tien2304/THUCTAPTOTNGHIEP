@@ -1,0 +1,126 @@
+.page-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.page-header h1{
+font-size:26px;
+font-weight:600;
+}
+
+.header-actions button{
+padding:10px 16px;
+border-radius:8px;
+border:none;
+margin-left:10px;
+cursor:pointer;
+}
+
+.btn-primary{
+background:#2563eb;
+color:white;
+}
+
+.btn-secondary{
+background:#f3f4f6;
+}
+
+.card{
+background:white;
+border-radius:12px;
+padding:20px;
+box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+.card-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.search-box input{
+padding:8px 12px;
+border-radius:6px;
+border:1px solid #ddd;
+}
+
+.student-table{
+width:100%;
+border-collapse:collapse;
+}
+
+.student-table th{
+text-align:left;
+font-size:13px;
+color:#777;
+padding:10px;
+border-bottom:1px solid #eee;
+}
+
+.student-table td{
+padding:14px 10px;
+border-bottom:1px solid #eee;
+}
+
+.student{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.avatar{
+width:36px;
+height:36px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+font-size:14px;
+}
+
+.avatar.blue{
+background:#3b82f6;
+}
+
+.avatar.green{
+background:#10b981;
+}
+
+.name{
+font-weight:600;
+}
+
+.major{
+font-size:12px;
+color:#777;
+}
+
+.company{
+font-weight:500;
+}
+
+.job{
+font-size:12px;
+color:#777;
+}
+
+.status{
+padding:4px 10px;
+border-radius:20px;
+font-size:12px;
+font-weight:500;
+}
+
+.status.doing{
+background:#dbeafe;
+color:#2563eb;
+}
+
+.status.done{
+background:#d1fae5;
+color:#059669;
+}

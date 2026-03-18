@@ -8,5 +8,15 @@ urlpatterns = [
     path('sinh-vien-huong-dan/',views.sinhvien_huongdan,name='sinhvien_huongdan'),
     path('tao-form/', views.tao_form, name='tao_form'),
     path('form/<uuid:public_id>/', views.public_form, name='public_form'),
+    path('submit/<uuid:public_id>/', views.submit_form, name='submit_form'),
 
-    path('submit/<uuid:public_id>/', views.submit_form, name='submit_form'),]
+    #HOI_DONG
+path('hoi-dong/', views.hoi_dong_list, name='hoi_dong_list'),
+path('hoi-dong/tao/', views.tao_hoi_dong, name='tao_hoi_dong'),
+path('hoi-dong/<int:id>/', views.hoi_dong_detail, name='hoi_dong_detail'),
+path('hoi-dong/<int:id>/them-sv/', views.them_sinh_vien, name='them_sinh_vien'),
+
+
+
+
+]

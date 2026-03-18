@@ -1,0 +1,40 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-8">
+
+<h1 class="text-2xl font-bold mb-6">Tạo hội đồng mới</h1>
+
+<form method="POST">
+{% csrf_token %}
+
+<input name="ten" placeholder="Tên hội đồng"
+class="border p-2 w-full mb-3">
+
+<input type="date" name="ngay"
+class="border p-2 w-full mb-3">
+
+<input name="dia_diem" placeholder="Địa điểm"
+class="border p-2 w-full mb-3">
+
+<input type="datetime-local" name="thoi_gian"
+class="border p-2 w-full mb-3">
+
+<h3 class="font-semibold mt-4 mb-2">Chọn giảng viên</h3>
+
+{% for gv in giangviens %}
+<label class="block">
+<input type="checkbox" name="giang_vien" value="{{gv.ma_gv}}">
+{{gv.ho_ten}}
+</label>
+{% endfor %}
+
+<button class="bg-blue-600 text-white px-4 py-2 mt-4 rounded">
+Lưu hội đồng
+</button>
+
+</form>
+
+</div>
+{% endblock %}

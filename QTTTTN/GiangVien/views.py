@@ -1,5 +1,7 @@
 from django.shortcuts import render
-from Home.models import GiangVien, PhanCongGVPT,SinhVien, PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon, KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia
+from Home.models import (GiangVien, PhanCongGVPT,SinhVien,
+                         PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon,
+                         KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia, HoiDong, HoiDong_SinhVien,HoiDong_GiangVien)
 
 def home_view(request):
     """Trang chủ dành cho Giảng Viên."""
@@ -131,3 +133,105 @@ def submit_form(request,public_id):
                         )
 
         return render(request,"Forms/success.html")
+
+def hoi_dong_list(request):
+
+    if not get_is_gvpt(request):
+        return redirect("GiangVien:giangvien_home")
+
+    hoidongs = HoiDong.objects.all()
+
+    return render(request, "GiangVien/hoi_dong_list.html", {
+        "hoidongs": hoidongs,
+        "current_page": "hoi_dong",
+        "is_gvpt": get_is_gvpt(request)
+    })
+
+def hoi_dong_list(request):
+
+    if not get_is_gvpt(request):
+        return redirect("GiangVien:giangvien_home")
+
+    hoidongs = HoiDong.objects.all()
+
+    return render(request, "GiangVien/hoi_dong_list.html", {
+        "hoidongs": hoidongs,
+        "current_page": "hoi_dong",
+        "is_gvpt": get_is_gvpt(request)
+    })
+
+def tao_hoi_dong(request):
+
+    if not get_is_gvpt(request):
+        return redirect("GiangVien:giangvien_home")
+
+    if request.method == "POST":
+        thoi_gian = request.POST.get("thoi_gian")
+        hd = HoiDong.objects.create(
+            ten_hoi_dong=request.POST.get("ten"),
+            ngay_bao_ve=request.POST.get("ngay"),
+            dia_diem=request.POST.get("dia_diem"),
+            thoi_gian=thoi_gian,
+            ky=KyThucTap.objects.last()
+        )
+
+        gv_ids = request.POST.getlist("giang_vien")
+
+        for gv_id in gv_ids:
+            HoiDong_GiangVien.objects.create(
+                hoi_dong=hd,
+                giang_vien_id=gv_id
+            )
+
+        return redirect("GiangVien:hoi_dong_detail", id=hd.id)
+
+    return render(request, "GiangVien/tao_hoi_dong.html", {
+        "giangviens": GiangVien.objects.all(),
+        "is_gvpt": get_is_gvpt(request)
+    })
+
+def them_sinh_vien(request, id):
+
+    hoidong = HoiDong.objects.get(id=id)
+
+    if request.method == "POST":
+
+        for sv_id in request.POST.getlist("sinh_vien"):
+
+            sv = SinhVien.objects.get(pk=sv_id)
+
+            gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
+
+            if gvhd:
+                if HoiDong_GiangVien.objects.filter(
+                    hoi_dong=hoidong,
+                    giang_vien=gvhd.giang_vien
+                ).exists():
+                    continue  # ❌ bỏ nếu trùng GVHD
+
+            HoiDong_SinhVien.objects.create(
+                hoi_dong=hoidong,
+                sinh_vien=sv
+            )
+
+        return redirect("GiangVien:hoi_dong_detail", id=id)
+
+    return render(request, "GiangVien/them_sinh_vien.html", {
+        "sinhviens": SinhVien.objects.all(),
+        "hoidong": hoidong
+    })
+
+def hoi_dong_detail(request, id):
+
+    hoidong = HoiDong.objects.get(id=id)
+
+    giangviens = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong)
+    sinhviens = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong)
+
+    return render(request, "GiangVien/hoi_dong_detail.html", {
+        "hoidong": hoidong,
+        "giangviens": giangviens,
+        "sinhviens": sinhviens,
+        "current_page": "hoi_dong",
+        "is_gvpt": get_is_gvpt(request)
+    })
