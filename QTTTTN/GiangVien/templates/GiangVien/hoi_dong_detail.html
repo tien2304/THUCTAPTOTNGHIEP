@@ -1,0 +1,147 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 bg-gray-50 min-h-screen">
+
+<!-- ===== HEADER ===== -->
+<div class="bg-white rounded-xl shadow p-6 mb-6">
+
+    <div class="flex justify-between items-center">
+        <div>
+            <span class="text-blue-600 text-xs font-semibold">● ĐANG HOẠT ĐỘNG</span>
+
+            <h1 class="text-2xl font-bold mt-2">
+                {{ hoidong.ten_hoi_dong }}
+            </h1>
+
+            <div class="flex gap-6 text-gray-500 mt-3 text-sm">
+                <span>📅 {{ hoidong.ngay_bao_ve }}</span>
+                <span>⏰ {{ hoidong.thoi_gian }}</span>
+                <span>📍 {{ hoidong.dia_diem }}</span>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button class="border px-4 py-2 rounded-lg hover:bg-gray-100">
+                ✏️ Chỉnh sửa
+            </button>
+
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+                🖨 In biên bản
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== TABS ===== -->
+<div class="bg-white rounded-xl shadow p-6">
+
+    <div class="flex gap-6 border-b mb-6">
+        <button onclick="showTab('gv')" id="tab-gv"
+            class="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">
+            Thành viên Hội đồng
+        </button>
+
+        <button onclick="showTab('sv')" id="tab-sv"
+            class="pb-2 text-gray-500">
+            Danh sách Sinh viên
+        </button>
+    </div>
+
+    <!-- ===== TAB GIẢNG VIÊN ===== -->
+    <div id="tab-content-gv">
+
+        <table class="w-full text-sm">
+            <thead class="text-gray-500 border-b">
+                <tr>
+                    <th class="py-2 text-left">STT</th>
+                    <th class="text-left">Mã GV</th>
+                    <th class="text-left">Họ và tên</th>
+                    <th class="text-left">Đơn vị</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for gv in giangviens %}
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="py-3">{{ forloop.counter }}</td>
+                    <td>{{ gv.giang_vien.ma_gv }}</td>
+                    <td>{{ gv.giang_vien.ho_ten }}</td>
+                    <td>{{ gv.giang_vien.khoa }}</td>
+                    <td class="text-center">
+                        <button class="text-red-500">🗑</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- ===== TAB SINH VIÊN ===== -->
+    <div id="tab-content-sv" class="hidden">
+
+        <div class="flex justify-between mb-4">
+            <h2 class="font-semibold">Danh sách sinh viên bảo vệ</h2>
+
+            <a href="{% url 'GiangVien:them_sinh_vien' hoidong.id %}"
+               class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+               + Thêm sinh viên
+            </a>
+        </div>
+
+        <table class="w-full text-sm">
+            <thead class="text-gray-500 border-b">
+                <tr>
+                    <th class="py-2 text-left">Mã SV</th>
+                    <th class="text-left">Họ tên</th>
+                    <th class="text-left">Lớp</th>
+                    <th class="text-left">Tên đề tài</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for sv in sinhviens %}
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="py-3 text-blue-600">
+                        {{ sv.sinh_vien.ma_sv }}
+                    </td>
+
+                    <td>{{ sv.sinh_vien.ho_ten }}</td>
+                    <td>{{ sv.sinh_vien.lop }}</td>
+                    <td>{{ sv.sinh_vien.de_tai }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- ===== JS TAB ===== -->
+<script>
+function showTab(type){
+
+    document.getElementById("tab-content-gv").classList.add("hidden");
+    document.getElementById("tab-content-sv").classList.add("hidden");
+
+    document.getElementById("tab-gv").classList.remove("border-blue-600","text-blue-600");
+    document.getElementById("tab-sv").classList.remove("border-blue-600","text-blue-600");
+
+    if(type==="gv"){
+        document.getElementById("tab-content-gv").classList.remove("hidden");
+        document.getElementById("tab-gv").classList.add("border-blue-600","text-blue-600");
+    }else{
+        document.getElementById("tab-content-sv").classList.remove("hidden");
+        document.getElementById("tab-sv").classList.add("border-blue-600","text-blue-600");
+    }
+}
+</script>
+
+{% endblock %}

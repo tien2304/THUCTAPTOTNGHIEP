@@ -1,29 +1,50 @@
 {% extends "GiangVien/Home.html" %}
 {% load static %}
-
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
 
 <div class="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+
 <form method="POST" id="saveForm">
 {% csrf_token %}
 <input type="hidden" name="form_data" id="formData">
 
-    <!-- 1. TÊN FORM -->
-    <div class="bg-white rounded-2xl shadow p-6 mb-8">
-        <h2 class="text-lg font-semibold flex items-center gap-2 mb-4">
-            📝 TÊN FORM KHẢO SÁT
-        </h2>
-        <input type="text" id="form_name" class="w-full px-4 py-3 text-lg border border-gray-300 rounded-xl focus:border-blue-500" placeholder="Nhập tên form">
-    </div>
-    <p class="text-sm text-gray-500">
-Ngày tạo: {{ form.ngay_tao|date:"d/m/Y H:i" }}
-</p>
-    <!-- 2. CẤU HÌNH THỜI GIAN -->
-    <div class="bg-white rounded-2xl shadow p-6 mb-8">
-        <h2 class="text-lg font-semibold flex items-center gap-2 mb-6">⚙️ CẤU HÌNH THỜI GIAN</h2>
-        <div class="grid grid-cols-2 gap-6">
-            <div>
+<!-- HEADER -->
+<div class="bg-white rounded-2xl shadow p-6 mb-6">
+    <input type="text" id="form_name"
+        value="{{ form.ten_form|default:'' }}"
+        class="w-full text-xl font-semibold border-b pb-2 outline-none"
+        placeholder="Nhập tên form">
+    <p class="text-sm text-gray-500 mt-2">
+        Ngày tạo: {{ form.ngay_tao|date:"d/m/Y H:i" }}
+    </p>
+</div>
+
+<!-- TAB -->
+<div class="flex gap-6 mb-6 border-b">
+    <button type="button" onclick="switchTab('question')"
+        id="tab-question"
+        class="pb-2 border-b-2 border-purple-600 text-purple-600">
+        Câu hỏi
+    </button>
+
+    <button type="button" onclick="switchTab('answer')"
+        id="tab-answer"
+        class="pb-2 text-gray-500">
+        Câu trả lời
+    </button>
+</div>
+
+<!-- ================= TAB CÂU HỎI ================= -->
+<div id="question-tab">
+
+<!-- TIME -->
+<div class="bg-white rounded-xl shadow p-6 mb-6">
+    <h2 class="font-semibold mb-4">⚙️ Cấu hình thời gian</h2>
+
+    <div class="grid grid-cols-2 gap-4">
+
+        <div>
                 <label class="block text-sm font-medium mb-2">Kỳ thực tập</label>
                 <input type="text" id="ky" value="{{ ky_moi_nhat.ten_ky }}" class="w-full px-4 py-3 border border-gray-300 rounded-xl" placeholder="Ví dụ: Học kỳ 2 - 2024-2025">
             </div>
@@ -36,246 +57,235 @@ Ngày tạo: {{ form.ngay_tao|date:"d/m/Y H:i" }}
                 <input type="date" value="{{ ky_moi_nhat.ngay_ket_thuc|date:'Y-m-d' }}" id="end_date" onchange="checkDate()" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
                 <span id="date_error" class="text-red-500 text-sm mt-1"></span>
             </div>
-        </div>
+
     </div>
+</div>
 
-    <!-- 3. CÁC PHẦN KHẢO SÁT (Giống Google Forms) -->
-    <div class="bg-white rounded-2xl shadow p-6">
-        <div class="flex items-center justify-between mb-6">
+<!-- QUESTIONS -->
+<div class="bg-white rounded-xl shadow p-6">
 
-<h2 class="text-lg font-semibold">
-📑 CÂU HỎI KHẢO SÁT
-</h2>
+<div class="flex justify-between mb-6">
+    <h2 class="font-semibold">📑 Câu hỏi</h2>
+    <button type="button" onclick="addQuestion()"
+        class="bg-blue-600 text-white px-4 py-2 rounded">
+        + Thêm
+    </button>
+</div>
 
-<button
-type="button"
-onclick="addQuestion()"
-class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+<div id="questions-area"></div>
 
-+ Thêm câu hỏi
+</div>
 
+<button type="button" onclick="saveForm()"
+class="mt-6 w-full bg-green-600 text-white py-3 rounded-xl">
+💾 Lưu form
 </button>
 
 </div>
 
-<div id="questions-area" class="space-y-6 mt-6"></div>
-    </div>
+<!-- ================= TAB CÂU TRẢ LỜI ================= -->
+<div id="answer-tab" class="hidden">
 
-    <button type="button" onclick="saveForm()" class="mt-10 w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl text-lg font-semibold">💾 Lưu form khảo sát</button>
+<h2 class="text-xl font-semibold mb-6">📊 Thống kê câu trả lời</h2>
+
+<div id="answer-area"></div>
+
+<h2 class="text-xl font-semibold mt-10 mb-4">🎯 Nguyện vọng GVHD</h2>
+
+<div class="bg-white p-4 rounded shadow">
+{% for gv, count in gvhd_stats.items %}
+<div class="flex justify-between border-b py-2">
+    <span>{{ gv }}</span>
+    <span class="font-semibold">{{ count }}</span>
+</div>
+{% empty %}
+<p class="text-gray-400">Chưa có dữ liệu</p>
+{% endfor %}
+</div>
+
+</div>
+
 </form>
 </div>
 
 <script>
-// ================== DATA ==================
+
+// ================= DATA =================
 let questions = [];
 
+// ================= ADD =================
 function addQuestion(){
-
-const id = Date.now();
-
-questions.push({
-temp_id: id,
-title: "",
-type: "TEXT",
-options: [],
-criteria: []
-});
-
-renderQuestions();
+    questions.push({
+        temp_id: Date.now(),
+        title:"",
+        type:"TEXT",
+        options:[],
+        criteria:[],
+        system_tag:""
+    });
+    render();
 }
 
+// ================= RENDER =================
+function render(){
 
-function renderQuestions(){
-
-const container = document.getElementById("questions-area");
-
-container.innerHTML="";
+let html="";
 
 questions.forEach(q=>{
 
-let html = `
+html+=`
+<div class="border p-4 mb-4 rounded bg-gray-50">
 
-<div class="bg-white border rounded-xl p-4">
-
-<input
-type="text"
-placeholder="Nhập câu hỏi..."
-class="w-full border p-2 rounded mb-3"
-value="${q.title}"
+<input value="${q.title}"
 oninput="updateTitle(${q.temp_id},this.value)"
->
+class="w-full mb-2 border p-2 rounded"
+placeholder="Nhập câu hỏi">
 
-<select
-onchange="updateType(${q.temp_id},this.value)"
-class="border p-2 rounded mb-3">
+<select onchange="updateType(${q.temp_id},this.value)"
+class="w-full mb-2 border p-2 rounded">
 
-<option value="TEXT" ${q.type==="TEXT"?"selected":""}>
-Trả lời ngắn
-</option>
+<option value="TEXT" ${q.type=="TEXT"?"selected":""}>TEXT</option>
+<option value="RADIO" ${q.type=="RADIO"?"selected":""}>RADIO</option>
+<option value="CHECKBOX" ${q.type=="CHECKBOX"?"selected":""}>CHECKBOX</option>
+<option value="SELECT" ${q.type=="SELECT"?"selected":""}>SELECT</option>
+<option value="LIKERT" ${q.type=="LIKERT"?"selected":""}>LIKERT</option>
 
-<option value="RADIO" ${q.type==="RADIO"?"selected":""}>
-Trắc nghiệm
-</option>
+</select>
 
-<option value="CHECKBOX" ${q.type==="CHECKBOX"?"selected":""}>
-Checkbox
-</option>
+<select onchange="updateTag(${q.temp_id},this.value)"
+class="w-full mb-2 border p-2 bg-yellow-100 rounded">
 
-<option value="SELECT" ${q.type==="SELECT"?"selected":""}>
-Dropdown
-</option>
-
-<option value="LIKERT" ${q.type==="LIKERT"?"selected":""}>
-Đánh giá 1-5
-</option>
+<option value="">-- thường --</option>
+<option value="GVHD_1" ${q.system_tag=="GVHD_1"?"selected":""}>GVHD 1</option>
+<option value="GVHD_2" ${q.system_tag=="GVHD_2"?"selected":""}>GVHD 2</option>
+<option value="HUONG_1" ${q.system_tag=="HUONG_1"?"selected":""}>Hướng 1</option>
+<option value="HUONG_2" ${q.system_tag=="HUONG_2"?"selected":""}>Hướng 2</option>
+<option value="GROUP" ${q.system_tag=="GROUP"?"selected":""}>Nhóm</option>
 
 </select>
 `;
 
 if(["RADIO","CHECKBOX","SELECT"].includes(q.type)){
-
-html += `<div id="options-${q.temp_id}"></div>
-<button onclick="addOption(${q.temp_id})"
-class="text-blue-600 mt-2">+ Thêm lựa chọn</button>`;
-}
-
-if(q.type==="LIKERT"){
-
-html += `<div id="criteria-${q.temp_id}" class="mt-3"></div>
-<button onclick="addCriteria(${q.temp_id})"
-class="text-blue-600 mt-2">+ Thêm tiêu chí</button>`;
-}
-
-html += `
-<button
-onclick="deleteQuestion(${q.temp_id})"
-class="text-red-500 mt-3">
-Xóa câu hỏi
-</button>
-
-</div>
+q.options.forEach((op,i)=>{
+html+=`
+<input value="${op.text}"
+oninput="updateOption(${q.temp_id},${i},this.value)"
+class="border p-2 mb-1 w-full rounded">
 `;
-
-container.innerHTML += html;
-
-renderOptions(q);
-renderCriteria(q);
 });
+html+=`<button onclick="addOption(${q.temp_id})">+ option</button>`;
 }
 
-
-function updateTitle(id,value){
-const q = questions.find(x=>x.temp_id===id);
-q.title=value;
+if(q.type=="LIKERT"){
+q.criteria.forEach((c,i)=>{
+html+=`
+<input value="${c.text}"
+oninput="updateCriteria(${q.temp_id},${i},this.value)"
+class="border p-2 mb-1 w-full rounded">
+`;
+});
+html+=`<button onclick="addCriteria(${q.temp_id})">+ tiêu chí</button>`;
 }
 
-function updateType(id,type){
-const q = questions.find(x=>x.temp_id===id);
-q.type=type;
-renderQuestions();
+html+=`</div>`;
+});
+
+document.getElementById("questions-area").innerHTML=html;
 }
 
+// ================= UPDATE =================
+function updateTitle(id,v){questions.find(q=>q.temp_id==id).title=v;}
+function updateType(id,v){questions.find(q=>q.temp_id==id).type=v;render();}
+function updateTag(id,v){questions.find(q=>q.temp_id==id).system_tag=v;}
 
 function addOption(id){
-const q = questions.find(x=>x.temp_id===id);
-q.options.push({text:""});
-renderQuestions();
+questions.find(q=>q.temp_id==id).options.push({text:""});
+render();
 }
 
-function renderOptions(q){
-
-if(!["RADIO","CHECKBOX","SELECT"].includes(q.type)) return;
-
-const container = document.getElementById(`options-${q.temp_id}`);
-
-let html="";
-
-q.options.forEach((op,i)=>{
-
-html+=`
-<div class="flex gap-2 mb-2">
-
-<input
-type="text"
-value="${op.text}"
-oninput="updateOption(${q.temp_id},${i},this.value)"
-class="border p-2 rounded flex-1">
-
-<button onclick="deleteOption(${q.temp_id},${i})">✕</button>
-
-</div>
-`;
-});
-
-container.innerHTML=html;
+function updateOption(id,i,v){
+questions.find(q=>q.temp_id==id).options[i].text=v;
 }
-
-function updateOption(qId,i,value){
-const q = questions.find(x=>x.temp_id===qId);
-q.options[i].text=value;
-}
-
-function deleteOption(qId,i){
-const q = questions.find(x=>x.temp_id===qId);
-q.options.splice(i,1);
-renderQuestions();
-}
-
 
 function addCriteria(id){
-const q = questions.find(x=>x.temp_id===id);
-q.criteria.push({text:""});
-renderQuestions();
+questions.find(q=>q.temp_id==id).criteria.push({text:""});
+render();
 }
 
-function renderCriteria(q){
+function updateCriteria(id,i,v){
+questions.find(q=>q.temp_id==id).criteria[i].text=v;
+}
 
-if(q.type!=="LIKERT") return;
+// ================= SAVE =================
+function saveForm(){
 
-const container = document.getElementById(`criteria-${q.temp_id}`);
+const data={
+ten_form:document.getElementById("form_name").value,
+questions:questions
+};
+
+document.getElementById("formData").value=JSON.stringify(data);
+document.getElementById("saveForm").submit();
+}
+
+// ================= LOAD =================
+const existing = {{ questions_json|default:"[]"|safe }};
+
+if(existing.length>0){
+questions=existing.map(q=>({
+...q,
+temp_id:Date.now()+Math.random()
+}));
+render();
+}
+
+// ================= TAB =================
+function switchTab(type){
+
+document.getElementById("question-tab").classList.add("hidden");
+document.getElementById("answer-tab").classList.add("hidden");
+
+document.getElementById("tab-question").classList.remove("border-purple-600","text-purple-600");
+document.getElementById("tab-answer").classList.remove("border-purple-600","text-purple-600");
+
+if(type==="question"){
+document.getElementById("question-tab").classList.remove("hidden");
+document.getElementById("tab-question").classList.add("border-purple-600","text-purple-600");
+}else{
+document.getElementById("answer-tab").classList.remove("hidden");
+document.getElementById("tab-answer").classList.add("border-purple-600","text-purple-600");
+}
+}
+
+// ================= RENDER STATS =================
+const stats = {{ stats_json|default:"[]"|safe }};
+
+function renderStats(){
 
 let html="";
 
-q.criteria.forEach((c,i)=>{
+stats.forEach(q=>{
 
+html+=`<div class="bg-white p-4 mb-4 rounded shadow">
+<b>${q.title}</b>`;
+
+if(q.stats){
+Object.entries(q.stats).forEach(([k,v])=>{
 html+=`
-<input
-type="text"
-value="${c.text}"
-oninput="updateCriteria(${q.temp_id},${i},this.value)"
-class="border p-2 rounded w-full mb-2"
-placeholder="Nhập tiêu chí..."
->
-`;
+<div class="flex justify-between text-sm mt-2">
+<span>${k}</span><span>${v}</span>
+</div>`;
+});
+}
+
+html+=`</div>`;
 });
 
-container.innerHTML=html;
+document.getElementById("answer-area").innerHTML=html;
 }
 
-function updateCriteria(qId,i,value){
-const q = questions.find(x=>x.temp_id===qId);
-q.criteria[i].text=value;
-}
+renderStats();
 
-
-function deleteQuestion(id){
-questions = questions.filter(q=>q.temp_id!==id);
-renderQuestions();
-}
-
-
-function saveForm(){
-
-const data = {
-ten_form: document.getElementById("form_name").value,
-start_date: document.getElementById("start_date").value,
-end_date: document.getElementById("end_date").value,
-questions: questions
-};
-
-document.getElementById("formData").value = JSON.stringify(data);
-
-document.getElementById("saveForm").submit();
-}
 </script>
+
 {% endblock %}

@@ -81,17 +81,34 @@ class MauKhaoSat(models.Model):
     def __str__(self):
         return self.ten_form
 class CauHoi(models.Model):
+
     LOAI_CHOICES = [
         ('TEXT', 'Câu hỏi ngắn'),
         ('RADIO', 'Trắc nghiệm'),
-        ('LIKERT','Đánh giá 1-5'),
+        ('LIKERT', 'Đánh giá 1-5'),
         ('SELECT', 'Menu thả xuống'),
         ('CHECKBOX', 'Hộp kiểm'),
     ]
-    mau_khao_sat = models.ForeignKey(MauKhaoSat, related_name='cau_hoi', on_delete=models.CASCADE)
+
+    SYSTEM_TAG_CHOICES = [
+        ('', 'Bình thường'),
+        ('GVHD_1', 'Nguyện vọng GVHD 1'),
+        ('GVHD_2', 'Nguyện vọng GVHD 2'),
+        # HƯỚNG
+        ('HUONG_1', 'Hướng đề tài 1'),
+        ('HUONG_2', 'Hướng đề tài 2'),
+
+        # NHÓM
+        ('GROUP', 'Làm nhóm'),
+        ('GROUP_MEMBER', 'Thành viên nhóm'),
+
+    ]
+
+    mau_khao_sat = models.ForeignKey(MauKhaoSat,related_name='cau_hoi', on_delete=models.CASCADE)
     noi_dung = models.TextField()
-    loai_cau_hoi = models.CharField(max_length=20, choices=LOAI_CHOICES)
-    # system_tag = models.CharField(max_length=50, null=True, blank=True)  # sv_mssv, sv_hoten, nganh_hoc, diem_dn
+    loai_cau_hoi = models.CharField(max_length=20,choices=LOAI_CHOICES)
+    # 🔥 QUAN TRỌNG NHẤT
+    system_tag = models.CharField(max_length=50,choices=SYSTEM_TAG_CHOICES,default="",blank=True)
     thu_tu = models.IntegerField(default=0)
 class TieuChiDanhGia(models.Model):
 

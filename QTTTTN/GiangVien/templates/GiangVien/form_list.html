@@ -25,34 +25,33 @@
 </div>
 
 <!-- DANH SÁCH FORM -->
-<h2 class="text-lg font-semibold mb-4">Biểu mẫu gần đây</h2>
+<h2 class="text-xl font-semibold mt-10 mb-4">Biểu mẫu gần đây</h2>
 
+{% if forms %}
 <div class="grid grid-cols-4 gap-6">
 
-{% for f in forms %}
+    {% for f in forms %}
+    <a href="{% url 'GiangVien:edit_form' f.public_id %}"
+       class="bg-white rounded-xl shadow hover:shadow-lg transition">
 
-<a href="{% url 'GiangVien:public_form' f.public_id %}">
-<div class="border rounded-xl p-4 hover:shadow cursor-pointer">
+        <div class="h-32 bg-purple-200 rounded-t-xl"></div>
 
-    <div class="h-24 bg-purple-100 mb-3"></div>
+        <div class="p-3">
+            <p class="font-semibold">{{ f.ten_form }}</p>
+            <p class="text-sm text-gray-500">
+                {{ f.ngay_tao|date:"d/m/Y H:i" }}
+            </p>
+        </div>
 
-    <h3 class="font-semibold">{{ f.ten_form }}</h3>
-
-    <p class="text-sm text-gray-500">
-        {{ f.ngay_tao|date:"d/m/Y H:i" }}
-    </p>
-
-</div>
-</a>
-
-{% empty %}
-
-<p>Chưa có form nào</p>
-
-{% endfor %}
+    </a>
+    {% endfor %}
 
 </div>
+{% else %}
+<p class="text-gray-500">Chưa có form nào</p>
+{% endif %}
 
 </div>
+
 
 {% endblock %}
