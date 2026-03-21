@@ -107,12 +107,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# Sửa 'en-us' thành 'vi' để các định dạng ngày tháng mặc định theo kiểu Việt Nam
+LANGUAGE_CODE = 'vi'
 
-TIME_ZONE = 'UTC'
+# Sửa 'UTC' thành 'Asia/Ho_Chi_Minh' để khớp với múi giờ GMT+7
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
 USE_I18N = True
 
+# Giữ nguyên True để Django xử lý chuyển đổi múi giờ thông minh
 USE_TZ = True
 
 
