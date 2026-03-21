@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 from Home.models import (GiangVien, PhanCongGVPT,SinhVien,
                          PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon,
                          KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia, HoiDong, HoiDong_SinhVien,HoiDong_GiangVien)
@@ -50,24 +51,29 @@ def form_list(request):
         "forms": forms,
         "current_page": "form_list",
         "is_gvpt": get_is_gvpt(request)    })
-def tao_form(request):
 
-    ky_moi_nhat = KyThucTap.objects.order_by("-id").first()
+
+def tao_form(request):
+    # Lấy tất cả các kỳ thực tập từ database
+    # Phải dùng đúng tên biến 'danh_sach_ky' như trong file HTML của ông
+    danh_sach_ky = KyThucTap.objects.all().order_by("-id")
+    ky_moi_nhat = danh_sach_ky.first()
 
     if request.method == "POST":
-
         raw = request.POST.get("form_data")
         data = json.loads(raw)
 
+        id_ky_chon = data.get("ky_thuc_tap")
+        ky_duoc_chon = KyThucTap.objects.get(id=id_ky_chon)
+
         form = MauKhaoSat.objects.create(
-            ky=ky_moi_nhat,
+            ky=ky_duoc_chon,
             ten_form=data["ten_form"],
-            ngay_bat_dau=ky_moi_nhat.ngay_bat_dau,
-            ngay_ket_thuc=ky_moi_nhat.ngay_ket_thuc
+            ngay_bat_dau=data.get("start_date") or ky_duoc_chon.ngay_bat_dau,
+            ngay_ket_thuc=data.get("end_date") or ky_duoc_chon.ngay_ket_thuc
         )
 
         for i, q in enumerate(data["questions"]):
-
             cauhoi = CauHoi.objects.create(
                 mau_khao_sat=form,
                 noi_dung=q["title"],
@@ -76,15 +82,14 @@ def tao_form(request):
                 system_tag=q.get("system_tag", "")
             )
 
-            # Lưu options (radio, checkbox, dropdown)
             for op in q.get("options", []):
                 LuaChon.objects.create(
                     cau_hoi=cauhoi,
                     noi_dung_option=op["text"]
                 )
 
-            # Lưu tiêu chí (LIKERT)
-            for tc in q.get("criteria", []):
+            # Dùng 'rows' để khớp với JS render của ông
+            for tc in q.get("rows", []):
                 TieuChiDanhGia.objects.create(
                     cau_hoi=cauhoi,
                     noi_dung=tc["text"]
@@ -92,9 +97,14 @@ def tao_form(request):
 
         return redirect("GiangVien:form_list")
 
-    return render(request,"GiangVien/tao_form.html",{
-        "ky_moi_nhat": ky_moi_nhat,"is_gvpt": get_is_gvpt(request)
+    # ĐÂY LÀ CHỖ QUAN TRỌNG:
+    # Phải truyền 'danh_sach_ky' vào dictionary này
+    return render(request, "GiangVien/tao_form.html", {
+        "danh_sach_ky": danh_sach_ky,
+        "ky_moi_nhat": ky_moi_nhat,
+        "is_gvpt": get_is_gvpt(request)
     })
+
 def form_detail(request, public_id):
 
     form = MauKhaoSat.objects.get(public_id=public_id)
@@ -106,75 +116,104 @@ def form_detail(request, public_id):
         "questions": questions, "is_gvpt": get_is_gvpt(request)
     })
 from collections import Counter
-def edit_form(request, public_id):
 
-    form = MauKhaoSat.objects.get(public_id=public_id)
+
+def edit_form(request, public_id):
+    form = get_object_or_404(MauKhaoSat, public_id=public_id)
+    danh_sach_ky = KyThucTap.objects.all().order_by("-id")
 
     if request.method == "POST":
         data = json.loads(request.POST.get("form_data"))
 
-        form.ten_form = data["ten_form"]
+        # 1. Cập nhật thông tin cơ bản của Form
+        form.ten_form = data.get("ten_form", "")
+        if data.get("start_date"):
+            form.ngay_bat_dau = data["start_date"]
+        if data.get("end_date"):
+            form.ngay_ket_thuc = data["end_date"]
+
+        # Cập nhật kỳ thực tập nếu có thay đổi
+        if data.get("ky_thuc_tap"):
+            form.ky_id = data["ky_thuc_tap"]
+
         form.save()
 
+        # 2. Xóa câu hỏi cũ để ghi đè (hoặc cập nhật tùy logic của ông)
         form.cau_hoi.all().delete()
 
+        # 3. Lưu danh sách câu hỏi mới
         for i, q in enumerate(data["questions"]):
-
             cauhoi = CauHoi.objects.create(
                 mau_khao_sat=form,
                 noi_dung=q["title"],
                 loai_cau_hoi=q["type"],
                 thu_tu=i,
-                system_tag=q.get("system_tag","")
+                system_tag=q.get("system_tag", "")
             )
 
+            # Lưu Options (Cho Radio, Checkbox, Select)
             for op in q.get("options", []):
-                LuaChon.objects.create(
-                    cau_hoi=cauhoi,
-                    noi_dung_option=op["text"]
-                )
+                if op.get("text"):  # Chỉ lưu nếu có nội dung
+                    LuaChon.objects.create(
+                        cau_hoi=cauhoi,
+                        noi_dung_option=op["text"]
+                    )
 
-            for tc in q.get("criteria", []):
-                TieuChiDanhGia.objects.create(
-                    cau_hoi=cauhoi,
-                    noi_dung=tc["text"]
-                )
+            # SỬA TẠI ĐÂY: Đổi 'criteria' thành 'rows' để khớp với JS
+            for tc in q.get("rows", []):
+                if tc.get("text"):
+                    TieuChiDanhGia.objects.create(
+                        cau_hoi=cauhoi,
+                        noi_dung=tc["text"]
+                    )
 
         return redirect("GiangVien:edit_form", public_id=public_id)
 
-    # ===== LOAD QUESTIONS =====
-    questions = []
-
+    # ===== LOAD QUESTIONS (GET METHOD) =====
+    questions_data = []
     gvhd_counter = Counter()
 
-    for q in form.cau_hoi.all():
+    # Load câu hỏi sắp xếp theo thứ tự
+    for q in form.cau_hoi.all().order_by('thu_tu'):
 
+        # Thống kê (Giữ nguyên logic của ông)
         answers = q.chitiettraloi_set.all()
         values = [a.gia_tri for a in answers]
-
         stats = Counter(values)
 
-        if q.system_tag in ["GVHD_1","GVHD_2"]:
+        if q.system_tag in ["GVHD_1", "GVHD_2"]:
             for v in values:
                 gvhd_counter[v] += 1
 
-        questions.append({
+        # Đóng gói object để đẩy xuống JS
+        questions_data.append({
+            "id": q.id,  # Để JS biết đây là câu cũ
             "title": q.noi_dung,
             "type": q.loai_cau_hoi,
             "system_tag": q.system_tag,
             "options": [{"text": o.noi_dung_option} for o in q.options.all()],
-            "criteria": [{"text": c.noi_dung} for c in q.tieuchi.all()],
+            # SỬA TẠI ĐÂY: Đổi key 'criteria' thành 'rows'
+            "rows": [{"text": c.noi_dung} for c in q.tieuchi.all()],
             "stats": dict(stats)
         })
 
     return render(request, "GiangVien/tao_form.html", {
         "form": form,
-        "questions_json": json.dumps(questions),
+        "questions_json": json.dumps(questions_data),  # Truyền xuống để JS render()
         "ky_moi_nhat": form.ky,
-        "stats_json": json.dumps(questions),  # 🔥 thêm
+        "danh_sach_ky": danh_sach_ky,
         "gvhd_stats": dict(gvhd_counter),
-        "is_edit": True, "is_gvpt": get_is_gvpt(request)
+        "is_edit": True,
+        "is_gvpt": get_is_gvpt(request)
     })
+
+def xoa_form(request, public_id):
+    # Chỉ cho phép xóa nếu là phương thức POST (để bảo mật)
+    if request.method == "POST":
+        form = get_object_or_404(MauKhaoSat, public_id=public_id)
+        form.delete()
+    return redirect("GiangVien:form_list")
+
 def public_form(request, public_id):
 
     form = MauKhaoSat.objects.get(public_id=public_id)

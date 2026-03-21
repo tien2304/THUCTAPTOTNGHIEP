@@ -11,8 +11,9 @@ urlpatterns = [
     path('submit/<uuid:public_id>/', views.submit_form, name='submit_form'),
 
 
-path('public/<uuid:public_id>/', views.public_form, name='public_form'),
-path('tao-form/<uuid:public_id>/', views.edit_form, name='edit_form'),
+    path('public/<uuid:public_id>/', views.public_form, name='public_form'),
+    path('tao-form/<uuid:public_id>/', views.edit_form, name='edit_form'),
+    path('xoa-form/<uuid:public_id>/', views.xoa_form, name='xoa_form'),
     path('auto-assign/<int:form_id>/', views.run_auto_assign, name='auto_assign'),
 
     #HOI_DONG
