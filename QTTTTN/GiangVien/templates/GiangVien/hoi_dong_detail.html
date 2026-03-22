@@ -22,6 +22,8 @@
             </div>
         </div>
 
+        <!-- 🔥 CHỈ GVPT MỚI THẤY -->
+        {% if is_gvpt %}
         <div class="flex gap-3">
             <button class="border px-4 py-2 rounded-lg hover:bg-gray-100">
                 ✏️ Chỉnh sửa
@@ -31,6 +33,7 @@
                 🖨 In biên bản
             </button>
         </div>
+        {% endif %}
     </div>
 
 </div>
@@ -60,7 +63,10 @@
                     <th class="text-left">Mã GV</th>
                     <th class="text-left">Họ và tên</th>
                     <th class="text-left">Đơn vị</th>
+
+                    {% if is_gvpt %}
                     <th class="text-center">Thao tác</th>
+                    {% endif %}
                 </tr>
             </thead>
 
@@ -71,9 +77,12 @@
                     <td>{{ gv.giang_vien.ma_gv }}</td>
                     <td>{{ gv.giang_vien.ho_ten }}</td>
                     <td>{{ gv.giang_vien.khoa }}</td>
+
+                    {% if is_gvpt %}
                     <td class="text-center">
                         <button class="text-red-500">🗑</button>
                     </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
@@ -87,10 +96,13 @@
         <div class="flex justify-between mb-4">
             <h2 class="font-semibold">Danh sách sinh viên bảo vệ</h2>
 
+            <!-- 🔥 CHỈ GVPT MỚI THÊM SV -->
+            {% if is_gvpt %}
             <a href="{% url 'GiangVien:them_sinh_vien' hoidong.id %}"
                class="bg-blue-600 text-white px-4 py-2 rounded-lg">
                + Thêm sinh viên
             </a>
+            {% endif %}
         </div>
 
         <table class="w-full text-sm">

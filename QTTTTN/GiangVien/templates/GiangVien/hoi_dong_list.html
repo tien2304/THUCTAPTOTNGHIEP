@@ -1,49 +1,62 @@
 {% extends "GiangVien/Home.html" %}
+
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
 
-<div class="p-8">
+<div class="p-6 bg-gray-50 min-h-screen">
 
 <div class="flex justify-between items-center mb-6">
-<h1 class="text-2xl font-bold">Danh sách Hội đồng bảo vệ</h1>
+    <h1 class="text-2xl font-bold">Hội đồng bảo vệ</h1>
 
-<a href="{% url 'GiangVien:tao_hoi_dong' %}"
-class="bg-blue-600 text-white px-4 py-2 rounded-lg">
-+ Tạo hội đồng mới
-</a>
+    {% if is_gvpt %}
+    <a href="{% url 'GiangVien:tao_hoi_dong' %}"
+       class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+        + Tạo hội đồng
+    </a>
+    {% endif %}
 </div>
 
-<div class="bg-white rounded-xl shadow p-4">
+<div class="bg-white rounded-xl shadow p-5">
 
-<table class="w-full text-left">
+{% if not is_gvpt %}
+<p class="text-sm text-gray-400 mb-3">
+Hội đồng bạn tham gia
+</p>
+{% endif %}
 
-<thead class="border-b">
+<table class="w-full text-sm">
+
+<thead class="text-gray-400 border-b">
 <tr>
-<th>Tên hội đồng</th>
+<th class="text-left p-3">Tên hội đồng</th>
 <th>Ngày</th>
 <th>Địa điểm</th>
-<th>Thao tác</th>
+<th></th>
 </tr>
 </thead>
 
 <tbody>
 
 {% for hd in hoidongs %}
-<tr class="border-b">
+<tr class="border-b hover:bg-gray-50">
 
-<td class="py-3 font-semibold">
-{{hd.ten_hoi_dong}}
-</td>
-
-<td>{{hd.ngay_bao_ve}}</td>
-
-<td>{{hd.dia_diem}}</td>
+<td class="p-3 font-medium">{{ hd.ten_hoi_dong }}</td>
+<td>{{ hd.ngay_bao_ve }}</td>
+<td>{{ hd.dia_diem }}</td>
 
 <td>
 <a href="{% url 'GiangVien:hoi_dong_detail' hd.id %}"
-class="text-blue-500">Xem</a>
+class="text-blue-600 hover:underline">
+Chi tiết →
+</a>
 </td>
 
+</tr>
+{% empty %}
+<tr>
+<td colspan="4" class="text-center text-gray-400 py-6">
+Không có hội đồng nào
+</td>
 </tr>
 {% endfor %}
 
@@ -54,4 +67,5 @@ class="text-blue-500">Xem</a>
 </div>
 
 </div>
+
 {% endblock %}
