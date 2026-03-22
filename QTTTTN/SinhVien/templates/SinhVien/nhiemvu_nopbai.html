@@ -1,0 +1,578 @@
+{% extends 'SinhVien/home.html' %}
+{% load static %}
+
+{% block title %}Nhiệm vụ & Nộp bài{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'SinhVien/css/nhiemvu_nopbai.css' %}">
+
+<div class="task-page">
+
+    <!-- HEADER -->
+    <div class="task-title">
+        <h1>Nhiệm vụ & Nộp bài</h1>
+        <p>Theo dõi các đầu việc thực tập và cập nhật tiến độ nộp bài của bạn.</p>
+    </div>
+
+    <!-- CARD -->
+    <div class="task-card">
+
+        <!-- CARD HEADER -->
+        <div class="task-card-header">
+
+            <h3>Danh sách nhiệm vụ nộp bài</h3>
+
+            <select class="task-filter">
+                <option>Tất cả trạng thái</option>
+                <option>Đã nộp</option>
+                <option>Chưa nộp</option>
+                <option>Trễ</option>
+            </select>
+
+        </div>
+
+        <!-- TABLE -->
+        <table class="task-table">
+
+            <thead class="task-row">
+                <tr>
+                    <th>Tên nhiệm vụ</th>
+                    <th>Hạn nộp</th>
+                    <th>Trạng thái</th>
+                    <th>Nhận xét từ GVHD</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% if page_obj.object_list %}
+
+                {% for task in page_obj %}
+                <tr>
+
+                    <td>
+                        <div class="task-name">
+                            <strong>{{ task.ten_nhiem_vu }}</strong>
+                            <span>{{ task.mo_ta }}</span>
+                        </div>
+                    </td>
+
+                    <td>{{ task.han_nop|date:"d/m/Y" }}</td>
+
+                    <td>
+                        <span class="status-badge {{ task.trang_thai }}">
+                            {% if task.trang_thai == "done" %}
+                            Đã nộp
+                            {% elif task.trang_thai == "late" %}
+                            Trễ
+                            {% else %}
+                            Chưa nộp
+                            {% endif %}
+                        </span>
+                    </td>
+
+                    <td class="task-comment">
+                        {{ task.nhan_xet|default:"Chưa có nhận xét" }}
+                    </td>
+
+                    <td>
+                        {% if task.trang_thai == "done" or task.trang_thai == "late" %}
+                        <button class="btn-view">Xem lại</button>
+                        {% else %}
+                        <button class="btn-submit open-submit-modal" data-task-name="{{ task.ten_nhiem_vu }}"
+                            data-task-rule="{{ task.mo_ta }}" data-task-id="{{ task.id }}">
+                            Nộp bài
+                        </button>
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% endfor %}
+
+                {% else %}
+
+                <tr>
+                    <td colspan="5" class="no-task">
+                        Chưa có nhiệm vụ nào
+                    </td>
+                </tr>
+
+                {% endif %}
+
+            </tbody>
+
+        </table>
+
+        <!-- PAGINATION -->
+        <div class="task-pagination">
+
+            <span>
+                Hiển thị {{ page_obj|length }} trên {{ page_obj.paginator.count }} nhiệm vụ
+            </span>
+
+            <div class="pagination-pages">
+
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">‹</a>
+                {% else %}
+                <span class="page-btn disabled">‹</span>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="page-btn active">{{ num }}</span>
+                {% else %}
+                <a href="?page={{ num }}" class="page-btn">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="page-btn">›</a>
+                {% else %}
+                <span class="page-btn disabled">›</span>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= POPUP NỘP BÀI ================= -->
+
+<div id="submitModal" class="submit-modal">
+
+    <div class="submit-modal-content">
+
+        <div class="submit-modal-header">
+            <h3 id="modalTaskTitle">Nộp bài</h3>
+            <span class="close-modal">×</span>
+        </div>
+
+        <!-- KHUNG QUY ĐỊNH -->
+        <div class="submit-rule-box">
+            <p id="modalTaskRule"></p>
+        </div>
+
+        <!-- UPLOAD FILE -->
+        <div class="upload-box">
+
+            <div class="upload-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org">
+                    <path
+                        d="M17.5 18c2.485 0 4.5-2.015 4.5-4.5 0-2.336-1.785-4.257-4.076-4.478C17.2 5.922 14.4 4 11 4 7.9 4 5.4 6.2 4.7 9.1 2.6 9.8 1 11.7 1 14c0 2.2 1.8 4 4 4h12.5z" />
+                    <line x1="11.5" y1="18" x2="11.5" y2="8.5" stroke="#F1F5F9" stroke-width="1.5" fill="none" />
+
+                    <!-- Đầu mũi tên: Vẫn giữ bo tròn ở đỉnh và các góc cho mượt -->
+                    <path d="M8 12L11.5 8.5L15 12" stroke="#F1F5F9" stroke-width="1.5" stroke-linecap="round"
+                        stroke-linejoin="round" fill="none" />
+                </svg>
+            </div>
+
+            <p class="upload-text">
+                Kéo và thả file <strong>PDF hoặc DOCX</strong> vào đây
+            </p>
+
+            <p class="upload-or">hoặc</p>
+
+            <label class="upload-btn">
+                Chọn file từ máy tính
+                <input type="file" hidden id="fileInput">
+            </label>
+
+            <p class="upload-note">
+                Hỗ trợ định dạng: PDF, DOCX (Tối đa 25MB)
+            </p>
+
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel">Huỷ bỏ</button>
+            <button class="btn-submit">Nộp bài ngay</button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ============ Xem lại -->
+<div id="reviewModal" class="submit-modal">
+    <div class="submit-modal-content modal-xem-lai">
+        <div class="review-header">
+            <div class="header-left">
+                <span class="icon-doc">📄</span>
+                <h3>Xem lại bài nộp</h3>
+            </div>
+            <span class="close-review">×</span>
+        </div>
+
+        <div class="review-body">
+            <div class="r-row">
+                <div class="r-label">Trạng thái nộp bài</div>
+                <div class="r-value" id="rvStatus"></div>
+            </div>
+
+            <div class="r-row">
+                <div class="r-label">Ngày hết hạn</div>
+                <div class="r-value" id="rvDeadline"></div>
+            </div>
+
+            <div class="r-row">
+                <div class="r-label">Thời gian còn lại</div>
+                <div class="r-value">
+                    <span id="rvTimeBox" class="review-time-badge"></span>
+                </div>
+            </div>
+
+            <div class="r-row">
+                <div class="r-label">Lần sửa cuối cùng</div>
+                <div class="r-value" id="rvLastModified"></div>
+            </div>
+
+            <div class="r-row file-section">
+                <div class="r-label">Nộp file</div>
+                <div class="r-value">
+                    <div class="file-card">
+                        <div class="file-info">
+                            <span class="file-icon-dynamic" id="rvFileIcon"></span>
+                            <div class="file-details">
+                                <div id="rvFileName" class="fname"></div>
+                                <div id="rvFileSize" class="fsize"></div>
+                            </div>
+                        </div>
+                        <a id="rvDownloadLink" href="#" download="" style="text-decoration: none;">
+                            <span class="download-btn" title="Tải xuống">
+                                <div class="dl-container">
+                                    <svg class="dl-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path class="arrow" d="M12 17L7 12H10V4H14V12H17L12 17Z" />
+                                        <path class="tray"
+                                            d="M4 15V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V15H17V18H7V15H4Z" />
+                                    </svg>
+                                </div>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="review-footer">
+            <button class="btn-edit-submission">Sửa bài nộp</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const submitModal = document.getElementById("submitModal");
+    const reviewModal = document.getElementById("reviewModal");
+    const fileInput = document.getElementById("fileInput");
+
+    let currentRow = null;
+
+    // đóng tất cả modal
+    function closeAllModals() {
+        submitModal.style.display = "none";
+        reviewModal.style.display = "none";
+    }
+
+    // nút đóng
+    document.querySelectorAll(".close-modal, .close-review, .btn-cancel").forEach(btn => {
+        btn.onclick = closeAllModals;
+    });
+
+
+    // =======================
+    // MỞ POPUP NỘP BÀI
+    // =======================
+
+    document.addEventListener("click", function (e) {
+
+        if (e.target.classList.contains("open-submit-modal")) {
+
+            const btn = e.target;
+            currentRow = btn.closest("tr");
+
+            const taskName = btn.dataset.taskName;
+            const rule = btn.dataset.taskRule;
+
+            document.getElementById("modalTaskTitle").innerText = "Nộp " + taskName;
+            document.getElementById("modalTaskRule").innerText = rule;
+
+            submitModal.style.display = "flex";
+        }
+
+    });
+
+
+    // =======================
+    // NỘP BÀI
+    // =======================
+
+    document.querySelector("#submitModal .btn-submit").onclick = function () {
+
+        if (fileInput.files.length === 0) {
+            alert("Vui lòng chọn file!");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const now = new Date();
+
+        // lấy hạn nộp từ bảng
+        const deadlineStr = currentRow.cells[1].innerText.trim();
+        const [day, month, year] = deadlineStr.split("/");
+
+        const deadline = new Date(year, month - 1, day, 23, 59, 59);
+
+        // lưu dữ liệu vào row
+        currentRow.dataset.filename = file.name;
+        currentRow.dataset.filesize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+        currentRow.dataset.submittime = now;
+
+        // đổi trạng thái
+        const badge = currentRow.querySelector(".status-badge");
+
+        if (now > deadline) {
+            badge.innerText = "Trễ";
+            badge.className = "status-badge late";
+        }
+        else {
+            badge.innerText = "Đã nộp";
+            badge.className = "status-badge done";
+        }
+
+        // Save actual file for download in data url format
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            currentRow.dataset.filedata = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // đổi nút
+        const btn = currentRow.querySelector("button");
+        btn.innerText = "Xem lại";
+        btn.className = "btn-view";
+
+        closeAllModals();
+
+        alert("Nộp bài thành công!");
+    };
+
+
+
+    // =======================
+    // XEM LẠI
+    // =======================
+
+    document.addEventListener("click", function (e) {
+
+        if (e.target.classList.contains("btn-view")) {
+
+            const row = e.target.closest("tr");
+
+            const deadlineStr = row.cells[1].innerText.trim();
+            const status = row.querySelector(".status-badge").innerText;
+
+            const fileName = row.dataset.filename || "Chưa có file";
+            const fileSize = row.dataset.filesize || "";
+
+            const submitTime = row.dataset.submittime ? new Date(row.dataset.submittime) : null;
+
+            document.getElementById("rvDeadline").innerText = deadlineStr + ", 23:59";
+
+            document.getElementById("rvFileName").innerText = fileName;
+            document.getElementById("rvFileSize").innerText = fileSize;
+
+            // trạng thái
+            if (status.includes("Đã nộp")) {
+                document.getElementById("rvStatus").innerHTML =
+                    `<span class="status-badge done">Đã nộp</span>`;
+            } else {
+                document.getElementById("rvStatus").innerHTML =
+                    `<span class="status-badge late">Trễ</span>`;
+            }
+
+            // Set file icon using robust standalone SVGs
+            const iconContainer = document.getElementById("rvFileIcon");
+            const lowerName = fileName.toLowerCase();
+
+            let iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#94a3b8"/>
+            <path d="M14 2V8H20" fill="#64748b"/>
+            <text x="6" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="6.5">FILE</text>
+        </svg>`; // default
+
+            if (lowerName.endsWith(".pdf")) {
+                iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#e02424"/>
+                <path d="M14 2V8H20" fill="#b91c1c"/>
+                <text x="6" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="7">PDF</text>
+            </svg>`;
+            } else if (lowerName.endsWith(".doc") || lowerName.endsWith(".docx")) {
+                iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#2b579a"/>
+                <path d="M14 2V8H20" fill="#1e3a8a"/>
+                <text x="5.5" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="6.5">DOC</text>
+            </svg>`;
+            }
+            iconContainer.innerHTML = iconHtml;
+
+            // Download functionality
+            const fileData = row.dataset.filedata;
+            const downloadLink = document.getElementById("rvDownloadLink");
+
+            if (fileData) {
+                downloadLink.href = fileData;
+                downloadLink.download = fileName;
+                downloadLink.style.display = "inline-block"; // Show the link if we have file data
+            } else {
+                // For files already in database without data URL in this session
+                // Replace '#' with real backend URL logic if available e.g. `/download/${taskId}`
+                downloadLink.href = "#";
+                downloadLink.removeAttribute("download");
+
+                downloadLink.onclick = function (e) {
+                    if (this.getAttribute('href') === "#") {
+                        e.preventDefault();
+                        alert("Tính năng tải về chưa khả dụng cho bài nộp cũ.");
+                    }
+                };
+            }
+
+            // thời gian
+            const timeBox = document.getElementById("rvTimeBox");
+
+            const [dayStr, monthStr, yearStr] = deadlineStr.split("/");
+            const deadlineDate = new Date(yearStr, monthStr - 1, dayStr, 23, 59, 59);
+            const daysOfWeek = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+            const strDayOfWeek = daysOfWeek[deadlineDate.getDay()];
+            document.getElementById("rvDeadline").innerText = `${strDayOfWeek}, ${dayStr} Tháng ${monthStr}, ${yearStr}, 23:59`;
+
+            if (submitTime) {
+                const diff = deadlineDate - submitTime;
+
+                if (diff > 0) {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    timeBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:-2px"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Bài tập đã được nộp sớm ${days} ngày ${hours} giờ`;
+                    timeBox.style.background = "#eff6ff"; // Màu xanh blue nhạt
+                    timeBox.style.color = "#3b82f6";
+                } else {
+                    timeBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:-2px"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Bài tập nộp trễ`;
+                    timeBox.style.background = "#fee2e2"; // Màu đỏ nhạt
+                    timeBox.style.color = "#ef4444";
+                }
+
+                const hr = submitTime.getHours().toString().padStart(2, '0');
+                const min = submitTime.getMinutes().toString().padStart(2, '0');
+                const dSub = submitTime.getDate().toString().padStart(2, '0');
+                const mSub = (submitTime.getMonth() + 1).toString().padStart(2, '0');
+                const ySub = submitTime.getFullYear();
+
+                document.getElementById("rvLastModified").innerText = `${daysOfWeek[submitTime.getDay()]}, ${dSub} Tháng ${mSub}, ${ySub}, ${hr}:${min}`;
+                document.getElementById("rvFileSize").innerText = `${fileSize} • Đã tải lên vào ${hr}:${min}`;
+            }
+            else {
+                document.getElementById("rvLastModified").innerText = "Chưa có dữ liệu";
+                timeBox.innerText = "Chưa nộp bài";
+                timeBox.style.background = "#e5e7eb";
+                timeBox.style.color = "#374151";
+                document.getElementById("rvFileSize").innerText = fileSize;
+            }
+
+            reviewModal.style.display = "flex";
+
+        }
+
+    });
+
+
+
+    // =======================
+    // SỬA BÀI NỘP
+    // =======================
+
+    document.querySelector(".btn-edit-submission").onclick = function () {
+
+        closeAllModals();
+        submitModal.style.display = "flex";
+
+    };
+
+
+
+    // =======================
+    // HIỂN THỊ TÊN FILE VÀ KÉO THẢ
+    // =======================
+
+    const uploadBox = document.querySelector(".upload-box");
+    const uploadNote = document.querySelector(".upload-note");
+
+    // Khi chọn file bằng nút bấm
+    fileInput.addEventListener("change", function () {
+        if (this.files.length > 0) {
+            uploadNote.innerText = "Đã chọn: " + this.files[0].name;
+            uploadBox.classList.remove("dragging");
+        }
+    });
+
+    // Các sự kiện kéo thả
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadBox.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Hiệu ứng khi kéo file vào vùng
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadBox.addEventListener(eventName, () => {
+            uploadBox.classList.add("dragging");
+        }, false);
+    });
+
+    // Xóa hiệu ứng khi kéo file ra ngoài hoặc thả
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadBox.addEventListener(eventName, () => {
+            uploadBox.classList.remove("dragging");
+        }, false);
+    });
+
+    // Kéo thả file thành công
+    uploadBox.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        let dt = e.dataTransfer;
+        let files = dt.files;
+
+        if (files.length > 0) {
+            // Kiểm tra định dạng nếu cần (ví dụ chỉ nhận pdf, doc, docx)
+            const allowedTypes = [".pdf", ".doc", ".docx"];
+            const fileName = files[0].name.toLowerCase();
+            const isValid = allowedTypes.some(type => fileName.endsWith(type));
+
+             if (!isValid) {
+                 alert("Chỉ hỗ trợ file PDF, DOC hoặc DOCX!");
+                 return;
+             }
+
+            // Gán file vào input bằng DataTransfer
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(files[0]);
+            fileInput.files = dataTransfer.files;
+            
+            // Cập nhật giao diện
+            let event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    }
+</script>
+
+{% endblock %}

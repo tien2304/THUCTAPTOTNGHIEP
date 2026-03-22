@@ -1,0 +1,457 @@
+/* HEADER */
+
+.task-title h1{
+    font-size:28px;
+    font-weight:700;
+}
+
+.task-title p{
+    margin-top:6px;
+    font-size:14px;
+    color:#6b7280;
+}
+
+
+/* CARD */
+
+.task-card{
+    margin-top:20px;
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+}
+
+
+/* CARD HEADER */
+
+.task-card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 20px;
+    border-bottom:1px solid #E5E7EB;
+}
+
+.task-filter{
+    padding: 5px 8px 5px 6px;
+    border-radius:6px;
+    border:1px solid #ddd;
+    font-size:13px;
+}
+
+
+/* TABLE */
+
+.task-table{
+    width:100%;
+    border-collapse:collapse;
+}
+.task-row{
+    background: #F3F4F6;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.task-table th{
+    text-align:left;
+    font-size:13px;
+    color:#6b7280;
+    padding:14px 20px;
+}
+
+.task-table td{
+    padding:18px 20px;
+    border-top:1px solid #E5E7EB;
+    font-size:14px;
+}
+
+.task-name span{
+    display:block;
+    font-size:12px;
+    color:#9ca3af;
+}
+
+
+/* STATUS */
+
+.status-badge{
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.status-badge.done{
+    background:#d1fae5;
+    color:#047857;
+}
+
+.status-badge.pending{
+    background:#e5e7eb;
+    color:#374151;
+}
+
+.status-badge.late{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+
+/* COMMENT */
+
+.task-comment{
+    color:#6b7280;
+}
+
+
+/* BUTTON */
+
+.btn-view{
+    padding:6px 12px;
+    border-radius:6px;
+    border:1px solid #ddd;
+    background:#f3f4f6;
+}
+
+.btn-cancel{
+    border-radius: 8px;
+    border: #CBD5E1 solid 1px;
+    padding:6px 12px;
+    color: #475569;
+    font-weight: 700;
+}
+
+.btn-submit{
+    padding:6px 12px;
+    border-radius:6px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    font-weight: 700;
+}
+
+
+/* NO DATA */
+
+.no-task{
+    text-align:center;
+    padding:40px;
+    color:#9ca3af;
+}
+
+
+/* PAGINATION */
+
+.task-pagination{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 20px;
+    border-top:1px solid #f1f1f1;
+    font-size:13px;
+}
+
+.pagination-pages{
+    display:flex;
+    gap:6px;
+}
+
+.page-btn{
+    padding:6px 10px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    background:white;
+}
+
+.page-btn.active{
+    background:#2563eb;
+    color:white;
+}
+
+.page-btn.disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+}
+
+.submit-modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+justify-content:center;
+align-items:center;
+z-index:1000;
+}
+
+.submit-modal-content{
+background:white;
+width:520px;
+padding:20px;
+border-radius:10px;
+}
+
+.submit-modal-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px !important;
+    border-bottom: 1px solid #f1f5f9;
+}
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.header-icon {
+    width: 22px;
+    height: 22px;
+    color: #3b82f6;
+}
+.icon-doc {
+    font-size: 22px;
+}
+.header-left h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+}
+.close-review {
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.close-review:hover {
+    color: #475569;
+}
+
+.close-modal{
+cursor:pointer;
+font-size:20px;
+}
+
+.submit-rule-box{
+background:#fff8db;
+border:1px solid #f1e3a2;
+padding:12px;
+border-radius:6px;
+margin:12px 0;
+}
+
+.upload-box{
+border:2px dashed #93c5fd;
+background:#f8fafc;
+border-radius:10px;
+padding:40px;
+text-align:center;
+margin:20px 0;
+transition:0.2s;
+cursor:pointer;
+}
+
+.upload-box:hover{
+background:#f1f5f9;
+}
+
+.upload-icon {
+    width: 60px;
+    height: 60px;
+    background: #dbeafe;
+    color: #2563eb;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px; /* Dùng cho font-icon nếu cần */
+    margin: 0 auto 15px auto;
+  }
+
+  /* Căn chỉnh lại SVG để luôn nằm giữa và có kích thước chuẩn */
+.upload-icon svg {
+    width: 45px;
+    height: 45px;
+}
+
+.upload-text{
+font-size:15px;
+color:#334155;
+margin-bottom:5px;
+}
+
+.upload-or{
+font-size:13px;
+color:#64748b;
+margin-bottom:10px;
+}
+
+.upload-btn{
+display:inline-block;
+background:white;
+border:1px solid #d1d5db;
+padding:8px 16px;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+transition:0.2s;
+color: #0066CC;
+font-weight: 600;
+}
+
+.upload-btn:hover{
+background:#f3f4f6;
+}
+
+.upload-note{
+font-size:12px;
+color:#94a3b8;
+margin-top:10px;
+}
+
+.modal-actions{
+display:flex;
+justify-content:flex-end;
+gap:10px;
+}
+
+.text-box{
+    padding-bottom: 5px;
+}
+
+.upload-box.dragging{
+    border: 2px dashed #3b82f6;
+    background: #f1f5ff;
+}
+
+
+
+/* Tùy chỉnh modal nội dung xem lại */
+/* 1. Kích thước mặc định vừa phải, cho phép flex thu gọn */
+#reviewModal .submit-modal-content {
+    width: 520px !important; /* Đã thu nhỏ xuống giống modal gốc (bự quá thì thu lại) */
+    max-width: 95% !important;
+    padding: 0 !important;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.review-body {
+    padding: 0 24px 20px 24px !important;
+}
+
+/* KHÓA CỨNG: Cột trái 150px, Cột phải tự giãn. Cấm xuống dòng đối với label */
+.r-row {
+    display: flex !important;
+    align-items: center !important;
+    padding: 18px 0 !important; /* Canh chỉnh khoảng cách dòng */
+    border-bottom: 1px solid #f1f5f9 !important;
+    gap: 15px;
+}
+
+.r-label {
+    width: 150px !important; /* Đặt width cố định để thẳng hàng hoàn hảo */
+    min-width: 150px !important;
+    display: block;
+    color: #64748b !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important; /* Cấm tiêu đề xuống dòng */
+}
+
+.r-value {
+    color: #1e293b !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    margin: 0 !important;
+    flex: 1; /* Cho phép giãn để chiếm không gian ngang còn lại */
+    /* Không ép nowrap nữa, để chữ có thể hiển thị bình thường */
+}
+
+/* Badge nộp sớm */
+.review-time-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+
+/* Hàng file nộp */
+.r-row.file-section {
+    align-items: flex-start !important;
+    border-bottom: none !important;
+}
+
+.file-card {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 12px 16px !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    background-color: #f8fafc;
+}
+
+.file-info { display: flex; align-items: center; gap: 14px; }
+.file-icon-dynamic { display: inline-block; width: 40px; height: 40px; line-height: 40px; text-align: center; }
+.fname { font-weight: 700; color: #1e293b; margin-bottom: 2px;}
+.fsize { font-size: 12px; color: #64748b; }
+.download-btn { cursor: pointer; color: #94a3b8; font-size: 20px;}
+
+.review-footer {
+    text-align: center;
+    padding: 24px 0 24px 0;
+}
+
+.btn-edit-submission {
+    width: 250px;
+    padding: 10px 0;
+    font-weight: 700;
+    color: #1e293b;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.btn-edit-submission:hover {
+    background: #f8fafc;
+}
+
+.dl-icon {
+  width: 30px;
+  height: 30px;
+  fill: #9db0c4; /* Màu xám xanh như trong ảnh */
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.dl-icon:hover {
+  fill: #2b579a; /* Đổi sang xanh đậm khi hover */
+  transform: translateY(2px); /* Nhảy nhẹ xuống dưới */
+}
+
+/* Hiệu ứng mũi tên chuyển động */
+.dl-icon:hover .arrow {
+  animation: bounce 0.5s infinite alternate;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2px); }
+}

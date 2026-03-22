@@ -1,291 +1,235 @@
 {% extends "GiangVien/Home.html" %}
 {% load static %}
+
 {% block content %}
+<link rel="stylesheet" href="{% static 'GiangVien/css/tao_form.css' %}">
 <script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-<div class="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+<div class="form-container">
+    <div class="flex-1">
+        <form method="POST" id="saveForm">
+            {% csrf_token %}
+            <input type="hidden" name="form_data" id="formData">
 
-<form method="POST" id="saveForm">
-{% csrf_token %}
-<input type="hidden" name="form_data" id="formData">
-
-<!-- HEADER -->
-<div class="bg-white rounded-2xl shadow p-6 mb-6">
-    <input type="text" id="form_name"
-        value="{{ form.ten_form|default:'' }}"
-        class="w-full text-xl font-semibold border-b pb-2 outline-none"
-        placeholder="Nhập tên form">
-    <p class="text-sm text-gray-500 mt-2">
-        Ngày tạo: {{ form.ngay_tao|date:"d/m/Y H:i" }}
-    </p>
-</div>
-
-<!-- TAB -->
-<div class="flex gap-6 mb-6 border-b">
-    <button type="button" onclick="switchTab('question')"
-        id="tab-question"
-        class="pb-2 border-b-2 border-purple-600 text-purple-600">
-        Câu hỏi
-    </button>
-
-    <button type="button" onclick="switchTab('answer')"
-        id="tab-answer"
-        class="pb-2 text-gray-500">
-        Câu trả lời
-    </button>
-</div>
-
-<!-- ================= TAB CÂU HỎI ================= -->
-<div id="question-tab">
-
-<!-- TIME -->
-<div class="bg-white rounded-xl shadow p-6 mb-6">
-    <h2 class="font-semibold mb-4">⚙️ Cấu hình thời gian</h2>
-
-    <div class="grid grid-cols-2 gap-4">
-
-        <div>
-                <label class="block text-sm font-medium mb-2">Kỳ thực tập</label>
-                <input type="text" id="ky" value="{{ ky_moi_nhat.ten_ky }}" class="w-full px-4 py-3 border border-gray-300 rounded-xl" placeholder="Ví dụ: Học kỳ 2 - 2024-2025">
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">Ngày bắt đầu</label>
-                <input type="date" value="{{ ky_moi_nhat.ngay_bat_dau|date:'Y-m-d' }}" id="start_date" onchange="checkDate()" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">Ngày kết thúc</label>
-                <input type="date" value="{{ ky_moi_nhat.ngay_ket_thuc|date:'Y-m-d' }}" id="end_date" onchange="checkDate()" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
-                <span id="date_error" class="text-red-500 text-sm mt-1"></span>
+            <div class="form-header-section">
+                <input type="text" id="form_name" value="{{ form.ten_form|default:'' }}"
+                    class="w-full text-3xl outline-none border-b-2 border-transparent focus:border-gray-200 pb-2 font-medium"
+                    placeholder="Tiêu đề biểu mẫu">
             </div>
 
+            <div class="config-card">
+                <div class="grid grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">KỲ THỰC TẬP</label>
+                        <select id="ky_thuc_tap" class="w-full border rounded p-2 text-sm bg-white outline-none focus:border-blue-500">
+                            {% if danh_sach_ky %}
+                                {% for ky in danh_sach_ky %}
+                                    <option value="{{ ky.id }}" {% if forloop.first %}selected{% endif %}>
+                                        {{ ky.ten_ky }} {% if forloop.first %} {% endif %}
+                                    </option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="">(Chưa có kỳ thực tập nào)</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">NGÀY BẮT ĐẦU</label>
+                        <input type="date" id="ngay_bat_dau" class="w-full border rounded p-2 text-sm bg-gray-50 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">NGÀY KẾT THÚC</label>
+                        <input type="date" id="ngay_ket_thuc" class="w-full border rounded p-2 text-sm bg-gray-50 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div id="questions-area" class="space-y-4 pb-32"></div>
+        </form>
+    </div>
+
+    <div class="toolbar-outer">
+        <div class="toolbar-inner">
+            <button type="button" onclick="addQuestion('TEXT')" class="toolbar-btn" title="Thêm câu hỏi">
+                <span class="material-icons">add_circle_outline</span>
+            </button>
+            <button type="button" onclick="addQuestion('SECTION')" class="toolbar-btn" title="Tiêu đề mục">
+                <span class="material-icons">title</span>
+            </button>
+            <button type="button" onclick="saveForm()" class="toolbar-btn text-green-600" title="Lưu">
+                <span class="material-icons">save</span>
+            </button>
+            <div class="border-t border-gray-100 my-1"></div>
+            <button type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="toolbar-btn" title="Lên đầu trang">
+                <span class="material-icons text-gray-400">arrow_upward</span>
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- QUESTIONS -->
-<div class="bg-white rounded-xl shadow p-6">
-
-<div class="flex justify-between mb-6">
-    <h2 class="font-semibold">📑 Câu hỏi</h2>
-    <button type="button" onclick="addQuestion()"
-        class="bg-blue-600 text-white px-4 py-2 rounded">
-        + Thêm
-    </button>
-</div>
-
-<div id="questions-area"></div>
-
-</div>
-
-<button type="button" onclick="saveForm()"
-class="mt-6 w-full bg-green-600 text-white py-3 rounded-xl">
-💾 Lưu form
-</button>
-
-</div>
-
-<!-- ================= TAB CÂU TRẢ LỜI ================= -->
-<div id="answer-tab" class="hidden">
-
-<h2 class="text-xl font-semibold mb-6">📊 Thống kê câu trả lời</h2>
-
-<div id="answer-area"></div>
-
-<h2 class="text-xl font-semibold mt-10 mb-4">🎯 Nguyện vọng GVHD</h2>
-
-<div class="bg-white p-4 rounded shadow">
-{% for gv, count in gvhd_stats.items %}
-<div class="flex justify-between border-b py-2">
-    <span>{{ gv }}</span>
-    <span class="font-semibold">{{ count }}</span>
-</div>
-{% empty %}
-<p class="text-gray-400">Chưa có dữ liệu</p>
-{% endfor %}
-</div>
-
-</div>
-
-</form>
-</div>
-
 <script>
+// 1. Nhận dữ liệu JSON từ Django truyền xuống
+// Nếu questions_json không có, nó sẽ mặc định là mảng rỗng []
+let questions = {{ questions_json|safe|default:"[]" }};
 
-// ================= DATA =================
-let questions = [];
+// 2. Hàm khởi chạy khi trang load xong
+window.onload = function() {
+    if (questions.length === 0) {
+        // Nếu là tạo form mới (mảng rỗng), thêm 1 câu hỏi TEXT mặc định
+        addQuestion('TEXT');
+    } else {
+        // Nếu đã có dữ liệu (chế độ chỉnh sửa), render lại toàn bộ giao diện
+        render();
 
-// ================= ADD =================
-function addQuestion(){
-    questions.push({
-        temp_id: Date.now(),
-        title:"",
-        type:"TEXT",
-        options:[],
-        criteria:[],
-        system_tag:""
-    });
+        // Đổ dữ liệu ngày tháng và kỳ thực tập vào các input
+        {% if form %}
+            document.getElementById("ngay_bat_dau").value = "{{ form.ngay_bat_dau|date:'Y-m-d' }}";
+            document.getElementById("ngay_ket_thuc").value = "{{ form.ngay_ket_thuc|date:'Y-m-d' }}";
+            document.getElementById("ky_thuc_tap").value = "{{ form.ky.id }}";
+        {% endif %}
+    }
+};
+
+// 3. Hàm tìm câu hỏi linh hoạt (hỗ trợ cả id thật từ DB hoặc temp_id tạm thời)
+function findQ(id) {
+    return questions.find(item => (item.temp_id == id || item.id == id));
+}
+
+function addQuestion(type = 'TEXT') {
+    const newQ = {
+        temp_id: Date.now() + Math.random(),
+        title: "",
+        type: type,
+        system_tag: "",
+        rows: type === "LIKERT" ? [{text: "Tiêu chí 1"}] : [],
+        options: ["RADIO", "CHECKBOX", "SELECT"].includes(type) ? [{text: "Tùy chọn 1"}] : []
+    };
+    questions.push(newQ);
     render();
 }
 
-// ================= RENDER =================
-function render(){
+function render() {
+    let html = "";
+    questions.forEach((q) => {
+        const isSection = q.type === "SECTION";
+        const currentId = q.id || q.temp_id; // Ưu tiên ID từ database nếu có
 
-let html="";
+        html += `
+        <div class="question-card">
+            <div class="flex flex-col gap-4">
+                <div class="flex gap-4">
+                    <input value="${q.title}" oninput="updateVal(${currentId}, 'title', this.value)"
+                        class="flex-1 text-lg p-1 outline-none border-b-2 border-transparent focus:border-blue-500 ${isSection ? 'font-bold text-blue-800' : ''}"
+                        placeholder="${isSection ? 'NHẬP TIÊU ĐỀ MỤC' : 'Câu hỏi'}">
 
-questions.forEach(q=>{
+                    <select onchange="updateVal(${currentId}, 'type', this.value)" class="border rounded p-2 text-sm bg-gray-50 outline-none">
+                        <option value="SECTION" ${q.type=="SECTION"?"selected":""}>Tiêu đề mục</option>
+                        <option value="TEXT" ${q.type=="TEXT"?"selected":""}>Trả lời ngắn</option>
+                        <option value="RADIO" ${q.type=="RADIO"?"selected":""}>Trắc nghiệm</option>
+                        <option value="CHECKBOX" ${q.type=="CHECKBOX"?"selected":""}>Hộp kiểm</option>
+                        <option value="SELECT" ${q.type=="SELECT"?"selected":""}>Menu thả xuống</option>
+                        <option value="LIKERT" ${q.type=="LIKERT"?"selected":""}>Lưới trắc nghiệm (Likert)</option>
+                    </select>
+                    <button type="button" onclick="removeQuestion(${currentId})" class="text-gray-300 hover:text-red-500"><span class="material-icons">delete_outline</span></button>
+                </div>
 
-html+=`
-<div class="border p-4 mb-4 rounded bg-gray-50">
+                ${!isSection ? `
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-blue-500 uppercase italic">GẮN TAG HỆ THỐNG:</span>
+                    <select onchange="updateVal(${currentId}, 'system_tag', this.value)"
+                            class="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-4 py-1 outline-none">
+                        <option value="">-- Không gắn Tag --</option>
 
-<input value="${q.title}"
-oninput="updateTitle(${q.temp_id},this.value)"
-class="w-full mb-2 border p-2 rounded"
-placeholder="Nhập câu hỏi">
+                        <optgroup label="Thông tin Sinh viên">
+                            <option value="ten_sv" ${q.system_tag=="ten_sv"?"selected":""}>Họ tên Sinh viên</option>
+                            <option value="ma_sv" ${q.system_tag=="ma_sv"?"selected":""}>Mã số Sinh viên</option>
+                            <option value="lop_sh" ${q.system_tag=="lop_sh"?"selected":""}>Lớp sinh hoạt</option>
+                        </optgroup>
 
-<select onchange="updateType(${q.temp_id},this.value)"
-class="w-full mb-2 border p-2 rounded">
+                        <optgroup label="Thông tin Phân công">
+                            <option value="ten_gvhd" ${q.system_tag=="ten_gvhd"?"selected":""}>Giáo viên hướng dẫn</option>
+                            <option value="don_vi_tt" ${q.system_tag=="don_vi_tt"?"selected":""}>Đơn vị thực tập (Công ty)</option>
+                            <option value="dia_diem_tt" ${q.system_tag=="dia_diem_tt"?"selected":""}>Địa điểm thực tập</option>
+                            <option value="vi_tri_tt" ${q.system_tag=="vi_tri_tt"?"selected":""}>Vị trí thực tập</option>
+                        </optgroup>
 
-<option value="TEXT" ${q.type=="TEXT"?"selected":""}>TEXT</option>
-<option value="RADIO" ${q.type=="RADIO"?"selected":""}>RADIO</option>
-<option value="CHECKBOX" ${q.type=="CHECKBOX"?"selected":""}>CHECKBOX</option>
-<option value="SELECT" ${q.type=="SELECT"?"selected":""}>SELECT</option>
-<option value="LIKERT" ${q.type=="LIKERT"?"selected":""}>LIKERT</option>
-
-</select>
-
-<select onchange="updateTag(${q.temp_id},this.value)"
-class="w-full mb-2 border p-2 bg-yellow-100 rounded">
-
-<option value="">-- thường --</option>
-<option value="GVHD_1" ${q.system_tag=="GVHD_1"?"selected":""}>GVHD 1</option>
-<option value="GVHD_2" ${q.system_tag=="GVHD_2"?"selected":""}>GVHD 2</option>
-<option value="HUONG_1" ${q.system_tag=="HUONG_1"?"selected":""}>Hướng 1</option>
-<option value="HUONG_2" ${q.system_tag=="HUONG_2"?"selected":""}>Hướng 2</option>
-<option value="GROUP" ${q.system_tag=="GROUP"?"selected":""}>Nhóm</option>
-
-</select>
-`;
-
-if(["RADIO","CHECKBOX","SELECT"].includes(q.type)){
-q.options.forEach((op,i)=>{
-html+=`
-<input value="${op.text}"
-oninput="updateOption(${q.temp_id},${i},this.value)"
-class="border p-2 mb-1 w-full rounded">
-`;
-});
-html+=`<button onclick="addOption(${q.temp_id})">+ option</button>`;
+                        <optgroup label="Thông tin Đề tài/Báo cáo">
+                            <option value="huong_tiep_can" ${q.system_tag=="huong_tiep_can"?"selected":""}>Hướng tiếp cận</option>
+                            <option value="hinh_thuc_nhom" ${q.system_tag=="hinh_thuc_nhom"?"selected":""}>Hình thức làm nhóm</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="mt-2">${renderInner(q)}</div>` : ''}
+            </div>
+        </div>`;
+    });
+    document.getElementById("questions-area").innerHTML = html;
 }
 
-if(q.type=="LIKERT"){
-q.criteria.forEach((c,i)=>{
-html+=`
-<input value="${c.text}"
-oninput="updateCriteria(${q.temp_id},${i},this.value)"
-class="border p-2 mb-1 w-full rounded">
-`;
-});
-html+=`<button onclick="addCriteria(${q.temp_id})">+ tiêu chí</button>`;
+function renderInner(q) {
+    const currentId = q.id || q.temp_id;
+    if (q.type === "TEXT") return `<div class="border-b border-dashed border-gray-300 text-gray-400 text-sm w-2/3 py-2 italic">Văn bản trả lời ngắn</div>`;
+
+    if (q.type === "LIKERT") {
+        let rowsHtml = (q.rows || []).map((row, idx) => `
+            <tr>
+                <td class="text-left">
+                    <input value="${row.text}" oninput="updateLikertRow(${currentId}, ${idx}, this.value)" class="likert-input-row" placeholder="Nhập tiêu chí...">
+                </td>
+                ${[1,2,3,4,5].map(() => `<td><span class="material-icons text-gray-200">radio_button_unchecked</span></td>`).join('')}
+                <td><button type="button" onclick="removeLikertRow(${currentId}, ${idx})" class="text-gray-300 hover:text-red-500"><span class="material-icons text-sm">close</span></button></td>
+            </tr>
+        `).join('');
+
+        return `
+            <table class="likert-table text-sm">
+                <thead><tr class="text-gray-400 font-bold"><th class="text-left">Tiêu chí</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th></th></tr></thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+            <button type="button" onclick="addLikertRow(${currentId})" class="mt-3 text-blue-600 text-xs font-bold hover:underline">+ THÊM TIÊU CHÍ</button>
+        `;
+    }
+
+    let opts = (q.options || []).map((op, i) => `
+        <div class="flex items-center gap-2 mb-2">
+            <span class="material-icons text-gray-300 text-xl">${q.type === 'CHECKBOX' ? 'check_box_outline_blank' : 'radio_button_unchecked'}</span>
+            <input value="${op.text}" oninput="updateOption(${currentId}, ${i}, this.value)" class="flex-1 border-b border-transparent focus:border-gray-200 outline-none text-sm py-1" placeholder="Tùy chọn">
+            <button type="button" onclick="removeOption(${currentId}, ${i})" class="text-gray-300 hover:text-red-500"><span class="material-icons text-sm">close</span></button>
+        </div>
+    `).join('');
+    return opts + `<button type="button" onclick="addOption(${currentId})" class="text-blue-600 text-xs font-bold hover:underline">+ THÊM TÙY CHỌN</button>`;
 }
 
-html+=`</div>`;
-});
-
-document.getElementById("questions-area").innerHTML=html;
+function updateVal(id, key, val) {
+    let q = findQ(id);
+    if(q) {
+        q[key] = val;
+        if(key === 'type') {
+            q.rows = val === "LIKERT" ? [{text: "Tiêu chí 1"}] : [];
+            q.options = ["RADIO", "CHECKBOX", "SELECT"].includes(val) ? [{text: "Tùy chọn 1"}] : [];
+            render();
+        }
+    }
 }
+function addLikertRow(id) { let q = findQ(id); if(q) { q.rows.push({text: ""}); render(); } }
+function updateLikertRow(qid, idx, val) { let q = findQ(qid); if(q) q.rows[idx].text = val; }
+function removeLikertRow(qid, idx) { let q = findQ(qid); if(q && q.rows.length > 1) { q.rows.splice(idx, 1); render(); } }
+function addOption(id) { let q = findQ(id); if(q) { q.options.push({text: ""}); render(); } }
+function updateOption(qid, idx, val) { let q = findQ(qid); if(q) q.options[idx].text = val; }
+function removeOption(qid, idx) { let q = findQ(qid); if(q && q.options.length > 1) { q.options.splice(idx, 1); render(); } }
+function removeQuestion(id) { questions = questions.filter(item => (item.id != id && item.temp_id != id)); render(); }
 
-// ================= UPDATE =================
-function updateTitle(id,v){questions.find(q=>q.temp_id==id).title=v;}
-function updateType(id,v){questions.find(q=>q.temp_id==id).type=v;render();}
-function updateTag(id,v){questions.find(q=>q.temp_id==id).system_tag=v;}
-
-function addOption(id){
-questions.find(q=>q.temp_id==id).options.push({text:""});
-render();
+function saveForm() {
+    const finalData = {
+        ten_form: document.getElementById("form_name").value,
+        ky_thuc_tap: document.getElementById("ky_thuc_tap").value,
+        start_date: document.getElementById("ngay_bat_dau").value,
+        end_date: document.getElementById("ngay_ket_thuc").value,
+        questions: questions
+    };
+    document.getElementById("formData").value = JSON.stringify(finalData);
+    document.getElementById("saveForm").submit();
 }
-
-function updateOption(id,i,v){
-questions.find(q=>q.temp_id==id).options[i].text=v;
-}
-
-function addCriteria(id){
-questions.find(q=>q.temp_id==id).criteria.push({text:""});
-render();
-}
-
-function updateCriteria(id,i,v){
-questions.find(q=>q.temp_id==id).criteria[i].text=v;
-}
-
-// ================= SAVE =================
-function saveForm(){
-
-const data={
-ten_form:document.getElementById("form_name").value,
-questions:questions
-};
-
-document.getElementById("formData").value=JSON.stringify(data);
-document.getElementById("saveForm").submit();
-}
-
-// ================= LOAD =================
-const existing = {{ questions_json|default:"[]"|safe }};
-
-if(existing.length>0){
-questions=existing.map(q=>({
-...q,
-temp_id:Date.now()+Math.random()
-}));
-render();
-}
-
-// ================= TAB =================
-function switchTab(type){
-
-document.getElementById("question-tab").classList.add("hidden");
-document.getElementById("answer-tab").classList.add("hidden");
-
-document.getElementById("tab-question").classList.remove("border-purple-600","text-purple-600");
-document.getElementById("tab-answer").classList.remove("border-purple-600","text-purple-600");
-
-if(type==="question"){
-document.getElementById("question-tab").classList.remove("hidden");
-document.getElementById("tab-question").classList.add("border-purple-600","text-purple-600");
-}else{
-document.getElementById("answer-tab").classList.remove("hidden");
-document.getElementById("tab-answer").classList.add("border-purple-600","text-purple-600");
-}
-}
-
-// ================= RENDER STATS =================
-const stats = {{ stats_json|default:"[]"|safe }};
-
-function renderStats(){
-
-let html="";
-
-stats.forEach(q=>{
-
-html+=`<div class="bg-white p-4 mb-4 rounded shadow">
-<b>${q.title}</b>`;
-
-if(q.stats){
-Object.entries(q.stats).forEach(([k,v])=>{
-html+=`
-<div class="flex justify-between text-sm mt-2">
-<span>${k}</span><span>${v}</span>
-</div>`;
-});
-}
-
-html+=`</div>`;
-});
-
-document.getElementById("answer-area").innerHTML=html;
-}
-
-renderStats();
-
 </script>
-
 {% endblock %}

@@ -1,0 +1,267 @@
+:root {
+    --primary-blue: #1e88e5;
+    --hover-blue: #1565c0;
+    --bg-gray: #F6F7F8;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-600: #475569;
+    --gray-900: #0f172a;
+    --transition: all 0.3s ease;
+}
+
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* CARD */
+.card, .section-container {
+    background: #fff;
+    border-radius: 20px;
+    padding: 25px;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between; /* Đẩy tiêu đề sang trái, link sang phải */
+    align-items: center;            /* Căn giữa theo chiều dọc */
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.section-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.view-all {
+    text-decoration: none;
+    color: var(--primary-blue);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.view-all:hover {
+    color: var(--hover-blue);
+    text-decoration: underline;
+}
+
+/* GRID */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+.company-name {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin: 10px 0;
+}
+
+.dot {
+    color: red;
+}
+/* TASK LIST */
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.task-title {
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.task-desc {
+    color: #4B5563;
+    font-size: 14px;
+    font-weight: 500;
+    padding-top: 5px;
+}
+
+.blue-text {
+    color: #137FEC;
+}
+/* FORM ITEM (card lớn) */
+.form-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: rgba(239, 246, 255, 0.6) !important;
+}
+
+/* ICON */
+.blue-icon-container {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-blue);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.blue-icon-container svg {
+    stroke: #fff;
+    width: 30px;
+    height: 30px;
+}
+
+/* BUTTON */
+.btn-fill-form {
+    background: var(--primary-blue);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.btn-fill-form:hover {
+    background: var(--hover-blue);
+}
+
+/* TASK NORMAL */
+.assignment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* BADGE */
+.task-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.task-status.normal {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+/* BOTTOM GRID */
+.bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Card Đơn vị thực tập V3 - Standard */
+.company-card-v3 {
+    position: relative;
+    overflow: hidden;
+    padding: 30px !important;
+}
+
+.company-layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.label-top {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.company-name-highlight {
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+}
+
+.team-subtext {
+    font-size: 1.05rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 25px;
+}
+
+/* Địa chỉ và Icon xanh */
+.location-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.loc-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.address-link {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #007bff; /* Màu xanh chuẩn mẫu */
+}
+
+.building-wrapper {
+    width: 120px; /* Bạn có thể chỉnh to nhỏ tùy ý */
+    height: 120px;
+    background-color: transparent;
+  }
+
+/* Responsive fix: Đảm bảo không bị đè chữ khi màn hình nhỏ */
+@media (max-width: 768px) {
+    .building-visual {
+        display: none;
+    }
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.company-card-v3 {
+    position: relative;
+    padding: 24px !important;
+}
+
+.company-layout {
+    display: flex;
+    justify-content: space-between;
+}
+
+.company-name-highlight {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 4px 0;
+}
+
+.address-link {
+    font-weight: 700;
+    color: #007bff;
+}
+
+.loc-icon {
+    width: 18px;
+    height: 18px;
+}
+

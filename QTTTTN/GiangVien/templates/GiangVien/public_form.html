@@ -1,0 +1,207 @@
+{% extends "SinhVien/Home.html" %}
+{% load static %}
+
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'GiangVien/css/public_form.css' %}">
+
+<style>
+    body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+    .font-montserrat { font-family: 'Montserrat', sans-serif; }
+</style>
+
+<div class="min-h-screen bg-[#f1f5f9] py-10 px-4 sm:px-6">
+    <div class="max-w-[760px] mx-auto">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 border-t-[8px] border-t-[#0047ab] p-8 md:p-10 mb-6">
+            <h1 class="text-[24px] font-montserrat font-black text-[#1e293b] uppercase tracking-wide leading-snug">
+                {{ form.ten_form|default:"BIỂU MẪU KHẢO SÁT ĐƠN VỊ THỰC TẬP & ĐÁNH GIÁ QUÁ TRÌNH" }}
+            </h1>
+            <p class="text-[#64748b] mt-4 text-[14px] leading-relaxed">
+                Vui lòng cung cấp thông tin chính xác để hoàn tất quy trình đánh giá.
+            </p>
+            <div class="border-t border-slate-100 mt-6 pt-4">
+                <p class="text-[13px] text-red-500 font-semibold">* Biểu thị câu hỏi bắt buộc</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{% url 'SinhVien:submit_form' form.public_id %}" class="space-y-4">
+            {% csrf_token %}
+
+            {% for q in questions %}
+                <!-- TIÊU ĐỀ MỤC -->
+                {% if q.loai_cau_hoi == "SECTION" %}
+                    <div class="pt-6 pb-2 {% if not forloop.first %}mt-6{% endif %} px-2">
+                        <h2 class="text-[18px] font-montserrat font-black text-[#1e293b] uppercase tracking-wider">
+                            {{ q.noi_dung }}
+                        </h2>
+                    </div>
+                
+                <!-- CÁC CẦU HỎI THƯỜNG -->
+                {% else %}
+                    <div class="bg-white rounded-xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <label class="block text-[15px] font-semibold text-slate-800 mb-6 leading-relaxed">
+                            {{ q.noi_dung }} <span class="text-red-500 ml-1">*</span>
+                        </label>
+
+                        <div class="w-full">
+                            <!-- TEXT INPUT -->
+                            {% if q.loai_cau_hoi == "TEXT" %}
+                                {% if q.system_tag == 'ten_sv' %}
+                                    <input type="text" name="question_{{q.id}}" value="{{ sinh_vien.ho_ten }}" readonly class="w-full border-b border-slate-300 bg-slate-50/50 px-2 py-3 text-[14px] text-slate-500 cursor-not-allowed focus:outline-none">
+                                {% elif q.system_tag == 'ma_sv' %}
+                                    <input type="text" name="question_{{q.id}}" value="{{ sinh_vien.ma_sv }}" readonly class="w-full border-b border-slate-300 bg-slate-50/50 px-2 py-3 text-[14px] text-slate-500 cursor-not-allowed focus:outline-none">
+                                {% elif q.system_tag == 'lop_sh' %}
+                                    <input type="text" name="question_{{q.id}}" value="{{ sinh_vien.lop|default:'Chưa cập nhật' }}" readonly class="w-full border-b border-slate-300 bg-slate-50/50 px-2 py-3 text-[14px] text-slate-500 cursor-not-allowed focus:outline-none">
+                                {% elif q.system_tag == 'sdt' %}
+                                    <input type="text" name="question_{{q.id}}" value="{{ sinh_vien.so_dien_thoai|default:'--' }}" readonly class="w-full border-b border-slate-300 bg-slate-50/50 px-2 py-3 text-[14px] text-slate-500 cursor-not-allowed focus:outline-none">
+                                {% else %}
+                                    <input type="text" name="question_{{q.id}}" required placeholder="Câu trả lời của bạn"
+                                        class="w-full md:w-1/2 border-b border-slate-300 bg-transparent px-2 py-2 focus:border-[#0047AB] focus:border-b-2 outline-none transition-all text-[15px] placeholder-slate-400">
+                                {% endif %}
+
+                            <!-- RADIO (Mỗi tùy chọn 1 hàng) -->
+                            {% elif q.loai_cau_hoi == "RADIO" %}
+                                <div class="space-y-4">
+                                    {% for op in q.options.all %}
+                                    <label class="flex items-center space-x-4 cursor-pointer group w-fit">
+                                        <input type="radio" name="question_{{q.id}}" value="{{op.noi_dung_option}}" required>
+                                        <span class="text-[15px] text-slate-700 tracking-tight group-hover:text-slate-900 transition-colors">{{ op.noi_dung_option }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+
+                            <!-- CHECKBOX (Mỗi tùy chọn 1 hàng) -->
+                            {% elif q.loai_cau_hoi == "CHECKBOX" %}
+                                <div class="space-y-4">
+                                    {% for op in q.options.all %}
+                                    <label class="flex items-center space-x-4 cursor-pointer group w-fit">
+                                        <input type="checkbox" name="question_{{q.id}}[]" value="{{op.noi_dung_option}}">
+                                        <span class="text-[15px] text-slate-700 tracking-tight group-hover:text-slate-900 transition-colors">{{ op.noi_dung_option }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+
+                            <!-- SELECT -->
+                            {% elif q.loai_cau_hoi == "SELECT" %}
+                                <div class="relative w-full md:w-1/2">
+                                    <select name="question_{{q.id}}" required class="w-full bg-transparent border border-slate-300 rounded-[6px] px-4 py-3 focus:ring-2 focus:ring-[#0047AB]/20 focus:border-[#0047AB] outline-none transition-all text-[15px] text-slate-700 appearance-none">
+                                        <option value="">-- Chọn đáp án --</option>
+                                        {% for op in q.options.all %}
+                                            <option value="{{op.noi_dung_option}}">{{ op.noi_dung_option }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </div>
+
+                            <!-- LIKERT -->
+                            {% elif q.loai_cau_hoi == "LIKERT" %}
+                                <p class="text-[13px] text-slate-500 mb-6">Vui lòng đánh giá mức độ hài lòng của bạn theo thang điểm từ 1 (Rất không hài lòng) đến 5 (Rất hài lòng)</p>
+                                <div class="overflow-x-auto rounded-[8px] border border-[#e2e8f0]">
+                                    <table class="w-full text-[14px] text-center border-collapse">
+                                        <thead class="bg-[#f8fafc]">
+                                            <tr>
+                                                <th class="py-4 px-6 text-left font-extrabold text-slate-500 uppercase tracking-widest text-[12px] border-b border-slate-200">Tiêu chí đánh giá</th>
+                                                <th class="py-4 px-3 font-extrabold text-slate-600 border-b border-slate-200 w-[10%]">1</th>
+                                                <th class="py-4 px-3 font-extrabold text-slate-600 border-b border-slate-200 w-[10%]">2</th>
+                                                <th class="py-4 px-3 font-extrabold text-slate-600 border-b border-slate-200 w-[10%]">3</th>
+                                                <th class="py-4 px-3 font-extrabold text-slate-600 border-b border-slate-200 w-[10%]">4</th>
+                                                <th class="py-4 px-3 font-extrabold text-slate-600 border-b border-slate-200 w-[10%]">5</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 bg-white">
+                                            {% for t in q.tieuchi.all %}
+                                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                                <td class="text-left py-4 px-6 text-slate-700 font-medium">
+                                                    {{ forloop.counter }}. {{ t.noi_dung }}
+                                                </td>
+                                                {% for i in "12345" %}
+                                                <td class="py-4 px-3 align-middle">
+                                                    <div class="flex items-center justify-center">
+                                                        <input type="radio" name="question_{{q.id}}_{{t.id}}" value="{{i}}" required class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+                                                    </div>
+                                                </td>
+                                                {% endfor %}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Nút gửi -->
+            <div class="pt-6 flex justify-between items-center">
+                <button type="submit"
+                        class="px-8 py-3 bg-[#0047AB] text-white font-bold rounded-[6px] hover:bg-[#00358a] transition-colors text-[14px]">
+                    Gửi biểu mẫu
+                </button>
+                <button type="reset" class="text-slate-400 hover:text-red-500 font-semibold text-[14px] transition-colors">
+                    Xóa hết câu trả lời
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    {% if messages %}
+        {% for message in messages %}
+            Swal.fire({
+                html: `
+                    <div class="flex flex-col items-center pt-6 pb-2">
+                        <div class="w-24 h-24 bg-[#f0fdf4] rounded-full flex items-center justify-center mb-6">
+                            <div class="w-[60px] h-[60px] bg-[#22c55e] rounded-full flex items-center justify-center shadow-sm">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                        </div>
+                        <h2 class="font-montserrat font-black text-[#1e293b] text-[24px] mb-3">Gửi khảo sát thành công!</h2>
+                        <p class="text-slate-500 font-medium text-[15px] leading-relaxed">Cảm ơn bạn đã hoàn thành khảo sát. Thông tin của bạn<br>đã được ghi lại trên hệ thống.</p>
+                    </div>
+                `,
+                showConfirmButton: true,
+                confirmButtonText: 'Quay lại Trang chủ',
+                buttonsStyling: false,
+                didOpen: () => {
+                    const popup = Swal.getPopup();
+                    popup.style.borderRadius = '24px';
+                    popup.style.border = 'none';
+                    
+                    // Giãn wrapper chứa action ra 100% để nút con bên trong thoải mái phình to
+                    const actions = Swal.getActions();
+                    actions.style.width = '100%';
+                    
+                    const btn = Swal.getConfirmButton();
+                    btn.style.width = '85%';
+                    btn.style.backgroundColor = '#0047ab';
+                    btn.style.color = 'white';
+                    btn.style.borderRadius = '12px';
+                    btn.style.padding = '16px 0';
+                    btn.style.fontSize = '16px';
+                    btn.style.fontWeight = 'bold';
+                    btn.style.border = 'none';
+                    btn.style.outline = 'none';
+                    btn.style.boxShadow = '0 4px 14px 0 rgba(0,71,171,0.39)';
+                    btn.style.marginBottom = '20px';
+                    btn.style.cursor = 'pointer';
+                    btn.style.transition = 'all 0.3s ease';
+                    
+                    // Hover effect
+                    btn.onmouseover = () => btn.style.backgroundColor = '#00358a';
+                    btn.onmouseout = () => btn.style.backgroundColor = '#0047ab';
+                }
+            }).then(() => {
+                window.location.href = "{% url 'SinhVien:sinhvien_home' %}";
+            });
+        {% endfor %}
+    {% endif %}
+</script>
+{% endblock %}

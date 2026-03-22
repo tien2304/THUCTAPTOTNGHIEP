@@ -13,14 +13,8 @@ urlpatterns = [
 
 path('public/<uuid:public_id>/', views.public_form, name='public_form'),
 path('tao-form/<uuid:public_id>/', views.edit_form, name='edit_form'),
-    # path('auto-assign/<int:form_id>/', views.run_auto_assign, name='auto_assign'),
-path('phan-cong/select/', views.select_sinh_vien),
-path('phan-cong/confirm/', views.confirm_assign),
-path('phan-cong/save/', views.save_assign),
-# GVHD
-path('phan-cong/', views.phan_cong_dashboard, name='phan_cong'),
-path('phan-cong/auto/', views.run_auto_assign_ui, name='auto_assign_ui'),
-path('phan-cong/update/', views.update_phan_cong, name='update_phan_cong'),
+    path('auto-assign/<int:form_id>/', views.run_auto_assign, name='auto_assign'),
+
     #HOI_DONG
 path('hoi-dong/', views.hoi_dong_list, name='hoi_dong_list'),
 path('hoi-dong/tao/', views.tao_hoi_dong, name='tao_hoi_dong'),

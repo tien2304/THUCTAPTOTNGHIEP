@@ -1,57 +1,67 @@
 {% extends "GiangVien/Home.html" %}
+
 {% block content %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 
 <div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Biểu mẫu</h1>
+    </div>
 
-<!-- HEADER -->
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Biểu mẫu</h1>
+    <h2 class="text-lg font-semibold mb-4 text-gray-700">Bắt đầu biểu mẫu mới</h2>
+    <div class="flex gap-4 mb-10">
+        <a href="{% url 'GiangVien:tao_form' %}" class="group">
+            <div class="w-40 h-40 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center
+                        group-hover:border-blue-500 group-hover:bg-blue-50 transition-all duration-200 cursor-pointer">
+                <span class="text-5xl text-gray-400 group-hover:text-blue-500">+</span>
+            </div>
+            <p class="text-center mt-2 text-sm font-medium text-gray-600 group-hover:text-blue-600">Biểu mẫu trống</p>
+        </a>
+    </div>
+
+    <h2 class="text-xl font-semibold mt-10 mb-4 text-gray-700">Biểu mẫu gần đây</h2>
+
+    {% if forms %}
+    <div class="grid grid-cols-4 gap-6">
+        {% for f in forms %}
+            <div class="relative group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 overflow-hidden">
+
+                <a href="{% url 'GiangVien:edit_form' f.public_id %}" class="block">
+                    <div class="h-48 bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <span class="material-icons text-blue-500" style="font-size: 100px !important;">
+                            assignment
+                        </span>
+                    </div>
+
+                    <div class="p-4 border-t border-gray-50">
+                        <p class="font-semibold text-gray-800 truncate">{{ f.ten_form }}</p>
+                        <div class="flex items-center mt-2 text-gray-500">
+                            <span class="material-icons text-xs mr-1">schedule</span>
+                            <p class="text-[11px] uppercase tracking-tighter">
+                                {{ f.ngay_tao|date:"d/m/Y H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                </a>
+
+                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <form action="{% url 'GiangVien:xoa_form' f.public_id %}" method="POST"
+                          onsubmit="return confirm('Xóa biểu mẫu này?');">
+                        {% csrf_token %}
+                        <button type="submit" class="p-2 bg-white/90 hover:bg-red-50 text-red-500 rounded-full shadow-sm border border-gray-100">
+                            <span class="material-icons text-sm">delete_outline</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+    </div>
+    {% else %}
+    <div class="py-10 text-center border-2 border-dashed border-gray-200 rounded-xl">
+        <p class="text-gray-400">Chưa có biểu mẫu nào được tạo.</p>
+    </div>
+    {% endif %}
 </div>
-
-<!-- TEMPLATE -->
-<h2 class="text-lg font-semibold mb-4">Bắt đầu biểu mẫu mới</h2>
-
-<div class="flex gap-4 mb-10">
-
-    <!-- FORM TRỐNG -->
-    <a href="{% url 'GiangVien:tao_form' %}">
-        <div class="w-40 h-40 border rounded-xl flex items-center justify-center hover:shadow cursor-pointer">
-            <span class="text-4xl">+</span>
-        </div>
-        <p class="text-center mt-2">Biểu mẫu trống</p>
-    </a>
-
-</div>
-
-<!-- DANH SÁCH FORM -->
-<h2 class="text-xl font-semibold mt-10 mb-4">Biểu mẫu gần đây</h2>
-
-{% if forms %}
-<div class="grid grid-cols-4 gap-6">
-
-    {% for f in forms %}
-    <a href="{% url 'GiangVien:edit_form' f.public_id %}"
-       class="bg-white rounded-xl shadow hover:shadow-lg transition">
-
-        <div class="h-32 bg-purple-200 rounded-t-xl"></div>
-
-        <div class="p-3">
-            <p class="font-semibold">{{ f.ten_form }}</p>
-            <p class="text-sm text-gray-500">
-                {{ f.ngay_tao|date:"d/m/Y H:i" }}
-            </p>
-        </div>
-
-    </a>
-    {% endfor %}
-
-</div>
-{% else %}
-<p class="text-gray-500">Chưa có form nào</p>
-{% endif %}
-
-</div>
-
 
 {% endblock %}

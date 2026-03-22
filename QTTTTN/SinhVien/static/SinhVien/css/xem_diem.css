@@ -1,0 +1,200 @@
+/* Layout & Container */
+.grades-page {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+.page-header p {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Grid System */
+.grades-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+/* Card Styles */
+.info-card, .company-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+}
+
+/* Info Card */
+.card-caption {
+    font-size: 13px;
+    text-transform: uppercase;
+    color: #3b82f6;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.student-name {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 24px;
+    line-height: 1.2;
+    margin-top: 0;
+}
+
+.info-row {
+    display: flex;
+    gap: 15%; /* Spacing between columns */
+    margin-bottom: 24px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 24px;
+}
+
+.info-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label, .company-label {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.info-value, .company-name, .company-address {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.company-address {
+    font-weight: 600;
+    color: #334155;
+}
+
+.info-topic {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Score Card */
+.score-card {
+    background: #1890ff; /* Màu xanh chuẩn như mockup */
+    border-radius: 12px;
+    color: #ffffff;
+    height: 190px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(24, 144, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* Khoảng cách giữa chữ và số */
+}
+
+.score-caption {
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+    z-index: 2;
+}
+
+.medal-icon {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    width: 90px;
+    height: 90px;
+    color: #ffffff;
+    opacity: 0.2;
+    z-index: 1;
+}
+
+.score-value {
+    font-size: 80px;
+    font-weight: 800;
+    line-height: 1;
+    z-index: 2;
+    margin: 0;
+}
+
+/* Company Card */
+.company-card {
+    grid-column: 1 / 2;
+}
+
+.company-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.company-icon-box {
+    background: #eff6ff;
+    color: #3b82f6;
+    padding: 7px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.company-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+.company-info {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+.company-address-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.location-icon {
+    margin-top: 3.5px;
+}
+
+.address-content {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .grades-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .company-card {
+        grid-column: 1;
+    }
+    .score-card {
+        grid-row: 1; /* Move score above everything on mobile */
+    }
+}
