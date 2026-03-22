@@ -1,0 +1,37 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6">
+
+<h2 class="text-xl font-bold mb-4">Chọn Sinh viên để Phân công</h2>
+
+<form method="POST" action="/giang-vien/phan-cong/confirm/">
+{% csrf_token %}
+
+{% for s in data %}
+<div class="card p-3 mb-2 flex items-center gap-3">
+
+<input type="checkbox" name="sv" value="{{ s.id }}">
+
+<div>
+<b>{{ s.ten }}</b><br>
+<span class="text-gray-400 text-sm">{{ s.lop }}</span>
+</div>
+
+<div class="ml-auto text-blue-600 text-sm">
+{{ s.nv }}
+</div>
+
+<span class="badge badge-yellow">Chưa phân</span>
+
+</div>
+{% endfor %}
+
+<button class="mt-4 btn-primary">Tiếp tục →</button>
+
+</form>
+
+</div>
+
+{% endblock %}
