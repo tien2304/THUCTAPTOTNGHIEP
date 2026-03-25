@@ -1,0 +1,33 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6">
+
+<h2 class="text-xl font-bold mb-4">Chọn giảng viên</h2>
+
+<form method="POST" action="/giang-vien/phan-cong/save/">
+{% csrf_token %}
+
+{% for id in sv_ids %}
+<input type="hidden" name="sv" value="{{ id }}">
+{% endfor %}
+
+{% for gv in gvs %}
+<div class="border p-3 mb-2 rounded">
+<label>
+<input type="radio" name="gv" value="{{ gv.ho_ten }}">
+<b>{{ gv.ho_ten }}</b>
+</label>
+</div>
+{% endfor %}
+
+<button class="bg-blue-600 text-white px-4 py-2 rounded mt-4">
+Xác nhận
+</button>
+
+</form>
+
+</div>
+
+{% endblock %}

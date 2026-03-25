@@ -23,7 +23,7 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="{% url 'GiangVien:giangvien_home' %}" class="nav-item {% if current_page == 'home' %}active{% endif %}"
+            <a href="{% url 'GiangVien:sinhvien_huongdan' %}" class="nav-item {% if current_page == 'sinhvien' %}active{% endif %}"
                 id="nav-home">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -47,7 +47,7 @@
                 <span class="nav-label">Hội đồng bảo vệ</span>
             </a>
             {% if is_gvpt %}
-            <a href="#" class="nav-item {% if current_page == 'phan_cong' %}active{% endif %}" id="nav-phancong">
+            <a href="{% url 'GiangVien:phan_cong' %}" class="nav-item {% if current_page == 'phan_cong' %}active{% endif %}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -64,8 +64,7 @@
                     </svg></span>
                 <span class="nav-label">Tổng hợp nguyện vọng</span>
             </a>
-            <a href="{% url 'GiangVien:form_list' %}"
-        class="nav-item {% if current_page == 'tao_form' %}active{% endif %}">
+            <a href="{% url 'GiangVien:form_list' %}" class="nav-item {% if current_page == 'form_list' %}active{% endif %}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />

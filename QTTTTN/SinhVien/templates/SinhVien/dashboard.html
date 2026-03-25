@@ -1,81 +1,145 @@
 {% extends 'SinhVien/home.html' %}
 {% load static %}
+
 {% block title %}Trang Chủ - MIS{% endblock %}
+
 {% block content %}
+<link rel="stylesheet" href="{% static 'SinhVien/css/dashboard.css' %}">
+
 <div class="dashboard-container">
+
     <div class="info-grid">
-        <div class="card instructor-card">
-            <h3>Giảng viên hướng dẫn</h3>
-            <div class="card-body">
-                <h2 class="name">{% if giang_vien %}{{ giang_vien.ho_ten }}{% else %}Chưa cập nhật{% endif %}</h2>
-                <p class="phone">📞 {{ giang_vien.sdt|default:"--" }}</p>
-            </div>
+
+        <div class="card">
+            <h3 class="card-label">Giảng viên hướng dẫn</h3>
+            <h2 class="name">
+                {% if giang_vien %}{{ giang_vien.ho_ten }}{% else %}Chưa cập nhật{% endif %}
+            </h2>
+            <p class="sub-text">
+                📞 {{ giang_vien.so_dien_thoai|default:"--" }}
+            </p>
         </div>
 
-        <div class="card company-card">
-            <div class="card-header-flex">
-                <div class="company-info">
-                    <p class="label">ĐƠN VỊ THỰC TẬP HIỆN TẠI</p>
-                    <h2 class="company-name">{% if cong_ty %}{{ cong_ty.ten }}{% else %}Chưa cập nhật{% endif %}</h2>
-                    <p class="position">{{ cong_ty.vi_tri|default:"--" }}</p>
-                    <p class="location">📍 {{ cong_ty.dia_chi|default:"--" }}</p>
+        <div class="card company-card-v3">
+            <div class="company-layout">
+                <div class="company-info-main">
+                    <p class="label-top">ĐƠN VỊ THỰC TẬP HIỆN TẠI</p>
+                    <h2 class="company-name-highlight">
+                        {{ thong_tin_thuc_tap.ten_cong_ty|default:"Chưa thiết lập đơn vị" }}
+                    </h2>
+                    <p class="team-subtext">
+                        {{ thong_tin_thuc_tap.bo_phan|default:"Chưa cập nhật bộ phận" }}
+                    </p>
+
+                    <div class="location-wrapper">
+                        <svg class="loc-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;">
+                            <path d="M12 21C16 17.5 19 14.4183 19 10C19 6.13401 15.866 3 12 3C8.13401 3 5 6.13401 5 10C5 14.4183 8 17.5 12 21Z" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="10" r="1.5" stroke="#007bff" stroke-width="2" fill="none"/>
+                        </svg>
+                        <span class="address-link">
+                            {{ thong_tin_thuc_tap.dia_chi|default:"Chưa cập nhật địa chỉ" }}
+                        </span>
+                    </div>
                 </div>
-                <div class="company-icon">🏢</div>
+
+                <div class="building-wrapper">
+                  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 10 H60 V30 H90 V90 H20 Z" fill="#EAEAEA" />
+                    <g fill="#FFFFFF">
+                      <rect x="28" y="20" width="10" height="10" /><rect x="28" y="38" width="10" height="10" />
+                      <rect x="28" y="56" width="10" height="10" /><rect x="28" y="74" width="10" height="10" />
+                      <rect x="45" y="20" width="10" height="10" /><rect x="45" y="38" width="10" height="10" />
+                      <rect x="45" y="56" width="10" height="10" /><rect x="45" y="74" width="10" height="10" />
+                      <rect x="68" y="45" width="10" height="10" /><rect x="68" y="65" width="10" height="10" />
+                    </g>
+                  </svg>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="section-container">
-        <div class="section-header">
-            <h3>Nhiệm vụ sắp tới <span style="color: #ffa500;">●</span></h3>
-            <a href="{% url 'nhiem_vu_page' %}" class="view-all">Xem tất cả nhiệm vụ</a>
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">Nhiệm vụ sắp tới <span class="dot">●</span></h3>
+            <a href="{% url 'SinhVien:nhiem_vu_page' %}" class="view-all" style="color: #007bff; font-weight: 600; text-decoration: none;">
+                Xem tất cả nhiệm vụ
+            </a>
         </div>
+
         <div class="task-list">
             {% for nv in danh_sach_nhiem_vu %}
-            <div class="task-item">
-                <div class="task-icon-bg">📄</div>
-                <div class="task-info">
-                    <p class="task-name">{{ nv.ten }}</p>
-                    <p class="task-deadline">Hạn chót: {{ nv.han_chot }}</p>
+                <div class="task-item {% if nv.is_form %}form-item{% else %}assignment-item{% endif %}"
+                     style="background-color: rgba(239, 246, 255, 0.6) !important; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+
+                    <div class="flex-left" style="display: flex; align-items: center; gap: 16px;">
+                        {% if nv.is_form %}
+                            <div class="blue-icon-container" style="background: #007bff; border-radius: 10px; padding: 10px;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M6 21V19C6 16.7909 7.79086 15 10 15H12M15 19L17 21L21 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        {% else %}
+                            <div class="assignment-icon" style="font-size: 24px; background: white; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid #e2e8f0;">📄</div>
+                        {% endif %}
+
+                        <div>
+                            <p class="task-title" style="font-weight: 700; margin: 0; color: #1e293b;">{{ nv.ten }}</p>
+                            <p class="task-desc" style="margin: 0; font-size: 0.85rem; color: #64748b;">
+                                Hạn chót: <span class="blue-text" style="color: #007bff; font-weight: 600;">{{ nv.han_chot }}</span>
+                                {% if nv.is_form %} - Vui lòng hoàn thành thông tin đăng ký{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if nv.is_form %}
+                        <a href="{{ nv.url }}" class="btn-fill-form"
+                           style="background: #007bff; color: white; padding: 8px 18px; border-radius: 8px; font-weight: 600; text-decoration: none;">
+                            Điền form
+                        </a>
+                    {% else %}
+                        <div class="task-status normal" style="font-weight: 800; font-size: 0.75rem; color: #64748b; background: white; padding: 4px 10px; border-radius: 6px;">
+                            CÒN {{ nv.con_lai }}
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="task-status {{ nv.loai }}">CÒN {{ nv.con_lai }}</div>
-            </div>
             {% empty %}
-            <div class="empty-msg">Hiện không có nhiệm vụ nào.</div>
+                <div class="empty">Tuyệt vời! Bạn đã hoàn thành hết nhiệm vụ.</div>
             {% endfor %}
         </div>
     </div>
 
     <div class="bottom-grid">
-        <div class="card doc-card">
-            <div class="section-header">
+        <div class="card">
+            <div class="card-header">
                 <h3>Tài liệu kỳ thực tập</h3>
-                <span class="icon">📂</span>
+                <span>📂</span>
             </div>
             <div class="doc-list">
                 {% for doc in tai_lieu %}
-                <div class="doc-item">
-                    <div class="doc-icon-blue">📄</div>
-                    <div class="doc-text">
-                        <p class="doc-name">{{ doc.ten }}</p>
-                        <p class="doc-meta">{{ doc.mo_ta }}</p>
+                    <div class="doc-item">
+                        <div class="doc-icon">📄</div>
+                        <div class="doc-info">
+                            <p class="doc-name">{{ doc.ten }}</p>
+                            <p class="doc-date">{{ doc.ngay_cap_nhat|date:"d/m/Y" }}</p>
+                        </div>
+                        <button class="download-btn">📥</button>
                     </div>
-                    <button class="download-btn">📥</button>
-                </div>
                 {% empty %}
-                <p class="empty-text">Chưa có tài liệu.</p>
+                    <p class="empty">Chưa có tài liệu</p>
                 {% endfor %}
             </div>
         </div>
 
-        <div class="card data-card">
-            <div class="section-header">
-                <h3>Kho dữ liệu nhận xét...</h3>
-                <span class="icon">🗄️</span>
+        <div class="card">
+            <div class="card-header">
+                <h3>Kho dữ liệu nhận xét</h3>
+                <span>🗄️</span>
             </div>
-            <p class="data-desc">Truy cập toàn bộ kho dữ liệu nhận xét chi tiết về các đơn vị thực tập được tổng hợp từ sinh viên khóa trước.</p>
+            <p class="desc">Truy cập kho dữ liệu nhận xét từ sinh viên khóa trước.</p>
+            <button class="btn-secondary">Truy cập ngay</button>
         </div>
     </div>
+
 </div>
 {% endblock %}
-

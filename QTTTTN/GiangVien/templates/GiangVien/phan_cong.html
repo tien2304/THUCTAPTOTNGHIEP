@@ -1,0 +1,194 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 bg-gray-50 min-h-screen max-w-[1400px] mx-auto">
+
+<!-- HEADER -->
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">Phân công GVHD</h2>
+        <p class="text-gray-500 text-sm">
+            Điều phối giảng viên hướng dẫn theo nguyện vọng sinh viên.
+        </p>
+    </div>
+
+    <div class="flex gap-3">
+        <button onclick="goSelect()" class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+            ✨ Phân công GVHD
+        </button>
+        <button class="bg-gray-200 px-4 py-2 rounded-lg">🔄 Thay đổi GVHD</button>
+    </div>
+</div>
+
+<div class="grid grid-cols-4 gap-6">
+
+<!-- LEFT -->
+<div class="col-span-3 bg-white rounded-xl p-5 shadow">
+
+<div class="flex justify-between items-center mb-4">
+    <h3 class="font-semibold text-gray-700">Danh sách sinh viên</h3>
+
+    <input placeholder="🔍 Mã SV, Họ tên..."
+    class="border px-3 py-1 rounded text-sm w-52">
+</div>
+
+<table class="w-full text-sm">
+
+<tr class="border-b">
+<th class="text-left p-3">Thông tin SV</th>
+<th>Lớp</th>
+<th>Đề tài</th>
+<th>Nguyện vọng</th>
+<th>GVHD hiện tại</th>
+<th></th>
+</tr>
+
+{% for s in data %}
+<tr class="border-b hover:bg-gray-50">
+
+<td class="p-3">
+<b>{{ s.ten }}</b><br>
+<span class="text-gray-400 text-xs">{{ s.id }}</span>
+</td>
+
+<td>{{ s.lop }}</td>
+
+<!-- 🔥 ĐỀ TÀI -->
+<td>{{ s.de_tai|default:"--" }}</td>
+
+<!-- 🔥 NGUYỆN VỌNG -->
+<td>
+{% if s.nv1 %}
+<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
+NV1: {{ s.nv1 }}
+</span><br>
+{% endif %}
+
+{% if s.nv2 %}
+<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+NV2: {{ s.nv2 }}
+</span>
+{% endif %}
+</td>
+
+<td>
+{% if s.gvhd %}
+<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+{{ s.gvhd }}
+</span>
+{% else %}
+<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
+Chưa phân
+</span>
+{% endif %}
+</td>
+
+<td>
+<button onclick="openModal('{{ s.id }}')" class="text-blue-500">
+✏️
+</button>
+</td>
+
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- RIGHT -->
+<div class="bg-white rounded-xl p-5 shadow">
+
+<h3 class="font-semibold text-gray-700 mb-4">Định mức theo nguyện vọng</h3>
+
+{% for gv in gv_stats %}
+<div class="mb-4">
+
+<div class="flex justify-between text-sm mb-1">
+<b>{{ gv.ten }}</b>
+
+{% if gv.count > 10 %}
+<span class="text-red-500">{{ gv.count }}/10</span>
+{% elif gv.count == 10 %}
+<span class="text-green-500">{{ gv.count }}/10</span>
+{% else %}
+<span class="text-blue-500">{{ gv.count }}/10</span>
+{% endif %}
+</div>
+
+<div class="w-full bg-gray-200 h-2 rounded">
+<div class="h-2 rounded
+{% if gv.count > 10 %}bg-red-500
+{% elif gv.count == 10 %}bg-green-500
+{% else %}bg-blue-500
+{% endif %}"
+style="width: {{ gv.count|floatformat:0 }}0%">
+</div>
+</div>
+
+</div>
+{% endfor %}
+
+</div>
+
+</div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 bg-black/40 hidden flex items-center justify-center">
+
+<div class="bg-white w-[400px] p-6 rounded-xl">
+
+<h3 class="font-semibold mb-4">Chọn GVHD</h3>
+
+{% for gv in gv_stats %}
+<div class="border p-2 mb-2 rounded flex justify-between">
+{{ gv.ten }}
+<input type="radio" name="gv" value="{{ gv.ten }}">
+</div>
+{% endfor %}
+
+<div class="flex justify-end gap-2 mt-4">
+<button onclick="closeModal()" class="bg-gray-200 px-3 py-1 rounded">Hủy</button>
+<button onclick="confirmAssign()" class="bg-blue-600 text-white px-3 py-1 rounded">Xác nhận</button>
+</div>
+
+</div>
+</div>
+
+<script>
+let selectedSV = null;
+
+function goSelect(){
+    window.location.href="/giang-vien/phan-cong/select/";
+}
+
+function openModal(id){
+    selectedSV = id;
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+function closeModal(){
+    document.getElementById("modal").classList.add("hidden");
+}
+
+function confirmAssign(){
+    let gv = document.querySelector('input[name="gv"]:checked').value;
+
+    fetch("{% url 'GiangVien:update_phan_cong' %}",{
+        method:"POST",
+        headers:{
+            "X-CSRFToken":"{{ csrf_token }}"
+        },
+        body:new URLSearchParams({
+            sv:selectedSV,
+            gv:gv
+        })
+    }).then(()=>location.reload());
+}
+</script>
+
+{% endblock %}

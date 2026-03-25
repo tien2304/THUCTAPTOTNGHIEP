@@ -58,6 +58,8 @@ class SinhVien(models.Model):
     ho_ten = models.CharField(max_length=255)
     lop = models.CharField(max_length=50)
     ky_hien_tai = models.ForeignKey(KyThucTap, on_delete=models.SET_NULL, null=True)
+    noi_thuc_tap = models.CharField(max_length=255, null=True, blank=True)
+    
     def __str__(self):
         return f"{self.ma_sv} - {self.ho_ten}"
 class SinhVien_KyThucTap(models.Model):
@@ -81,17 +83,19 @@ class MauKhaoSat(models.Model):
     def __str__(self):
         return self.ten_form
 class CauHoi(models.Model):
+
     LOAI_CHOICES = [
         ('TEXT', 'Câu hỏi ngắn'),
         ('RADIO', 'Trắc nghiệm'),
-        ('LIKERT','Đánh giá 1-5'),
+        ('LIKERT', 'Đánh giá 1-5'),
         ('SELECT', 'Menu thả xuống'),
         ('CHECKBOX', 'Hộp kiểm'),
     ]
-    mau_khao_sat = models.ForeignKey(MauKhaoSat, related_name='cau_hoi', on_delete=models.CASCADE)
+    mau_khao_sat = models.ForeignKey(MauKhaoSat,related_name='cau_hoi', on_delete=models.CASCADE)
     noi_dung = models.TextField()
-    loai_cau_hoi = models.CharField(max_length=20, choices=LOAI_CHOICES)
-    # system_tag = models.CharField(max_length=50, null=True, blank=True)  # sv_mssv, sv_hoten, nganh_hoc, diem_dn
+    loai_cau_hoi = models.CharField(max_length=20,choices=LOAI_CHOICES)
+    # 🔥 QUAN TRỌNG NHẤT
+    system_tag = models.CharField(max_length=50, null=True, blank=True)  # sv_mssv, sv_hoten, nganh_hoc, diem_dn
     thu_tu = models.IntegerField(default=0)
 class TieuChiDanhGia(models.Model):
 
