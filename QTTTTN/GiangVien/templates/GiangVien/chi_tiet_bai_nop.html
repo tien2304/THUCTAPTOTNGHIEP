@@ -1,0 +1,77 @@
+{% extends "GiangVien/Home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 bg-gray-100 min-h-screen flex gap-6">
+
+<!-- LEFT: NỘI DUNG -->
+<div class="flex-1 bg-white rounded-xl shadow p-6">
+
+<h2 class="text-xl font-bold text-center mb-2">
+{{ nv.ten_nhiem_vu|upper }}
+</h2>
+
+<p class="text-center text-sm text-gray-400 mb-6">
+Sinh viên: {{ sv.ho_ten }} • MSSV: {{ sv.ma_sv }}
+</p>
+
+<hr class="mb-4">
+
+<!-- FILE -->
+<div class="mt-4">
+
+{% if bai.file_path %}
+    <iframe src="{{ bai.file_path.url }}"
+            class="w-full h-[600px] border rounded">
+    </iframe>
+{% else %}
+    <p class="text-gray-400">Không có file</p>
+{% endif %}
+
+</div>
+
+</div>
+
+<!-- RIGHT: PANEL -->
+<div class="w-80 bg-white rounded-xl shadow p-5 flex flex-col justify-between">
+
+<div>
+
+<h3 class="font-semibold mb-3 text-gray-700">
+📄 Thông tin bài nộp
+</h3>
+
+<div class="text-sm space-y-2">
+<p><b>Tên:</b> {{ nv.ten_nhiem_vu }}</p>
+<p><b>Sinh viên:</b> {{ sv.ho_ten }}</p>
+
+<p>
+<b>Trạng thái:</b>
+<span class="text-orange-500 font-semibold">
+{{ bai.trang_thai }}
+</span>
+</p>
+</div>
+
+<hr class="my-4">
+
+<label class="text-sm text-gray-500">
+Nhận xét của Giảng viên
+</label>
+
+<textarea
+class="w-full border rounded p-2 mt-2 text-sm"
+rows="5"
+placeholder="Nhập nhận xét..."></textarea>
+
+</div>
+
+<button class="bg-blue-600 text-white py-2 rounded mt-4">
+💾 Lưu đánh giá
+</button>
+
+</div>
+
+</div>
+
+{% endblock %}

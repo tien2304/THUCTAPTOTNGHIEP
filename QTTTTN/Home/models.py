@@ -58,7 +58,7 @@ class SinhVien(models.Model):
     ho_ten = models.CharField(max_length=255)
     lop = models.CharField(max_length=50)
     ky_hien_tai = models.ForeignKey(KyThucTap, on_delete=models.SET_NULL, null=True)
-    
+    noi_thuc_tap = models.CharField(max_length=255, null=True, blank=True)
     
     def __str__(self):
         return f"{self.ma_sv} - {self.ho_ten}"

@@ -1,102 +1,42 @@
 {% extends "GiangVien/Home.html" %}
 {% block content %}
 
-<style>
-.card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-}
-
-.btn-primary {
-    background: #2f6fed;
-    color: white;
-    padding: 10px 18px;
-    border-radius: 12px;
-    font-weight: 500;
-}
-
-.btn-gray {
-    background: #f3f4f6;
-    padding: 10px 18px;
-    border-radius: 12px;
-}
-
-.badge {
-    padding: 4px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-    display: inline-block;
-}
-
-.badge-blue { background:#e0edff; color:#2563eb }
-.badge-green { background:#dcfce7; color:#15803d }
-.badge-yellow { background:#fef9c3; color:#92400e }
-
-.progress {
-    height: 6px;
-    border-radius: 6px;
-    background: #e5e7eb;
-    overflow: hidden;
-}
-.progress-bar {
-    height: 100%;
-    border-radius: 6px;
-}
-.progress-red { background:#ef4444 }
-.progress-blue { background:#3b82f6 }
-.progress-green { background:#22c55e }
-
-.avatar {
-    width:32px;
-    height:32px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:12px;
-    font-weight:bold;
-}
-</style>
 <script src="https://cdn.tailwindcss.com"></script>
+
 <div class="p-6 bg-gray-50 min-h-screen max-w-[1400px] mx-auto">
+
 <!-- HEADER -->
 <div class="flex justify-between items-center mb-6">
     <div>
         <h2 class="text-2xl font-bold">Phân công GVHD</h2>
         <p class="text-gray-500 text-sm">
-            Điều phối giảng viên hướng dẫn và xem xét nguyện vọng của sinh viên.
+            Điều phối giảng viên hướng dẫn theo nguyện vọng sinh viên.
         </p>
     </div>
 
     <div class="flex gap-3">
-        <button onclick="goSelect()" class="btn-primary">
+        <button onclick="goSelect()" class="bg-blue-600 text-white px-4 py-2 rounded-lg">
             ✨ Phân công GVHD
         </button>
-        <button class="btn-gray">🔄 Thay đổi GVHD</button>
+        <button class="bg-gray-200 px-4 py-2 rounded-lg">🔄 Thay đổi GVHD</button>
     </div>
 </div>
 
 <div class="grid grid-cols-4 gap-6">
 
 <!-- LEFT -->
-<div class="col-span-3 card p-5">
+<div class="col-span-3 bg-white rounded-xl p-5 shadow">
 
 <div class="flex justify-between items-center mb-4">
     <h3 class="font-semibold text-gray-700">Danh sách sinh viên</h3>
 
-    <div class="flex gap-2">
-        <select class="border px-3 py-1 rounded text-sm text-gray-500">
-            <option>Tất cả các lớp</option>
-        </select>
-
-        <input placeholder="🔍 Mã SV, Họ tên..."
-        class="border px-3 py-1 rounded text-sm w-52">
-    </div>
+    <input placeholder="🔍 Mã SV, Họ tên..."
+    class="border px-3 py-1 rounded text-sm w-52">
 </div>
 
-<table class="w-full text-sm border-separate border-spacing-y-2">
-<tr class="bg-white hover:bg-gray-50 transition shadow-sm rounded-lg">
+<table class="w-full text-sm">
+
+<tr class="border-b">
 <th class="text-left p-3">Thông tin SV</th>
 <th>Lớp</th>
 <th>Đề tài</th>
@@ -106,40 +46,47 @@
 </tr>
 
 {% for s in data %}
-<tr class="border-b hover:bg-gray-50 transition">
+<tr class="border-b hover:bg-gray-50">
 
-<td class="p-4">
-    <div class="flex items-center gap-3">
-<div class="avatar bg-blue-100 text-blue-600">
-{{ s.ten|slice:":2" }}
-</div>
-<div>
-<b class="text-gray-700">{{ s.ten }}</b><br>
+<td class="p-3">
+<b>{{ s.ten }}</b><br>
 <span class="text-gray-400 text-xs">{{ s.id }}</span>
-</div>
-</div>
 </td>
 
-<td class="text-gray-600">{{ s.lop }}</td>
+<td>{{ s.lop }}</td>
 
-<td class="text-gray-600">{{ s.nv1 }}</td>
+<!-- 🔥 ĐỀ TÀI -->
+<td>{{ s.de_tai|default:"--" }}</td>
 
+<!-- 🔥 NGUYỆN VỌNG -->
 <td>
-<span class="badge badge-green">{{ s.nv1 }}</span><br>
-<span class="badge badge-blue mt-1">{{ s.nv2 }}</span>
-</td>
+{% if s.nv1 %}
+<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
+NV1: {{ s.nv1 }}
+</span><br>
+{% endif %}
 
-<td>
-{% if s.gvhd %}
-<span class="badge badge-blue">{{ s.gvhd }}</span>
-{% else %}
-<span class="badge badge-yellow">Chưa phân</span>
+{% if s.nv2 %}
+<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+NV2: {{ s.nv2 }}
+</span>
 {% endif %}
 </td>
 
 <td>
-<button onclick="openModal('{{ s.id }}')"
-class="text-blue-500 hover:scale-110 transition">
+{% if s.gvhd %}
+<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+{{ s.gvhd }}
+</span>
+{% else %}
+<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
+Chưa phân
+</span>
+{% endif %}
+</td>
+
+<td>
+<button onclick="openModal('{{ s.id }}')" class="text-blue-500">
 ✏️
 </button>
 </td>
@@ -149,21 +96,12 @@ class="text-blue-500 hover:scale-110 transition">
 
 </table>
 
-<div class="flex justify-between items-center mt-4 text-sm text-gray-400">
-    <span>Hiển thị {{ data|length }} sinh viên</span>
-
-    <div class="flex gap-2">
-        <button class="btn-gray text-xs">Trước</button>
-        <button class="btn-gray text-xs">Tiếp</button>
-    </div>
-</div>
-
 </div>
 
 <!-- RIGHT -->
-<div class="card p-5">
+<div class="bg-white rounded-xl p-5 shadow">
 
-<h3 class="font-semibold text-gray-700 mb-4">Định mức tiếp nhận</h3>
+<h3 class="font-semibold text-gray-700 mb-4">Định mức theo nguyện vọng</h3>
 
 {% for gv in gv_stats %}
 <div class="mb-4">
@@ -172,19 +110,19 @@ class="text-blue-500 hover:scale-110 transition">
 <b>{{ gv.ten }}</b>
 
 {% if gv.count > 10 %}
-<span class="text-red-500 font-medium">{{ gv.count }}/10</span>
+<span class="text-red-500">{{ gv.count }}/10</span>
 {% elif gv.count == 10 %}
-<span class="text-green-500 font-medium">{{ gv.count }}/10</span>
+<span class="text-green-500">{{ gv.count }}/10</span>
 {% else %}
-<span class="text-blue-500 font-medium">{{ gv.count }}/10</span>
+<span class="text-blue-500">{{ gv.count }}/10</span>
 {% endif %}
 </div>
 
-<div class="progress">
-<div class="progress-bar
-{% if gv.count > 10 %}progress-red
-{% elif gv.count == 10 %}progress-green
-{% else %}progress-blue
+<div class="w-full bg-gray-200 h-2 rounded">
+<div class="h-2 rounded
+{% if gv.count > 10 %}bg-red-500
+{% elif gv.count == 10 %}bg-green-500
+{% else %}bg-blue-500
 {% endif %}"
 style="width: {{ gv.count|floatformat:0 }}0%">
 </div>
@@ -192,10 +130,6 @@ style="width: {{ gv.count|floatformat:0 }}0%">
 
 </div>
 {% endfor %}
-
-<button class="w-full border mt-3 py-2 rounded-lg text-sm hover:bg-gray-50">
-Xem chi tiết tất cả GV
-</button>
 
 </div>
 
@@ -206,27 +140,20 @@ Xem chi tiết tất cả GV
 <!-- MODAL -->
 <div id="modal" class="fixed inset-0 bg-black/40 hidden flex items-center justify-center">
 
-<div class="bg-white w-[420px] p-6 rounded-xl">
+<div class="bg-white w-[400px] p-6 rounded-xl">
 
-<h3 class="font-semibold mb-4">Phân công GVHD</h3>
+<h3 class="font-semibold mb-4">Chọn GVHD</h3>
 
-<div id="gvList">
 {% for gv in gv_stats %}
-<div class="border p-3 mb-2 rounded flex justify-between items-center hover:bg-gray-50">
-
-<div>
-<b>{{ gv.ten }}</b><br>
-<span class="text-xs text-gray-400">{{ gv.count }}/10</span>
-</div>
-
+<div class="border p-2 mb-2 rounded flex justify-between">
+{{ gv.ten }}
 <input type="radio" name="gv" value="{{ gv.ten }}">
 </div>
 {% endfor %}
-</div>
 
 <div class="flex justify-end gap-2 mt-4">
-<button onclick="closeModal()" class="btn-gray">Hủy</button>
-<button onclick="confirmAssign()" class="btn-primary">Xác nhận</button>
+<button onclick="closeModal()" class="bg-gray-200 px-3 py-1 rounded">Hủy</button>
+<button onclick="confirmAssign()" class="bg-blue-600 text-white px-3 py-1 rounded">Xác nhận</button>
 </div>
 
 </div>
