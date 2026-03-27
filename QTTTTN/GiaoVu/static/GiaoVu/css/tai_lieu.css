@@ -76,6 +76,19 @@
     vertical-align: middle;
 }
 
+.doc-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.doc-table tbody tr {
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.doc-table tbody tr:hover td {
+    background-color: rgba(59, 130, 246, 0.05); /* Slight blue tint on hover */
+    cursor: pointer;
+}
+
 .doc-table tr:last-child td {
     border-bottom: none;
 }
