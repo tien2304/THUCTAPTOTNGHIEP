@@ -78,12 +78,17 @@
 
                     <td>
                         {% if task.trang_thai == "done" or task.trang_thai == "late" %}
-                        <button class="btn-view">Xem lại</button>
+                            <button class="btn-view"
+                                    data-filename="{{ task.thong_tin_nop.ten_file }}"
+                                    data-filesize="{{ task.thong_tin_nop.file_path.size|filesizeformat }}"
+                                    data-submittime="{{ task.thong_tin_nop.thoi_gian_nop|date:'Y-m-d H:i:s' }}"
+                                    data-fileurl="{{ task.thong_tin_nop.file_path.url }}">
+                                Xem lại
+                            </button>
                         {% else %}
-                        <button class="btn-submit open-submit-modal" data-task-name="{{ task.ten_nhiem_vu }}"
-                            data-task-rule="{{ task.mo_ta }}" data-task-id="{{ task.id }}">
-                            Nộp bài
-                        </button>
+                            <button class="btn-submit open-submit-modal" ...>
+                                Nộp bài
+                            </button>
                         {% endif %}
                     </td>
 
@@ -174,18 +179,18 @@
             </div>
 
             <p class="upload-text">
-                Kéo và thả file <strong>PDF hoặc DOCX</strong> vào đây
+                Kéo và thả file <strong>PDF, DOCX hoặc ZIP</strong> vào đây
             </p>
 
             <p class="upload-or">hoặc</p>
 
             <label class="upload-btn">
                 Chọn file từ máy tính
-                <input type="file" hidden id="fileInput">
+                <input type="file" hidden id="fileInput" accept=".pdf,.doc,.docx,.zip,.rar">
             </label>
 
             <p class="upload-note">
-                Hỗ trợ định dạng: PDF, DOCX (Tối đa 25MB)
+                Hỗ trợ định dạng: PDF, DOCX, ZIP (Tối đa 25MB)
             </p>
 
         </div>
@@ -553,13 +558,13 @@
         let files = dt.files;
 
         if (files.length > 0) {
-            // Kiểm tra định dạng nếu cần (ví dụ chỉ nhận pdf, doc, docx)
-            const allowedTypes = [".pdf", ".doc", ".docx"];
+            // Kiểm tra định dạng nếu cần
+            const allowedTypes = [".pdf", ".doc", ".docx", ".zip", ".rar"];
             const fileName = files[0].name.toLowerCase();
             const isValid = allowedTypes.some(type => fileName.endsWith(type));
 
              if (!isValid) {
-                 alert("Chỉ hỗ trợ file PDF, DOC hoặc DOCX!");
+                 alert("Chỉ hỗ trợ file PDF, DOCX, ZIP hoặc RAR!");
                  return;
              }
 
@@ -567,7 +572,7 @@
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(files[0]);
             fileInput.files = dataTransfer.files;
-            
+
             // Cập nhật giao diện
             let event = new Event('change');
             fileInput.dispatchEvent(event);

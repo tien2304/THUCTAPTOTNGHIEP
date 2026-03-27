@@ -1,0 +1,100 @@
+{% extends "SinhVien/Home.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'SinhVien/css/tong_hop_nxet.css' %}">
+
+<div class="nxet-container">
+    <div class="nxet-header">
+        <h1>Tổng hợp nhận xét đơn vị thực tập</h1>
+        <p>Tra cứu thông tin và đánh giá từ cộng đồng sinh viên các khóa trước</p>
+    </div>
+
+    <div class="search-filter-wrapper">
+        <form method="GET" action="{% url 'SinhVien:tong-hop-nxet' %}" class="search-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" name="q" value="{{ search_query }}"
+                   placeholder="Tìm kiếm theo tên đơn vị hoặc nội dung nhận xét..."
+                   class="search-input">
+
+            <button type="submit" style="display: none;"></button>
+        </form>
+    </div>
+
+    <div class="nxet-table-card">
+        <table class="nxet-table">
+            <thead>
+                <tr>
+                    <th class="align-left col-don-vi">TÊN ĐƠN VỊ<br>THỰC TẬP</th>
+                    <th class="align-left col-contact email">EMAIL ĐƠN VỊ<br>THỰC TẬP</th>
+                    <th class="align-left col-contact sdt">SỐ ĐIỆN THOẠI<br>ĐƠN VỊ</th>
+                    <th class="align-left col-nhan-xet">NHẬN XÉT ĐƠN VỊ<br>THỰC TẬP</th>
+                    <th class="align-left col-loi-nhan">GỬI LỜI NHẮN<br>ĐẾN KHÓA SAU</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr>
+                    <td class="col-don-vi"><div class="company-name">{{ r.don_vi }}</div></td>
+                    <td class="col-contact email"><div class="email-text">{{ r.email }}</div></td>
+                    <td class="col-contact sdt"><div class="sdt-text">{{ r.sdt }}</div></td>
+                    <td class="col-nhan-xet">{{ r.nhan_xet|truncatechars:150 }}</td>
+                    <td class="col-loi-nhan">{{ r.loi_nhan }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td class="col-don-vi"><div class="company-name">FPT Software</div></td>
+                    <td class="col-contact email"><div class="email-text">hr@fsoft.com.vn</div></td>
+                    <td class="col-contact sdt"><div class="sdt-text">0283962388</div></td>
+                    <td class="col-nhan-xet">Môi trường chuyên nghiệp, mentor nhiệt tình...</td>
+                    <td class="col-loi-nhan">Hãy chủ động hỏi đáp và học hỏi quy trình Agile.</td>
+                </tr>
+                <tr>
+                    <td class="col-don-vi"><div class="company-name">VNG Corporation</div></td>
+                    <td class="col-contact email"><div class="email-text">recruitment@vng.com.vn</div></td>
+                    <td class="col-contact sdt"><div class="sdt-text">0283962388</div></td>
+                    <td class="col-nhan-xet">Văn hóa trẻ trung, năng động, nhiều thử thách...</td>
+                    <td class="col-loi-nhan">Nên trau dồi kiến thức về cấu trúc dữ liệu và giải thuật.</td>
+                </tr>
+                <tr>
+                    <td class="col-don-vi"><div class="company-name">Shopee Vietnam</div></td>
+                    <td class="col-contact email"><div class="email-text">careers@shopee.vn</div></td>
+                    <td class="col-contact sdt"><div class="sdt-text">0283962388</div></td>
+                    <td class="col-nhan-xet">Áp lực công việc cao nhưng học hỏi được nhiều...</td>
+                    <td class="col-loi-nhan">Quản lý thời gian tốt là chìa khóa thành công ở đây.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="task-pagination">
+            <span>Hiển thị {{ page_obj|length }} trong tổng số {{ page_obj.paginator.count }} đơn vị</span>
+            <div class="pagination-pages">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">‹</a>
+                {% else %}
+                <span class="page-btn disabled">‹</span>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="page-btn active">{{ num }}</span>
+                {% else %}
+                <a href="?page={{ num }}" class="page-btn">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="page-btn">›</a>
+                {% else %}
+                <span class="page-btn disabled">›</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

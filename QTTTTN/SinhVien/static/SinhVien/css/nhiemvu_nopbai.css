@@ -394,20 +394,55 @@ gap:10px;
 }
 
 .file-card {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    border: 1px solid #e2e8f0 !important;
-    padding: 12px 16px !important;
-    border-radius: 10px !important;
-    width: 100% !important;
-    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    gap: 12px;
+    box-sizing: border-box; /* Đảm bảo không bị phình do padding */
 }
 
-.file-info { display: flex; align-items: center; gap: 14px; }
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.file-text {
+    min-width: 0; /* Quan trọng để con nó cắt chữ được */
+    flex: 1;
+}
+
+.file-details {
+    flex: 1;
+    min-width: 0; /* QUAN TRỌNG NHÌ: Cho phép nội dung bên trong co lại */
+    overflow: hidden;
+}
+
 .file-icon-dynamic { display: inline-block; width: 40px; height: 40px; line-height: 40px; text-align: center; }
-.fname { font-weight: 700; color: #1e293b; margin-bottom: 2px;}
-.fsize { font-size: 12px; color: #64748b; }
+
+.fname {
+    display: block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-weight: 600;
+    color: #1e293b;
+    width: 100%; /* Ép chiếm hết không gian của file-details */
+    max-width: 280px; /* Điểm dừng an toàn để không đè lên nút download */
+}
+
+.fsize {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap; /* Tránh việc size file bị nhảy xuống dòng */
+}
+
 .download-btn { cursor: pointer; color: #94a3b8; font-size: 20px;}
 
 .review-footer {
@@ -454,4 +489,31 @@ gap:10px;
 @keyframes bounce {
   from { transform: translateY(0); }
   to { transform: translateY(-2px); }
+}
+
+
+
+/* Badge nộp sớm khung xanh chuẩn image_b41fc0 */
+.review-time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #eff6ff;
+    color: #3b82f6;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1px solid #dbeafe;
+}
+
+/* File cũ nằm dưới nút chọn file trong modal nộp */
+.old-file-info {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+    font-size: 13px;
+    text-align: left;
 }
