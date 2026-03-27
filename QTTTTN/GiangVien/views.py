@@ -749,34 +749,82 @@ def tao_hoi_dong(request):
 
     if not get_is_gvpt(request):
         return redirect("GiangVien:hoi_dong_list")
+    ky = KyThucTap.objects.last()
+
+    sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
 
     if request.method == "POST":
-        thoi_gian = request.POST.get("thoi_gian")
+
+        gv_ids = request.POST.getlist("giang_vien")
+        sv_ids = request.POST.get("sinh_vien_ids").split(",")
 
         hd = HoiDong.objects.create(
             ten_hoi_dong=request.POST.get("ten"),
             ngay_bao_ve=request.POST.get("ngay"),
             dia_diem=request.POST.get("dia_diem"),
-            thoi_gian=thoi_gian,
+            thoi_gian=request.POST.get("thoi_gian"),
             ky=KyThucTap.objects.last()
         )
 
-        gv_ids = request.POST.getlist("giang_vien")
-
+        # GV
         for gv_id in gv_ids:
             HoiDong_GiangVien.objects.create(
                 hoi_dong=hd,
                 giang_vien_id=gv_id
             )
 
+        # SV
+        for sv_id in sv_ids:
+            if not sv_id:
+                continue
+
+            sv = SinhVien.objects.get(ma_sv=sv_id)
+
+            gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
+
+            # ❌ CHẶN GVHD
+            if gvhd and gvhd.giang_vien.ma_gv in gv_ids:
+                continue
+
+            HoiDong_SinhVien.objects.create(
+                hoi_dong=hd,
+                sinh_vien=sv
+            )
+
         return redirect("GiangVien:hoi_dong_detail", id=hd.id)
 
     return render(request, "GiangVien/tao_hoi_dong.html", {
         "giangviens": GiangVien.objects.all(),
+        "sinhviens": sinhviens,  # 👈 THÊM DÒNG NÀY
         "is_gvpt": True,
         "current_page": "hoi_dong"
     })
+def load_sinh_vien(request):
+    ky = KyThucTap.objects.last()
 
+    sv_da_co = HoiDong_SinhVien.objects.filter(
+        hoi_dong__ky=ky
+    ).values_list("sinh_vien_id", flat=True)
+
+    sinhviens = SinhVien.objects.filter(
+        ky_hien_tai=ky
+    ).exclude(
+        ma_sv__in=sv_da_co
+    )
+
+    data = []
+
+    for sv in sinhviens:
+        gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
+
+        data.append({
+            "id": sv.ma_sv,
+            "ten": sv.ho_ten,
+            "lop": sv.lop,
+            "gvhd": gvhd.giang_vien.ma_gv if gvhd else ""
+        })
+
+    return JsonResponse(data, safe=False)
 def them_sinh_vien(request, id):
 
     hoidong = HoiDong.objects.get(id=id)
@@ -838,11 +886,11 @@ def hoi_dong_detail(request, id):
         bd = BangDiem.objects.filter(
             sinh_vien=sv,
             ky=hoidong.ky
-        ).first()
+        ).order_by("-id").first()
 
         data_sv.append({
             "sv": sv,
-            "diem": bd.diem_bao_cao if bd else None,
+            "diem": bd.diem_bao_cao if bd and bd.diem_bao_cao is not None else None,
             "id": sv.ma_sv
         })
 

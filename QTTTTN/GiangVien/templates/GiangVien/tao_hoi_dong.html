@@ -1,40 +1,238 @@
 {% extends "GiangVien/Home.html" %}
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- DATATABLE -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 
-<div class="p-8">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- SELECT2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-<h1 class="text-2xl font-bold mb-6">Tạo hội đồng mới</h1>
+<div class="p-6">
 
-<form method="POST">
-{% csrf_token %}
+    <!-- HEADER -->
+    <div class="flex justify-between mb-6">
+        <h1 class="text-2xl font-bold">Tạo hội đồng mới</h1>
 
-<input name="ten" placeholder="Tên hội đồng"
-class="border p-2 w-full mb-3">
+        <button form="form-hoi-dong"
+            class="bg-blue-600 text-white px-4 py-2 rounded">
+            + Tạo hội đồng
+        </button>
+    </div>
 
-<input type="date" name="ngay"
-class="border p-2 w-full mb-3">
+    <form method="POST" id="form-hoi-dong">
+        {% csrf_token %}
 
-<input name="dia_diem" placeholder="Địa điểm"
-class="border p-2 w-full mb-3">
+        <!-- CARD -->
+        <div class="bg-white p-6 rounded-xl shadow mb-6">
 
-<input type="datetime-local" name="thoi_gian"
-class="border p-2 w-full mb-3">
+            <div class="grid grid-cols-3 gap-4">
 
-<h3 class="font-semibold mt-4 mb-2">Chọn giảng viên</h3>
+                <input name="ten" placeholder="Tên hội đồng"
+                    class="border p-2 rounded">
 
-{% for gv in giangviens %}
-<label class="block">
-<input type="checkbox" name="giang_vien" value="{{gv.ma_gv}}">
-{{gv.ho_ten}}
-</label>
-{% endfor %}
+                <input type="date" name="ngay"
+                    class="border p-2 rounded">
 
-<button class="bg-blue-600 text-white px-4 py-2 mt-4 rounded">
-Lưu hội đồng
-</button>
+                <input name="dia_diem" placeholder="Địa điểm"
+                    class="border p-2 rounded">
 
-</form>
+            </div>
 
+            <input type="datetime-local" name="thoi_gian"
+                class="border p-2 rounded w-full mt-4">
+
+            <!-- SELECT2 GV -->
+            <div class="mt-6">
+                <label class="font-medium">Thành viên hội đồng</label>
+
+                <select id="select-gv" name="giang_vien" multiple style="width:100%">
+                    {% for gv in giangviens %}
+                    <option value="{{gv.ma_gv}}">{{gv.ho_ten}}</option>
+                    {% endfor %}
+                </select>
+
+                <p id="error-gv" class="text-red-500 text-sm hidden">
+                    ❌ Tối thiểu 2 giảng viên
+                </p>
+
+                <p id="error-gvhd" class="text-red-500 text-sm hidden">
+                    ❌ Có GVHD trong hội đồng
+                </p>
+            </div>
+
+        </div>
+
+        <!-- CARD SINH VIÊN -->
+        <div class="bg-white p-6 rounded-xl shadow">
+
+            <div class="flex justify-between mb-4">
+                <h2 class="font-semibold">Danh sách sinh viên</h2>
+
+                <button type="button" onclick="openPopup()"
+                    class="text-blue-600">
+                    + Thêm sinh viên
+                </button>
+            </div>
+
+<table id="sv-table" class="w-full text-sm">
+    <thead class="bg-gray-100">
+                    <tr>
+                        <th>Mã SV</th>
+                        <th>Tên</th>
+                        <th>Lớp</th>
+                        <th>GVHD</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody id="table-sv"></tbody>
+            </table>
+
+        </div>
+
+        <input type="hidden" name="sinh_vien_ids" id="sv-hidden">
+
+    </form>
 </div>
+
+<!-- POPUP -->
+<div id="popup" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center">
+    <div class="bg-white p-6 rounded w-[600px]">
+
+        <h2 class="font-bold mb-4">Chọn sinh viên</h2>
+
+        <input id="search" placeholder="Tìm kiếm..."
+            class="border p-2 w-full mb-3">
+
+        <div id="list-sv" class="max-h-[300px] overflow-y-auto"></div>
+
+        <button onclick="closePopup()" class="mt-4 px-4 py-2 bg-gray-300 rounded">
+            Đóng
+        </button>
+    </div>
+</div>
+
+<script>
+let selectedSV = []
+let table = null
+
+// INIT SELECT2
+$('#select-gv').select2({
+    placeholder: "Chọn giảng viên"
+})
+
+// INIT DATATABLE
+$(document).ready(function () {
+
+    table = $('#sv-table').DataTable({
+        pageLength: 5,
+        lengthMenu: [5, 10, 20, 50],
+        ordering: true,
+        searching: true,
+        language: {
+            search: "🔍 Tìm kiếm:",
+            lengthMenu: "Hiển thị _MENU_ dòng",
+            info: "Hiển thị _START_ → _END_ / _TOTAL_ sinh viên",
+            paginate: {
+                next: "→",
+                previous: "←"
+            },
+            zeroRecords: "Không tìm thấy dữ liệu"
+        }
+    });
+
+})
+
+// LOAD SV AJAX
+function openPopup(){
+    $("#popup").removeClass("hidden")
+
+    fetch("/giang-vien/hoi-dong/load-sv/")
+    .then(res=>res.json())
+    .then(data=>{
+        let html = ""
+
+        data.forEach(sv=>{
+            html += `
+                <div class="flex justify-between p-2 border-b">
+                    <span>${sv.ten}</span>
+                    <button onclick="addSV('${sv.id}','${sv.ten}','${sv.lop}','${sv.gvhd}')"
+                        class="text-blue-600">Chọn</button>
+                </div>
+            `
+        })
+
+        document.getElementById("list-sv").innerHTML = html
+    })
+}
+
+function closePopup(){
+    $("#popup").addClass("hidden")
+}
+
+// ADD SV
+function addSV(id, ten, lop, gvhd){
+
+    if(selectedSV.find(x=>x.id==id)) return
+
+    selectedSV.push({id, ten, lop, gvhd})
+
+    renderTable()
+}
+
+// REMOVE
+function removeSV(id){
+    selectedSV = selectedSV.filter(x=>x.id!=id)
+    renderTable()
+}
+
+// RENDER TABLE (CHUẨN - CHỈ 1 FUNCTION)
+function renderTable(){
+
+    if(!table) return
+
+    table.clear()
+
+    selectedSV.forEach(sv=>{
+        table.row.add([
+            sv.id,
+            sv.ten,
+            sv.lop,
+            sv.gvhd,
+            `<button onclick="removeSV('${sv.id}')" class="text-red-500">Xóa</button>`
+        ])
+    })
+
+    table.draw()
+
+    // hidden input
+    document.getElementById("sv-hidden").value =
+        selectedSV.map(x=>x.id).join(",")
+}
+
+// VALIDATE
+document.getElementById("form-hoi-dong").addEventListener("submit", function(e){
+
+    let gv = $('#select-gv').val()
+
+    // >=2 GV
+    if(!gv || gv.length < 2){
+        e.preventDefault()
+        $("#error-gv").removeClass("hidden")
+        return
+    }
+
+    // ❌ CHẶN GVHD
+    let conflict = selectedSV.some(sv => gv.includes(sv.gvhd))
+
+    if(conflict){
+        e.preventDefault()
+        $("#error-gvhd").removeClass("hidden")
+    }
+})
+</script>
+
 {% endblock %}

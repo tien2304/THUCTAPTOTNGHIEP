@@ -125,16 +125,15 @@
 
 <input type="number" step="0.1"
        name="diem"
-       value="{{ item.diem|default:'' }}"
-       class="border px-2 py-1 rounded w-20
-       {% if item.diem != None %}bg-gray-100{% endif %}"
-       {% if item.diem != None %}readonly{% endif %}>
-   {% if item.diem != None %}
-<span class="text-green-600 text-xs font-semibold">
-Đã chấm
+       value="{% if item.diem != None %}{{ item.diem }}{% endif %}"
+       class="border px-2 py-1 rounded w-20 bg-white">
+
+{% if item.diem != None %}
+<span class="text-green-600 text-xs font-semibold ml-2">
+✔ Đã chấm
 </span>
 {% else %}
-<span class="text-gray-400 text-xs">
+<span class="text-gray-400 text-xs ml-2">
 Chưa chấm
 </span>
 {% endif %}
