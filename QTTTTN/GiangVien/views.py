@@ -92,26 +92,29 @@ def chi_tiet_sinh_vien(request, ma_sv):
             file = bai_nop.ten_file
             file_url = bai_nop.file_path.url
             ngay = bai_nop.thoi_gian_nop
+            bai_id = bai_nop.id  # ✅ có thì mới lấy
         else:
             status = "CHƯA NỘP"
             file = "--"
             file_url = "#"
             ngay = "--"
+            bai_id = None  # ✅ tránh lỗi
 
         milestones.append({
-            "id": bai_nop.id,
+            "id": bai_id,
             "ten": nv.ten_nhiem_vu,
             "ngay": ngay,
             "file": file,
             "file_url": file_url,
-            "status": status
+            "status": status,
+            "is_submitted": True if bai_nop else False  # 🔥 thêm dòng này
         })
 
     # 🔥 lấy điểm nếu đã có
     bang_diem = BangDiem.objects.filter(
         sinh_vien=sv,
         ky=ky
-    ).first()
+    ).order_by('-id').first()
 
     context = {
         "sv": sv,
@@ -131,9 +134,12 @@ from django.views.decorators.http import require_POST
 def save_diem(request, ma_sv):
 
     sv = SinhVien.objects.get(ma_sv=ma_sv)
-    ky = sv.ky_hien_tai
+    ky = sv.ky_hien_tai or KyThucTap.objects.order_by('-id').first()
 
     diem = request.POST.get("diem")
+
+    if diem:
+        diem = float(diem)
 
     bd, _ = BangDiem.objects.get_or_create(
         sinh_vien=sv,
@@ -857,69 +863,64 @@ def them_sinh_vien(request, id):
 
     })
 
+
 def hoi_dong_detail(request, id):
-
-    hoidong = HoiDong.objects.get(id=id)
-
+    hoidong = get_object_or_404(HoiDong, id=id)
+    is_gvpt = get_is_gvpt(request)
     ma_gv = request.user.username
     gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
 
-    is_gvpt = get_is_gvpt(request)
-
-    # ❌ chặn nếu không thuộc hội đồng
-    if not is_gvpt:
-        if not HoiDong_GiangVien.objects.filter(
-            hoi_dong=hoidong,
-            giang_vien=gv
-        ).exists():
+    if not is_gvpt and gv:
+        if not HoiDong_GiangVien.objects.filter(hoi_dong=hoidong, giang_vien=gv).exists():
             return redirect("GiangVien:hoi_dong_list")
 
-    giangviens = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong)
+    giangviens = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
 
-    sv_list = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong)
+    # Lấy danh sách sinh viên + điểm
+    sv_list = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
 
     data_sv = []
-
     for item in sv_list:
         sv = item.sinh_vien
 
+        # SỬA TẠI ĐÂY: Truy vấn bằng ma_sv cụ thể để tránh lỗi mapping đối tượng
         bd = BangDiem.objects.filter(
-            sinh_vien=sv,
-            ky=hoidong.ky
-        ).order_by("-id").first()
+            sinh_vien_id=sv.ma_sv,
+            ky_id=hoidong.ky_id
+        ).first()
+
+        diem_value = None
+        if bd:
+            # Đảm bảo lấy đúng trường diem_bao_cao (điểm hội đồng)
+            diem_value = bd.diem_bao_cao
 
         data_sv.append({
             "sv": sv,
-            "diem": bd.diem_bao_cao if bd and bd.diem_bao_cao is not None else None,
-            "id": sv.ma_sv
+            "diem": diem_value,
         })
 
     return render(request, "GiangVien/hoi_dong_detail.html", {
         "hoidong": hoidong,
         "giangviens": giangviens,
-        "sinhviens": data_sv,   # 👈 đổi sang data mới
+        "sinhviens": data_sv,  # Key này phải khớp với {% for item in sinhviens %}
         "is_gvpt": is_gvpt,
         "current_page": "hoi_dong"
     })
 
 @require_POST
 def cham_diem_hoi_dong(request, id, ma_sv):
+    sv = get_object_or_404(SinhVien, ma_sv=ma_sv)
+    hoidong = get_object_or_404(HoiDong, id=id)
+    diem_str = request.POST.get("diem")
 
-    sv = SinhVien.objects.get(ma_sv=ma_sv)
-    hoidong = HoiDong.objects.get(id=id)
-
-    diem = request.POST.get("diem")
-
-    bd, _ = BangDiem.objects.get_or_create(
-        sinh_vien=sv,
-        ky=hoidong.ky
-    )
-    if diem:
-        diem = float(diem)
-    bd.diem_bao_cao = diem
-    bd.save()
-
-    # 🔥 auto tính tổng luôn
-    bd.calculate_total()
+    if diem_str:
+        # Sử dụng update_or_create để đảm bảo không tạo bản ghi rác
+        bd, created = BangDiem.objects.update_or_create(
+            sinh_vien=sv,
+            ky=hoidong.ky,
+            defaults={'diem_bao_cao': float(diem_str)}
+        )
+        # Gọi hàm tính tổng kết nếu có
+        bd.calculate_total()
 
     return redirect("GiangVien:hoi_dong_detail", id=id)
