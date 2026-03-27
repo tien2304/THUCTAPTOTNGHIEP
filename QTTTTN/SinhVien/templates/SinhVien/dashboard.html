@@ -4,7 +4,7 @@
 {% block title %}Trang Chủ - MIS{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'SinhVien/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'SinhVien/css/dashboard.css' %}?v=1.3">
 
 <div class="dashboard-container">
 
@@ -59,52 +59,55 @@
     </div>
 
     <div class="section-container">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0;">Nhiệm vụ sắp tới <span class="dot">●</span></h3>
-            <a href="{% url 'SinhVien:nhiem_vu_page' %}" class="view-all" style="color: #007bff; font-weight: 600; text-decoration: none;">
-                Xem tất cả nhiệm vụ
-            </a>
+        <div class="section-header">
+            <h3>Nhiệm vụ sắp tới <span class="dot" style="color: #f59e0b; font-size: 16px; margin-left: 6px;">●</span></h3>
+            <a href="{% url 'SinhVien:nhiem_vu_page' %}" class="view-all">Xem tất cả nhiệm vụ</a>
         </div>
 
         <div class="task-list">
             {% for nv in danh_sach_nhiem_vu %}
-                <div class="task-item {% if nv.is_form %}form-item{% else %}assignment-item{% endif %}"
-                     style="background-color: rgba(239, 246, 255, 0.6) !important; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-
-                    <div class="flex-left" style="display: flex; align-items: center; gap: 16px;">
+                {% if not nv.is_form %}<a href="{{ nv.url }}" class="task-link-wrapper">{% endif %}
+                <div class="task-item">
+                    <div class="flex-left">
                         {% if nv.is_form %}
-                            <div class="blue-icon-container" style="background: #007bff; border-radius: 10px; padding: 10px;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M6 21V19C6 16.7909 7.79086 15 10 15H12M15 19L17 21L21 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <div class="assignment-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"/>
+                                    <path d="M6 21V19C6 16.7909 7.79086 15 10 15H12M15 19L17 21L21 17"/>
                                 </svg>
                             </div>
                         {% else %}
-                            <div class="assignment-icon" style="font-size: 24px; background: white; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid #e2e8f0;">📄</div>
+                            <div class="assignment-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                            </div>
                         {% endif %}
 
-                        <div>
-                            <p class="task-title" style="font-weight: 700; margin: 0; color: #1e293b;">{{ nv.ten }}</p>
-                            <p class="task-desc" style="margin: 0; font-size: 0.85rem; color: #64748b;">
-                                Hạn chót: <span class="blue-text" style="color: #007bff; font-weight: 600;">{{ nv.han_chot }}</span>
+                        <div class="task-text-container">
+                            <p class="task-title">{{ nv.ten }}</p>
+                            <p class="task-desc">
+                                Hạn chót: <span class="blue-text">{{ nv.han_chot }}</span>
                                 {% if nv.is_form %} - Vui lòng hoàn thành thông tin đăng ký{% endif %}
                             </p>
                         </div>
                     </div>
 
                     {% if nv.is_form %}
-                        <a href="{{ nv.url }}" class="btn-fill-form"
-                           style="background: #007bff; color: white; padding: 8px 18px; border-radius: 8px; font-weight: 600; text-decoration: none;">
-                            Điền form
-                        </a>
+                        <a href="{{ nv.url }}" class="btn-fill-form">Điền form</a>
                     {% else %}
-                        <div class="task-status normal" style="font-weight: 800; font-size: 0.75rem; color: #64748b; background: white; padding: 4px 10px; border-radius: 6px;">
-                            CÒN {{ nv.con_lai }}
+                        <div class="task-status {{ nv.loai }}">
+                            {{ nv.con_lai }}
                         </div>
                     {% endif %}
                 </div>
+                {% if not nv.is_form %}</a>{% endif %}
             {% empty %}
-                <div class="empty">Tuyệt vời! Bạn đã hoàn thành hết nhiệm vụ.</div>
+                <div class="empty" style="color: #64748b; font-size: 14px; text-align: center; margin: 10px 0;">Tuyệt vời! Bạn đã hoàn thành hết nhiệm vụ.</div>
             {% endfor %}
         </div>
     </div>
@@ -113,33 +116,126 @@
         <div class="card">
             <div class="card-header">
                 <h3>Tài liệu kỳ thực tập</h3>
-                <span>📂</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
             </div>
             <div class="doc-list">
                 {% for doc in tai_lieu %}
-                    <div class="doc-item">
-                        <div class="doc-icon">📄</div>
-                        <div class="doc-info">
-                            <p class="doc-name">{{ doc.ten }}</p>
-                            <p class="doc-date">{{ doc.ngay_cap_nhat|date:"d/m/Y" }}</p>
+                    <div class="doc-item {% if forloop.counter > 2 %}hidden-doc{% endif %}" {% if forloop.counter > 2 %}style="display: none;"{% endif %}>
+                        {% with lower_url=doc.duong_dan_file.url|lower %}
+                        {% if '.zip' in lower_url or '.rar' in lower_url %}
+                        <div class="doc-icon" style="width: 44px; height: 44px; min-width: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #f3e8ff; margin-right: 14px;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="#a855f7"/>
+                                <path d="M14 8h2v2h-2zm2 2h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm-2 2h2v2h-2z" fill="white"/>
+                            </svg>
                         </div>
-                        <button class="download-btn">📥</button>
+                        <div class="doc-info">
+                            <p class="doc-name">{{ doc.ten_tai_lieu }}</p>
+                            <p class="doc-date">ZIP • {{ doc.ngay_cap_nhat|date:"d/m/Y" }}</p>
+                        </div>
+                        {% elif '.pdf' in lower_url %}
+                        <div class="doc-icon" style="width: 44px; height: 44px; min-width: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #fef2f2; margin-right: 14px;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <text x="8" y="16" font-size="6" font-weight="bold" fill="#ef4444" stroke="none">PDF</text>
+                            </svg>
+                        </div>
+                        <div class="doc-info">
+                            <p class="doc-name">{{ doc.ten_tai_lieu }}</p>
+                            <p class="doc-date">PDF • {{ doc.ngay_cap_nhat|date:"d/m/Y" }}</p>
+                        </div>
+                        {% else %}
+                        <div class="doc-icon" style="width: 44px; height: 44px; min-width: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #eff6ff; margin-right: 14px;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="9" y1="13" x2="15" y2="13"></line>
+                                <line x1="9" y1="17" x2="15" y2="17"></line>
+                            </svg>
+                        </div>
+                        <div class="doc-info">
+                            <p class="doc-name">{{ doc.ten_tai_lieu }}</p>
+                            <p class="doc-date">DOCX • {{ doc.ngay_cap_nhat|date:"d/m/Y" }}</p>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        <a href="{{ doc.duong_dan_file.url }}" download class="download-icon-btn" style="display: flex;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </a>
                     </div>
                 {% empty %}
-                    <p class="empty">Chưa có tài liệu</p>
+                    <p class="empty" style="color: #64748b; font-size: 14px; text-align: center; margin-top: 20px;">Chưa có tài liệu</p>
                 {% endfor %}
+                <button class="btn-outline" id="toggleDocBtn" onclick="toggleDocuments()" style="display: none;">Xem thêm tài liệu</button>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h3>Kho dữ liệu nhận xét</h3>
-                <span>🗄️</span>
+                <h3>Kho dữ liệu nhận xét đơn vị thực tập</h3>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                </svg>
             </div>
-            <p class="desc">Truy cập kho dữ liệu nhận xét từ sinh viên khóa trước.</p>
-            <button class="btn-secondary">Truy cập ngay</button>
+            <p class="repo-desc">
+                Truy cập toàn bộ kho dữ liệu nhận xét chi tiết về các đơn vị thực tập được tổng hợp từ sinh viên các khóa trước.
+            </p>
+
+            <div class="repo-btn-container">
+            <a href="{% url 'SinhVien:tong-hop-nxet' %}" class="repo-card-btn">
+                <div class="repo-icon-block">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        <line x1="12" y1="11" x2="12" y2="17"></line>
+                        <line x1="9" y1="14" x2="15" y2="14"></line>
+                    </svg>
+                </div>
+                <div class="repo-text-block">
+                    <h4>Tổng hợp nhận xét đơn vị thực tập</h4>
+                    <p>Kho dữ liệu đánh giá thực tế từ quá khứ</p>
+                </div>
+                <div class="repo-arrow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+            </div>
         </div>
     </div>
-
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hiddenDocs = document.querySelectorAll('.hidden-doc');
+    const btn = document.getElementById('toggleDocBtn');
+    if (hiddenDocs.length > 0) {
+        btn.style.display = 'block';
+    }
+});
+
+function toggleDocuments() {
+    const hiddenDocs = document.querySelectorAll('.hidden-doc');
+    const btn = document.getElementById('toggleDocBtn');
+    if (!hiddenDocs.length) return;
+    
+    let isHidden = hiddenDocs[0].style.display === 'none';
+    
+    hiddenDocs.forEach(doc => {
+        doc.style.display = isHidden ? 'flex' : 'none';
+    });
+    
+    btn.innerHTML = isHidden ? 'Thu gọn tài liệu' : 'Xem thêm tài liệu';
+}
+</script>
 {% endblock %}

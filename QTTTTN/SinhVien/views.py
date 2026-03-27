@@ -32,8 +32,21 @@ def home(request):
         for t in tasks:
             delta = t.han_nop - now
             days = delta.days
-            loai = "danger" if days < 1 else ("warning" if days <= 3 else "normal")
-            con_lai = f"{days} NGÀY" if days > 0 else f"{int(delta.seconds / 3600)} GIỜ"
+            if days > 2:
+                loai = "warning"
+                con_lai = f"CÒN {days} NGÀY"
+            elif days >= 1 and days <= 2:
+                loai = "danger"
+                con_lai = f"CÒN {days} NGÀY"
+            else:
+                loai = "danger"
+                hours = delta.seconds // 3600
+                minutes = (delta.seconds % 3600) // 60
+                if minutes > 0:
+                    con_lai = f"CÒN {hours} GIỜ {minutes} PHÚT"
+                else:
+                    con_lai = f"CÒN {hours} GIỜ"
+
             danh_sach_nhiem_vu.append({
                 'id': t.id,
                 'ten': t.ten_nhiem_vu,
@@ -41,6 +54,7 @@ def home(request):
                 'con_lai': con_lai,
                 'loai': loai,
                 'url': reverse('SinhVien:nhiem_vu_page'),
+                'is_form': False,
                 'sort_time': t.han_nop
             })
 
@@ -56,9 +70,25 @@ def home(request):
             con_lai_str = "--"
             loai = "normal"
             if f.ngay_ket_thuc:
-                days = (f.ngay_ket_thuc - now_date).days
-                con_lai_str = f"{days} NGÀY" if days > 0 else "Hết hạn"
-                loai = "danger" if days <= 1 else ("warning" if days <= 3 else "normal")
+                delta = timezone.make_aware(timezone.datetime.combine(f.ngay_ket_thuc, timezone.datetime.max.time())) - now
+                days = delta.days
+                if days > 2:
+                    loai = "warning"
+                    con_lai_str = f"CÒN {days} NGÀY"
+                elif days >= 1 and days <= 2:
+                    loai = "danger"
+                    con_lai_str = f"CÒN {days} NGÀY"
+                elif days == 0:
+                    loai = "danger"
+                    hours = delta.seconds // 3600
+                    minutes = (delta.seconds % 3600) // 60
+                    if minutes > 0:
+                        con_lai_str = f"CÒN {hours} GIỜ {minutes} PHÚT"
+                    else:
+                        con_lai_str = f"CÒN {hours} GIỜ"
+                else:
+                    con_lai_str = "Hết hạn"
+                    loai = "danger"
 
             danh_sach_nhiem_vu.append({
                 'id': f.id,
@@ -99,13 +129,13 @@ def nhiem_vu(request):
 
     # Gắn trạng thái bài nộp vào nhiệm vụ
     for task in tasks:
-        bainop = BaiNop.objects.filter(
-            nhiem_vu=task,
-            sinh_vien=sinh_vien
-        ).first()
+        # Lấy bản ghi bài nộp thực sự từ DB
+        bainop = BaiNop.objects.filter(nhiem_vu=task, sinh_vien=sinh_vien).first()
 
         if bainop:
             task.trang_thai = "done"
+            # Đính thẳng object bainop vào task để Template lấy dữ liệu
+            task.thong_tin_nop = bainop
         else:
             if timezone.now() > task.han_nop:
                 task.trang_thai = "late"
@@ -230,3 +260,91 @@ def submit_form(request, public_id):
             return redirect('SinhVien:dien_form', public_id=public_id)
 
     return redirect('SinhVien:sinhvien_home')
+
+
+def tong_hop_nxet(request):
+    """View dành cho sinh viên tra cứu nhận xét đơn vị thực tập."""
+
+    # Định nghĩa các tag cần lấy (Phải khớp với tag ông đã đặt ở app GiangVien)
+    target_tags = ['don_vi_tt', 'email_don_vi', 'sdt_don_vi', 'nhan_xet_dv', 'loi_nhan_dv']
+
+    # Lấy tất cả câu trả lời có gắn các tag này
+    chi_tiet_answers = ChiTietTraLoi.objects.filter(
+        cau_hoi__system_tag__in=target_tags
+    ).select_related('phieu_tra_loi', 'cau_hoi')
+
+    # Gom nhóm dữ liệu theo từng phiếu trả lời (mỗi phiếu là 1 đơn vị/1 SV)
+    data_map = {}
+    for ans in chi_tiet_answers:
+        phieu_id = ans.phieu_tra_loi.id
+        if phieu_id not in data_map:
+            data_map[phieu_id] = {
+                'don_vi': 'Chưa rõ',
+                'email': '-',
+                'sdt': '-',
+                'nhan_xet': '',
+                'loi_nhan': ''
+            }
+
+        tag = ans.cau_hoi.system_tag
+        if tag == 'don_vi_tt':
+            data_map[phieu_id]['don_vi'] = ans.gia_tri
+        elif tag == 'email_don_vi':
+            data_map[phieu_id]['email'] = ans.gia_tri
+        elif tag == 'sdt_don_vi':
+            data_map[phieu_id]['sdt'] = ans.gia_tri
+        elif tag == 'nhan_xet_dv':
+            data_map[phieu_id]['nhan_xet'] = ans.gia_tri
+        elif tag == 'loi_nhan_dv':
+            data_map[phieu_id]['loi_nhan'] = ans.gia_tri
+
+    results_list = list(data_map.values())
+    
+    # ------------------
+    # Xử lý TÌM KIẾM
+    # ------------------
+    search_query = request.GET.get('q', '').strip().lower()
+    if search_query:
+        # Lọc danh sách theo tên công ty hoặc nội dung nhận xét
+        results_list = [
+            item for item in results_list
+            if search_query in item['don_vi'].lower() or search_query in item['nhan_xet'].lower()
+        ]
+
+    paginator = Paginator(results_list, 10) # Hiển thị 10 đơn vị 1 trang
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'results': page_obj,
+        'page_obj': page_obj,
+        'current_page': 'tra_cuu_don_vi',  # Để active menu nếu cần
+        'search_query': search_query
+    }
+    return render(request, "SinhVien/tong_hop_nxet.html", context)
+
+
+@login_required
+def nop_bai_action(request):
+    if request.method == "POST" and request.FILES.get('file_nop'):
+        task_id = request.POST.get('task_id')
+        file_obj = request.FILES['file_nop']
+
+        nguoi_dung = NguoiDung.objects.get(user=request.user)
+        sinh_vien = SinhVien.objects.get(ma_sv=nguoi_dung.username)
+        nhiem_vu_obj = get_object_or_404(NhiemVu, id=task_id)
+
+        # Lưu vào Database qua Model BaiNop
+        # Django sẽ tự động lưu file vật lý vào thư mục /media/assignments/
+        bai_nop, created = BaiNop.objects.update_or_create(
+            nhiem_vu=nhiem_vu_obj,
+            sinh_vien=sinh_vien,
+            defaults={
+                'file_path': file_obj,
+                'ten_file': file_obj.name,
+                'thoi_gian_nop': timezone.now(),
+                'trang_thai': 'Đã nộp'
+            }
+        )
+        messages.success(request, "Nộp bài thành công!")
+    return redirect('SinhVien:nhiem_vu_page')

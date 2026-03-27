@@ -9,6 +9,11 @@
     --transition: all 0.3s ease;
 }
 
+.repo-btn-container {
+    display: flex;
+    flex-direction: column;
+}
+
 .dashboard-container {
     display: flex;
     flex-direction: column;
@@ -37,6 +42,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
 }
 
 .view-all {
@@ -73,23 +81,35 @@
 .task-list {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
+}
+
+.task-text-container {
+    flex: 1;
+    min-width: 0;
 }
 
 .task-title {
-    font-weight: 800;
-    font-size: 18px;
+    font-weight: 700;
+    font-size: 15px;
+    color: #0f172a;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .task-desc {
-    color: #4B5563;
-    font-size: 14px;
-    font-weight: 500;
-    padding-top: 5px;
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .blue-text {
-    color: #137FEC;
+    color: #64748b; /* in new design it's plain text */
 }
 /* FORM ITEM (card lớn) */
 .form-item {
@@ -125,6 +145,8 @@
     border-radius: 8px;
     font-weight: 700;
     text-decoration: none;
+    font-size: 14px;
+    white-space: nowrap;
 }
 
 .btn-fill-form:hover {
@@ -141,27 +163,89 @@
 .flex-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
 }
 
 /* BADGE */
 .task-status {
-    padding: 6px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 11px;
-    font-weight: 800;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
-.task-status.normal {
-    background: #e0f2fe;
-    color: #0369a1;
+.task-status.warning {
+    background-color: #fffbeb !important;
+    color: #d97706 !important;
+}
+
+.task-status.danger {
+    background-color: #fee2e2 !important;
+    color: #ef4444 !important;
+}
+
+.task-status.normal { /* in case there are normal ones */
+    background-color: #f1f5f9 !important;
+    color: #64748b !important;
+}
+
+/* TASK ITEM REDESIGN */
+a.task-link-wrapper {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 12px;
+}
+
+.task-item {
+    background-color: #ffffff !important;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.2s ease;
+}
+
+.task-item:hover {
+    border-color: var(--primary-blue);
+    box-shadow: 0 6px 16px rgba(30, 136, 229, 0.12);
+    transform: translateY(-2px);
+}
+
+.assignment-icon {
+    font-size: 20px !important;
+    background: #f0f9ff !important;
+    color: #0066CC;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px;
+    border: none !important;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* BOTTOM GRID */
 .bottom-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 25px;
+}
+
+.bottom-grid .card {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Card Đơn vị thực tập V3 - Standard */
@@ -215,7 +299,7 @@
 .address-link {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #007bff; /* Màu xanh chuẩn mẫu */
+    color: #0066CC; /* Màu xanh chuẩn mẫu */
 }
 
 .building-wrapper {
@@ -257,7 +341,7 @@
 
 .address-link {
     font-weight: 700;
-    color: #007bff;
+    color: #0066CC;
 }
 
 .loc-icon {
@@ -265,3 +349,183 @@
     height: 18px;
 }
 
+/* Card Kho dữ liệu nhận xét - Removed old btn-secondary styling */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.card-header svg {
+    color: #94a3b8;
+    width: 24px;
+    height: 24px;
+}
+
+.doc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.doc-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    background: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.doc-item:hover {
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    transform: translateY(-2px);
+}
+
+.doc-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f9ff; /* Default light blue */
+    margin-right: 14px;
+}
+
+.doc-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-name {
+    margin: 0;
+    font-weight: 700;
+    font-size: 14px;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-date {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.download-icon-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.download-icon-btn:hover {
+    background: #f1f5f9;
+    color: #0066CC;
+}
+
+.btn-outline {
+    width: 100%;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    color: #0066CC;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: all 0.2s;
+}
+
+.btn-outline:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.repo-desc {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    margin-top: 0;
+}
+
+.repo-card-btn {
+    display: flex;
+    align-items: center;
+    background: #f0f9ff;
+    border: 1px solid #e0f2fe;
+    border-radius: 16px;
+    padding: 20px;
+    text-decoration: none;
+    transition: all 0.2s;
+    margin-top: 10px;
+}
+
+.repo-card-btn:hover {
+    background: #e0f2fe;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.05);
+}
+
+.repo-icon-block {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    background: #007bff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+}
+
+.repo-text-block {
+    flex: 1;
+    min-width: 0;
+}
+
+.repo-text-block h4 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0284c7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.repo-text-block p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.repo-arrow {
+    color: #0284c7;
+}

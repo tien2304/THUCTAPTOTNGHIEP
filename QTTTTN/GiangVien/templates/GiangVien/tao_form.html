@@ -141,20 +141,20 @@ function render() {
                             class="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-4 py-1 outline-none">
                         <option value="">-- Không gắn Tag --</option>
 
-                        <optgroup label="Thông tin Sinh viên">
-                            <option value="ten_sv" ${q.system_tag=="ten_sv"?"selected":""}>Họ tên Sinh viên</option>
+                        <optgroup label="Tổng hợp Đơn vị thực tập">
+                            <option value="don_vi_tt" ${q.system_tag=="don_vi_tt"?"selected":""}>Tên đơn vị thực tập</option>
+                            <option value="email_don_vi" ${q.system_tag=="email_don_vi"?"selected":""}>Email liên hệ đơn vị</option>
+                            <option value="sdt_don_vi" ${q.system_tag=="sdt_don_vi"?"selected":""}>Số điện thoại đơn vị</option>
+                            <option value="dia_diem_dv" ${q.system_tag=="dia_diem_dv"?"selected":""}>Địa điểm đơn vị</option>
+                            <option value="nhan_xet_dv" ${q.system_tag=="nhan_xet_dv"?"selected":""}>Nhận xét về đơn vị</option>
+                            <option value="loi_nhan_dv" ${q.system_tag=="loi_nhan_dv"?"selected":""}>Lời nhắn cho khóa sau</option>
+                        </optgroup>
+
+                        <optgroup label="Thông tin Sinh viên & Phân công">
                             <option value="ma_sv" ${q.system_tag=="ma_sv"?"selected":""}>Mã số Sinh viên</option>
+                            <option value="ten_sv" ${q.system_tag=="ten_sv"?"selected":""}>Họ tên Sinh viên</option>
                             <option value="lop_sh" ${q.system_tag=="lop_sh"?"selected":""}>Lớp sinh hoạt</option>
-                        </optgroup>
-
-                        <optgroup label="Thông tin Phân công">
                             <option value="ten_gvhd" ${q.system_tag=="ten_gvhd"?"selected":""}>Giáo viên hướng dẫn</option>
-                            <option value="don_vi_tt" ${q.system_tag=="don_vi_tt"?"selected":""}>Đơn vị thực tập (Công ty)</option>
-                            <option value="dia_diem_tt" ${q.system_tag=="dia_diem_tt"?"selected":""}>Địa điểm thực tập</option>
-                            <option value="vi_tri_tt" ${q.system_tag=="vi_tri_tt"?"selected":""}>Vị trí thực tập</option>
-                        </optgroup>
-
-                        <optgroup label="Thông tin Đề tài/Báo cáo">
                             <option value="huong_tiep_can" ${q.system_tag=="huong_tiep_can"?"selected":""}>Hướng tiếp cận</option>
                             <option value="hinh_thuc_nhom" ${q.system_tag=="hinh_thuc_nhom"?"selected":""}>Hình thức làm nhóm</option>
                         </optgroup>
