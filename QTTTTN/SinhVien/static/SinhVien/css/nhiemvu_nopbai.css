@@ -45,7 +45,14 @@
 .task-table{
     width:100%;
     border-collapse:collapse;
+    table-layout: fixed;
 }
+
+.task-table th:nth-child(1) { width: 35%; }
+.task-table th:nth-child(2) { width: 14%; }
+.task-table th:nth-child(3) { width: 13%; }
+.task-table th:nth-child(4) { width: 22%; }
+.task-table th:nth-child(5) { width: 16%; }
 .task-row{
     background: #F3F4F6;
     border-bottom: 1px solid #E5E7EB;
@@ -62,6 +69,8 @@
     padding:18px 20px;
     border-top:1px solid #E5E7EB;
     font-size:14px;
+    word-wrap: break-word;
+    word-break: break-word; /* Ensure extremely long unbroken strings also wrap */
 }
 
 .task-name span{
@@ -110,6 +119,12 @@
     border-radius:6px;
     border:1px solid #ddd;
     background:#f3f4f6;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.btn-view:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
 }
 
 .btn-cancel{
@@ -118,6 +133,11 @@
     padding:6px 12px;
     color: #475569;
     font-weight: 700;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.btn-cancel:hover {
+    background: #f8fafc;
 }
 
 .btn-submit{
@@ -127,6 +147,12 @@
     color:white;
     border:none;
     font-weight: 700;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.btn-submit:hover {
+    background: #1d4ed8;
+    box-shadow: 0 2px 4px rgba(37,99,235,0.2);
 }
 
 
@@ -215,9 +241,7 @@ align-items:center;
     height: 22px;
     color: #3b82f6;
 }
-.icon-doc {
-    font-size: 22px;
-}
+
 .header-left h3 {
     margin: 0;
     font-size: 18px;
@@ -374,7 +398,7 @@ gap:10px;
     font-weight: 500 !important;
     margin: 0 !important;
     flex: 1; /* Cho phép giãn để chiếm không gian ngang còn lại */
-    /* Không ép nowrap nữa, để chữ có thể hiển thị bình thường */
+    min-width: 0 !important; /* ÉP ĐỂ TRÁNH TRÀN TEXT */
 }
 
 /* Badge nộp sớm */
@@ -434,7 +458,6 @@ gap:10px;
     font-weight: 600;
     color: #1e293b;
     width: 100%; /* Ép chiếm hết không gian của file-details */
-    max-width: 280px; /* Điểm dừng an toàn để không đè lên nút download */
 }
 
 .fsize {
@@ -517,3 +540,5 @@ gap:10px;
     font-size: 13px;
     text-align: left;
 }
+/* Ẩn hoàn toàn khung chứa thông báo để tránh tạo ra khoảng trống (padding) đùn trang xuống dưới */
+.message-container { display: none !important; }

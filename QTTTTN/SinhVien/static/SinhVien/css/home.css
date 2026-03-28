@@ -331,3 +331,75 @@ svg {
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
+
+/* Messages / Alerts */
+.message-container {
+    padding: 24px 32px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+
+.alert-error,
+.alert-danger {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.alert-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.alert-icon svg {
+    width: 100%;
+    height: 100%;
+    border: none !important;
+    stroke: currentColor;
+}
+
+.alert-text {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+}
+
+.alert-close {
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.5;
+    padding: 0 4px;
+}
+
+.alert-close:hover {
+    opacity: 1;
+}
