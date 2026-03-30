@@ -84,6 +84,7 @@
                         <th>Tên</th>
                         <th>Lớp</th>
                         <th>GVHD</th>
+                        <th>Thao tác</th> <!-- 👈 THÊM -->
                         <th></th>
                     </tr>
                 </thead>
@@ -99,24 +100,32 @@
 </div>
 
 <!-- POPUP -->
-<div id="popup" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center">
-    <div class="bg-white p-6 rounded w-[600px]">
+<!-- POPUP -->
+<div id="popup" class="fixed inset-0 bg-black/40 hidden flex items-center justify-center">
+    <div class="bg-white p-6 rounded w-[700px]">
 
         <h2 class="font-bold mb-4">Chọn sinh viên</h2>
 
         <input id="search" placeholder="Tìm kiếm..."
             class="border p-2 w-full mb-3">
 
-        <div id="list-sv" class="max-h-[300px] overflow-y-auto"></div>
+        <div id="list-sv" class="max-h-[350px] overflow-y-auto border rounded"></div>
 
-        <button onclick="closePopup()" class="mt-4 px-4 py-2 bg-gray-300 rounded">
-            Đóng
-        </button>
+        <div class="flex justify-end gap-3 mt-4">
+            <button onclick="closePopup()" class="px-4 py-2 bg-gray-300 rounded">
+                Đóng
+            </button>
+
+            <button onclick="addSelectedSV()" class="px-4 py-2 bg-blue-600 text-white rounded">
+                Thêm đã chọn
+            </button>
+        </div>
     </div>
 </div>
 
 <script>
 let selectedSV = []
+let tempSelected = []
 let table = null
 
 // INIT SELECT2
@@ -124,44 +133,50 @@ $('#select-gv').select2({
     placeholder: "Chọn giảng viên"
 })
 
-// INIT DATATABLE
+// DATATABLE
 $(document).ready(function () {
-
     table = $('#sv-table').DataTable({
         pageLength: 5,
-        lengthMenu: [5, 10, 20, 50],
-        ordering: true,
-        searching: true,
-        language: {
-            search: "🔍 Tìm kiếm:",
-            lengthMenu: "Hiển thị _MENU_ dòng",
-            info: "Hiển thị _START_ → _END_ / _TOTAL_ sinh viên",
-            paginate: {
-                next: "→",
-                previous: "←"
-            },
-            zeroRecords: "Không tìm thấy dữ liệu"
-        }
+        destroy: true,   // 👈 thêm dòng này
+        searching: true
     });
-
 })
 
-// LOAD SV AJAX
+// ==========================
+// LOAD SV
+// ==========================
 function openPopup(){
+
     $("#popup").removeClass("hidden")
+
+    let selectedGV = $('#select-gv').val() || []
 
     fetch("/giang-vien/hoi-dong/load-sv/")
     .then(res=>res.json())
     .then(data=>{
+
         let html = ""
 
         data.forEach(sv=>{
+
+            // ❌ CHẶN GVHD TRÙNG
+            if(selectedGV.includes(sv.gvhd)){
+                return
+            }
+
             html += `
-                <div class="flex justify-between p-2 border-b">
-                    <span>${sv.ten}</span>
-                    <button onclick="addSV('${sv.id}','${sv.ten}','${sv.lop}','${sv.gvhd}')"
-                        class="text-blue-600">Chọn</button>
-                </div>
+                <label class="flex items-center justify-between p-2 border-b hover:bg-gray-50">
+                    <div>
+                        <b>${sv.ten}</b><br>
+                        <span class="text-sm text-gray-500">${sv.lop}</span>
+                    </div>
+
+                    <input type="checkbox" value="${sv.id}"
+                        data-ten="${sv.ten}"
+                        data-lop="${sv.lop}"
+                        data-gvhd="${sv.gvhd}"
+                        class="sv-checkbox">
+                </label>
             `
         })
 
@@ -173,23 +188,42 @@ function closePopup(){
     $("#popup").addClass("hidden")
 }
 
-// ADD SV
-function addSV(id, ten, lop, gvhd){
+// ==========================
+// ADD MULTI
+// ==========================
+function addSelectedSV(){
 
-    if(selectedSV.find(x=>x.id==id)) return
+    let checkboxes = document.querySelectorAll(".sv-checkbox:checked")
 
-    selectedSV.push({id, ten, lop, gvhd})
+    checkboxes.forEach(cb=>{
+
+        let id = cb.value
+
+        if(selectedSV.find(x => x.id == id)) return
+
+        selectedSV.push({
+            id: id,
+            ten: cb.dataset.ten,
+            lop: cb.dataset.lop,
+            gvhd: cb.dataset.gvhd
+        })
+    })
 
     renderTable()
+    closePopup()
 }
 
+// ==========================
 // REMOVE
+// ==========================
 function removeSV(id){
     selectedSV = selectedSV.filter(x=>x.id!=id)
     renderTable()
 }
 
-// RENDER TABLE (CHUẨN - CHỈ 1 FUNCTION)
+// ==========================
+// RENDER TABLE
+// ==========================
 function renderTable(){
 
     if(!table) return
@@ -206,26 +240,26 @@ function renderTable(){
         ])
     })
 
-    table.draw()
+    table.draw(false) // 👈 QUAN TRỌNG
 
-    // hidden input
+    // update hidden input
     document.getElementById("sv-hidden").value =
         selectedSV.map(x=>x.id).join(",")
 }
 
+// ==========================
 // VALIDATE
+// ==========================
 document.getElementById("form-hoi-dong").addEventListener("submit", function(e){
 
     let gv = $('#select-gv').val()
 
-    // >=2 GV
     if(!gv || gv.length < 2){
         e.preventDefault()
         $("#error-gv").removeClass("hidden")
         return
     }
 
-    // ❌ CHẶN GVHD
     let conflict = selectedSV.some(sv => gv.includes(sv.gvhd))
 
     if(conflict){

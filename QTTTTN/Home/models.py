@@ -171,6 +171,9 @@ class HoiDong_GiangVien(models.Model):
 class HoiDong_SinhVien(models.Model):
     hoi_dong = models.ForeignKey(HoiDong, on_delete=models.CASCADE)
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('sinh_vien', 'hoi_dong')
 class TaiLieu(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     mo_ta = models.TextField()
