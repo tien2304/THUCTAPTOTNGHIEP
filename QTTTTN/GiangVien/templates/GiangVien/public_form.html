@@ -3,7 +3,6 @@
 
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'GiangVien/css/public_form.css' %}">
 
@@ -154,54 +153,28 @@
 
 <script>
     {% if messages %}
-        {% for message in messages %}
-            Swal.fire({
-                html: `
-                    <div class="flex flex-col items-center pt-6 pb-2">
-                        <div class="w-24 h-24 bg-[#f0fdf4] rounded-full flex items-center justify-center mb-6">
-                            <div class="w-[60px] h-[60px] bg-[#22c55e] rounded-full flex items-center justify-center shadow-sm">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                            </div>
+        document.addEventListener("DOMContentLoaded", function() {
+            const modalHtml = `
+            <div id="successModal" class="fixed top-0 left-0 w-full h-full bg-black/40 flex justify-center items-center z-[1000] font-inter">
+                <div class="bg-white w-[480px] max-w-[95%] rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <h3 class="m-0 text-[18px] font-bold text-slate-800">Hoàn tất biểu mẫu</h3>
                         </div>
-                        <h2 class="font-montserrat font-black text-[#1e293b] text-[24px] mb-3">Gửi khảo sát thành công!</h2>
-                        <p class="text-slate-500 font-medium text-[15px] leading-relaxed">Cảm ơn bạn đã hoàn thành khảo sát. Thông tin của bạn<br>đã được ghi lại trên hệ thống.</p>
                     </div>
-                `,
-                showConfirmButton: true,
-                confirmButtonText: 'Quay lại Trang chủ',
-                buttonsStyling: false,
-                didOpen: () => {
-                    const popup = Swal.getPopup();
-                    popup.style.borderRadius = '24px';
-                    popup.style.border = 'none';
-                    
-                    // Giãn wrapper chứa action ra 100% để nút con bên trong thoải mái phình to
-                    const actions = Swal.getActions();
-                    actions.style.width = '100%';
-                    
-                    const btn = Swal.getConfirmButton();
-                    btn.style.width = '85%';
-                    btn.style.backgroundColor = '#0047ab';
-                    btn.style.color = 'white';
-                    btn.style.borderRadius = '12px';
-                    btn.style.padding = '16px 0';
-                    btn.style.fontSize = '16px';
-                    btn.style.fontWeight = 'bold';
-                    btn.style.border = 'none';
-                    btn.style.outline = 'none';
-                    btn.style.boxShadow = '0 4px 14px 0 rgba(0,71,171,0.39)';
-                    btn.style.marginBottom = '20px';
-                    btn.style.cursor = 'pointer';
-                    btn.style.transition = 'all 0.3s ease';
-                    
-                    // Hover effect
-                    btn.onmouseover = () => btn.style.backgroundColor = '#00358a';
-                    btn.onmouseout = () => btn.style.backgroundColor = '#0047ab';
-                }
-            }).then(() => {
-                window.location.href = "{% url 'SinhVien:sinhvien_home' %}";
-            });
-        {% endfor %}
+                    <div class="px-6 py-8 text-center text-slate-600 text-[15px]">
+                        Biểu mẫu của bạn đã được nộp thành công. Dữ liệu khảo sát đã được hệ thống ghi nhận đầy đủ!
+                    </div>
+                    <div class="text-center py-5 px-6 border-t border-slate-50 bg-slate-50/50">
+                        <button onclick="window.location.href='{% url 'SinhVien:sinhvien_home' %}'" class="w-full sm:w-auto px-10 py-2.5 font-bold text-white bg-[#2563eb] rounded-lg cursor-pointer text-[14px] transition-colors hover:bg-[#1d4ed8] shadow-sm">
+                            Quay về trang chủ
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        });
     {% endif %}
 </script>
 {% endblock %}

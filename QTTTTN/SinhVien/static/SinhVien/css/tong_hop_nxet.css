@@ -60,8 +60,7 @@
     background: #ffffff;
     border-radius: 12px;
     overflow-x: auto;
-    border: 1px solid #f3f4f6;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
 }
 
 .nxet-table {
@@ -69,22 +68,23 @@
     text-align: left;
     border-collapse: collapse;
     min-width: 900px;
+    table-layout: fixed;
 }
 
 .nxet-table thead tr {
-    background-color: #f9fafb; /* Màu nền nhẹ nhàng cho header */
+    background-color: #F3F4F6;
+    border-bottom: 1px solid #E5E7EB;
 }
 
 .nxet-table th {
-    font-size: 12px;
-    font-weight: 700; /* Đậm hơn một chút cho rõ tiêu đề */
-    color: #4b5563;   /* Màu chữ tối hơn */
+    font-size: 13px;
+    color: #6b7280;
+    padding: 14px 20px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 16px 20px;
-    border-bottom: 2px solid #e5e7eb; /* Đường kẻ dưới đậm hơn để tách biệt */
     line-height: 1.5;
-    vertical-align: middle; /* Căn giữa theo chiều dọc */
+    vertical-align: middle;
 }
 
 .nxet-table th.align-left {
@@ -96,16 +96,14 @@
 }
 
 .nxet-table td {
-    padding: 20px 20px;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 18px 20px;
+    border-top: 1px solid #E5E7EB;
     vertical-align: top;
     font-size: 14px;
     color: #4b5563;
     line-height: 1.5;
-}
-
-.nxet-table tr:last-child td {
-    border-bottom: 1px solid #f3f4f6;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .col-don-vi {

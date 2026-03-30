@@ -3,7 +3,7 @@
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'SinhVien/css/tong_hop_nxet.css' %}">
+<link rel="stylesheet" href="{% static 'SinhVien/css/tong_hop_nxet.css' %}?v=1.2">
 
 <div class="nxet-container">
     <div class="nxet-header">
@@ -47,25 +47,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td class="col-don-vi"><div class="company-name">FPT Software</div></td>
-                    <td class="col-contact email"><div class="email-text">hr@fsoft.com.vn</div></td>
-                    <td class="col-contact sdt"><div class="sdt-text">0283962388</div></td>
-                    <td class="col-nhan-xet">Môi trường chuyên nghiệp, mentor nhiệt tình...</td>
-                    <td class="col-loi-nhan">Hãy chủ động hỏi đáp và học hỏi quy trình Agile.</td>
-                </tr>
-                <tr>
-                    <td class="col-don-vi"><div class="company-name">VNG Corporation</div></td>
-                    <td class="col-contact email"><div class="email-text">recruitment@vng.com.vn</div></td>
-                    <td class="col-contact sdt"><div class="sdt-text">0283962388</div></td>
-                    <td class="col-nhan-xet">Văn hóa trẻ trung, năng động, nhiều thử thách...</td>
-                    <td class="col-loi-nhan">Nên trau dồi kiến thức về cấu trúc dữ liệu và giải thuật.</td>
-                </tr>
-                <tr>
-                    <td class="col-don-vi"><div class="company-name">Shopee Vietnam</div></td>
-                    <td class="col-contact email"><div class="email-text">careers@shopee.vn</div></td>
-                    <td class="col-contact sdt"><div class="sdt-text">0283962388</div></td>
-                    <td class="col-nhan-xet">Áp lực công việc cao nhưng học hỏi được nhiều...</td>
-                    <td class="col-loi-nhan">Quản lý thời gian tốt là chìa khóa thành công ở đây.</td>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af;">Không tìm thấy thông tin đơn vị nào khớp với tìm kiếm của bạn.</td>
                 </tr>
                 {% endfor %}
             </tbody>
