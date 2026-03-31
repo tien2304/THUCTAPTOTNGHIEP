@@ -3,6 +3,51 @@
 {% block title %}Quản lý sinh viên – Giáo Vụ{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'GiaoVu/css/sinh_vien.css' %}">
+<style>
+/* ÉP BUỘC CSS ĐỂ TRÁNH LỖI CACHE */
+.filter-bar {
+    background: #fff !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 16px 24px !important;
+    margin-bottom: 24px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: flex-start !important;
+    box-shadow: none !important;
+}
+
+.filter-label {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin: 0 !important;
+}
+
+.select-ky {
+    height: 40px !important;
+    padding: 0 32px 0 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center !important;
+    appearance: none !important;
+    font-size: 14px !important;
+    color: #1e293b !important;
+    cursor: pointer !important;
+    width: 350px !important;
+    max-width: 100% !important;
+}
+
+.select-ky:focus, .select-ky:hover {
+    outline: none !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    background-color: #fff !important;
+}
+</style>
 {% endblock %}
 {% block content %}
 <div class="page-container">
@@ -12,7 +57,7 @@
     </div>
 
     <div class="filter-bar">
-        <label class="filter-label">Học kỳ:</label>
+        <label class="filter-label">Học kỳ</label>
         <form method="get" id="filterForm">
             <select name="ky" class="select-ky" id="kySelect" onchange="document.getElementById('filterForm').submit()">
                 <option value="">-- Tất cả --</option>

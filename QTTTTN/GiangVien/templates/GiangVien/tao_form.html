@@ -5,7 +5,16 @@
 <link rel="stylesheet" href="{% static 'GiangVien/css/tao_form.css' %}">
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<div class="mt-4 mb-6 sticky top-0 bg-white z-10 pt-2">
+    {% if is_edit %}
+    <div class="flex border-b border-gray-200 w-full justify-center gap-2 pb-2">
+        <button id="tab-btn-cau-hoi" type="button" onclick="switchTab('cau-hoi')" class="px-6 py-2 font-semibold text-blue-600 border border-gray-900 rounded-sm transition-colors">Câu hỏi</button>
+        <button id="tab-btn-cau-tra-loi" type="button" onclick="switchTab('cau-tra-loi')" class="px-6 py-2 font-medium text-gray-500 rounded-sm hover:text-gray-700 transition-colors">Câu trả lời</button>
+    </div>
+    {% endif %}
+</div>
 
+<div id="tab-content-cau-hoi">
 <div class="form-container">
     <div class="flex-1">
         <form method="POST" id="saveForm">
@@ -67,11 +76,86 @@
         </div>
     </div>
 </div>
+</div> <!-- ĐÓNG TAB-CONTENT-CAU-HOI Ở ĐÂY -->
+
+{% if is_edit %}
+<div id="tab-content-cau-tra-loi" class="hidden max-w-6xl mx-auto mt-0 pb-20">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ responses_list|length }} Câu trả lời</h2>
+        
+        {% if responses_list %}
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <div class="overflow-x-auto bg-white">
+                <table class="w-full text-sm text-left align-top">
+                    <thead class="bg-gray-50 text-gray-700 border-b border-gray-200">
+                        <tr class="divide-x divide-gray-200">
+                            <th class="px-5 py-4 font-semibold min-w-[140px] whitespace-nowrap">Mã sinh viên</th>
+                            <th class="px-5 py-4 font-semibold min-w-[200px] whitespace-nowrap">Họ và tên</th>
+                            <th class="px-5 py-4 font-semibold min-w-[160px] whitespace-nowrap">Thời gian nộp</th>
+                            {% for q in questions_list %}
+                            <th class="px-5 py-4 font-semibold min-w-[280px] text-gray-600">{{ q.title }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for res in responses_list %}
+                        <tr class="hover:bg-blue-50/30 transition-colors divide-x divide-gray-200">
+                            <td class="px-5 py-4 font-medium text-gray-900 whitespace-nowrap">{{ res.ma_sv }}</td>
+                            <td class="px-5 py-4 font-medium text-gray-900 whitespace-nowrap">{{ res.ho_ten }}</td>
+                            <td class="px-5 py-4 text-gray-500 whitespace-nowrap">{{ res.thoi_gian }}</td>
+                            {% for ans in res.answers %}
+                                <td class="px-5 py-4 text-gray-700 leading-relaxed">{{ ans }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+            <span class="material-icons text-gray-400 text-5xl mb-3">inbox</span>
+            <p class="text-gray-500 font-medium">Chưa có sinh viên nào trả lời biểu mẫu này.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 <script>
+// TAB LOGIC
+function switchTab(tabId) {
+    const isEdit = {{ is_edit|lower|default:"false" }};
+    if (!isEdit) return;
+
+    const btnCauHoi = document.getElementById('tab-btn-cau-hoi');
+    const btnCauTraLoi = document.getElementById('tab-btn-cau-tra-loi');
+
+    if (tabId === 'cau-hoi') {
+        document.getElementById('tab-content-cau-hoi').classList.remove('hidden');
+        document.getElementById('tab-content-cau-tra-loi').classList.add('hidden');
+        
+        btnCauHoi.className = 'px-6 py-2 font-semibold text-blue-600 border border-gray-900 rounded-sm transition-colors';
+        btnCauTraLoi.className = 'px-6 py-2 font-medium text-gray-500 rounded-sm hover:text-gray-700 transition-colors';
+        
+        const tb = document.querySelector('.toolbar-outer');
+        if(tb) tb.style.display = 'block';
+    } else {
+        document.getElementById('tab-content-cau-hoi').classList.add('hidden');
+        document.getElementById('tab-content-cau-tra-loi').classList.remove('hidden');
+        
+        btnCauTraLoi.className = 'px-6 py-2 font-semibold text-blue-600 border border-gray-900 rounded-sm transition-colors';
+        btnCauHoi.className = 'px-6 py-2 font-medium text-gray-500 rounded-sm hover:text-gray-700 transition-colors';
+        
+        const tb = document.querySelector('.toolbar-outer');
+        if(tb) tb.style.display = 'none';
+    }
+}
+
 // 1. Nhận dữ liệu JSON từ Django truyền xuống
 // Nếu questions_json không có, nó sẽ mặc định là mảng rỗng []
 let questions = {{ questions_json|safe|default:"[]" }};
+let danh_sach_gv = {{ danh_sach_gv_json|safe|default:"[]" }};
 
 // 2. Hàm khởi chạy khi trang load xong
 window.onload = function() {
@@ -154,7 +238,7 @@ function render() {
                             <option value="ma_sv" ${q.system_tag=="ma_sv"?"selected":""}>Mã số Sinh viên</option>
                             <option value="ten_sv" ${q.system_tag=="ten_sv"?"selected":""}>Họ tên Sinh viên</option>
                             <option value="lop_sh" ${q.system_tag=="lop_sh"?"selected":""}>Lớp sinh hoạt</option>
-                            <option value="ten_gvhd" ${q.system_tag=="ten_gvhd"?"selected":""}>Giáo viên hướng dẫn</option>
+                            <option value="ten_gvhd" ${q.system_tag=="ten_gvhd"?"selected":""}>Giảng viên hướng dẫn</option>
                             <option value="huong_tiep_can" ${q.system_tag=="huong_tiep_can"?"selected":""}>Hướng tiếp cận</option>
                             <option value="hinh_thuc_nhom" ${q.system_tag=="hinh_thuc_nhom"?"selected":""}>Hình thức làm nhóm</option>
                             <option value="de_tai_tt" ${q.system_tag=="de_tai_tt"?"selected":""}>Đề tài thực tập</option>
@@ -206,6 +290,15 @@ function updateVal(id, key, val) {
     let q = findQ(id);
     if(q) {
         q[key] = val;
+        
+        // AUTO ĐIỀN DANH SÁCH GIẢNG VIÊN VÀO TÙY CHỌN NẾU CHỌN TAG ten_gvhd
+        if (key === 'system_tag' && val === 'ten_gvhd' && danh_sach_gv.length > 0) {
+            q.type = 'SELECT';
+            q.options = danh_sach_gv.map(gv => ({text: gv.ho_ten}));
+            render();
+            return;
+        }
+
         if(key === 'type') {
             q.rows = val === "LIKERT" ? [{text: "Tiêu chí 1"}] : [];
             q.options = ["RADIO", "CHECKBOX", "SELECT"].includes(val) ? [{text: "Tùy chọn 1"}] : [];

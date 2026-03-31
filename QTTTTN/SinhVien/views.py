@@ -21,7 +21,8 @@ def home(request):
 
     giang_vien = None
     if ky_hien_tai:
-        phan_cong = PhanCongGVHD.objects.filter(sinh_vien=sinh_vien, ky=ky_hien_tai).first()
+        # CHỈ TRẢ VỀ GVHD NẾU ĐƯỢC PHÊ DUYỆT (trang_thai = 2)
+        phan_cong = PhanCongGVHD.objects.filter(sinh_vien=sinh_vien, ky=ky_hien_tai, trang_thai=2).first()
         if phan_cong:
             giang_vien = phan_cong.giang_vien
 

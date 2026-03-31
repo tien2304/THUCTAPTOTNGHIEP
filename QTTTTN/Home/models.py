@@ -117,7 +117,8 @@ class PhanCongGVHD(models.Model):
     giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ngay_phan_cong = models.DateTimeField(auto_now_add=True)
-    trang_thai = models.IntegerField(default=1)  # 1: Chờ, 2: Đã phân công
+    trang_thai = models.IntegerField(default=1)  # 1: Chờ duyệt, 2: Đã phê duyệt, 3: Bị từ chối
+    ly_do_tu_choi = models.TextField(blank=True, null=True)
 class PhanCongGVPT(models.Model):
     giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)

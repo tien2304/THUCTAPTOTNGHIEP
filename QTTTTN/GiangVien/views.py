@@ -1,8 +1,10 @@
 from django.shortcuts import render
+from django.utils import timezone
 from Home.models import (GiangVien, PhanCongGVPT,SinhVien,
                          PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon, BaiNop, NhiemVu, BangDiem, KyThucTap,
                          KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia, HoiDong, HoiDong_SinhVien,HoiDong_GiangVien)
 from django.shortcuts import get_object_or_404
+from django.contrib import messages
 
 def home_view(request):
     """Trang chủ dành cho Giảng Viên."""
@@ -28,7 +30,8 @@ def sinhvien_huongdan(request):
     gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
 
     danh_sach = PhanCongGVHD.objects.filter(
-        giang_vien=gv
+        giang_vien=gv,
+        trang_thai=2 # CHỈ SHOW KHI TRƯỞNG BỘ MÔN ĐÃ DUYỆT
     ).select_related('sinh_vien', 'ky')
 
     for item in danh_sach:
@@ -205,6 +208,17 @@ def tao_form(request):
     # Phải dùng đúng tên biến 'danh_sach_ky' như trong file HTML của ông
     danh_sach_ky = KyThucTap.objects.all().order_by("-id")
     ky_moi_nhat = danh_sach_ky.first()
+    
+    # Danh sách giảng viên để tự động điền vào tạo form đánh giá (loại Giáo vụ và thêm học vị)
+    gvs = GiangVien.objects.exclude(chuc_vu='Giáo vụ').order_by('ho_ten')
+    danh_sach_gv = []
+    prefix_map = {'Thạc sĩ': 'ThS.', 'Tiến sĩ': 'TS.', 'Phó Giáo sư': 'PGS.TS.', 'Giáo sư': 'GS.TS.'}
+    for gv in gvs:
+        prefix = prefix_map.get(gv.hoc_vi, '')
+        hovaten = f"{prefix} {gv.ho_ten}".strip() if prefix else gv.ho_ten
+        if gv.chuyen_mon:
+            hovaten += f" ({gv.chuyen_mon})"
+        danh_sach_gv.append({'ma_gv': gv.ma_gv, 'ho_ten': hovaten})
 
     if request.method == "POST":
         raw = request.POST.get("form_data")
@@ -249,7 +263,8 @@ def tao_form(request):
     return render(request, "GiangVien/tao_form.html", {
         "danh_sach_ky": danh_sach_ky,
         "ky_moi_nhat": ky_moi_nhat,
-        "is_gvpt": get_is_gvpt(request)
+        "is_gvpt": get_is_gvpt(request),
+        "danh_sach_gv_json": json.dumps(danh_sach_gv)
     })
 
 def form_detail(request, public_id):
@@ -268,6 +283,17 @@ from collections import Counter
 def edit_form(request, public_id):
     form = get_object_or_404(MauKhaoSat, public_id=public_id)
     danh_sach_ky = KyThucTap.objects.all().order_by("-id")
+    
+    # Danh sách giảng viên
+    gvs = GiangVien.objects.exclude(chuc_vu='Giáo vụ').order_by('ho_ten')
+    danh_sach_gv = []
+    prefix_map = {'Thạc sĩ': 'ThS.', 'Tiến sĩ': 'TS.', 'Phó Giáo sư': 'PGS.TS.', 'Giáo sư': 'GS.TS.'}
+    for gv in gvs:
+        prefix = prefix_map.get(gv.hoc_vi, '')
+        hovaten = f"{prefix} {gv.ho_ten}".strip() if prefix else gv.ho_ten
+        if gv.chuyen_mon:
+            hovaten += f" ({gv.chuyen_mon})"
+        danh_sach_gv.append({'ma_gv': gv.ma_gv, 'ho_ten': hovaten})
 
     if request.method == "POST":
         data = json.loads(request.POST.get("form_data"))
@@ -285,34 +311,62 @@ def edit_form(request, public_id):
 
         form.save()
 
-        # 2. Xóa câu hỏi cũ để ghi đè (hoặc cập nhật tùy logic của ông)
-        form.cau_hoi.all().delete()
+        form.save()
 
-        # 3. Lưu danh sách câu hỏi mới
-        for i, q in enumerate(data["questions"]):
-            cauhoi = CauHoi.objects.create(
-                mau_khao_sat=form,
-                noi_dung=q["title"],
-                loai_cau_hoi=q["type"],
-                thu_tu=i,
-                system_tag=q.get("system_tag", "")
-            )
+        # So sánh câu hỏi cũ và mới để quyết định có reset bài nộp hay không
+        old_questions = list(form.cau_hoi.all().order_by('thu_tu'))
+        new_questions_data = data.get("questions", [])
 
-            # Lưu Options (Cho Radio, Checkbox, Select)
-            for op in q.get("options", []):
-                if op.get("text"):  # Chỉ lưu nếu có nội dung
-                    LuaChon.objects.create(
-                        cau_hoi=cauhoi,
-                        noi_dung_option=op["text"]
-                    )
+        is_changed = False
+        if len(old_questions) != len(new_questions_data):
+            is_changed = True
+        else:
+            for i, q in enumerate(new_questions_data):
+                old_q = old_questions[i]
+                if (old_q.noi_dung != q["title"] or 
+                    old_q.loai_cau_hoi != q["type"] or 
+                    (old_q.system_tag or "") != (q.get("system_tag", ""))):
+                    is_changed = True
+                    break
+                
+                # Kiểm tra options
+                old_opts = list(old_q.options.all().order_by('id'))
+                new_opts = q.get("options", [])
+                if len(old_opts) != len([o for o in new_opts if o.get("text")]):
+                    is_changed = True
+                    break
+                
+                # Kiểm tra rows (Tiêu chí)
+                old_rows = list(old_q.tieuchidanhgia_set.all().order_by('id'))
+                new_rows = q.get("rows", [])
+                if len(old_rows) != len([r for r in new_rows if r.get("text")]):
+                    is_changed = True
+                    break
 
-            # SỬA TẠI ĐÂY: Đổi 'criteria' thành 'rows' để khớp với JS
-            for tc in q.get("rows", []):
-                if tc.get("text"):
-                    TieuChiDanhGia.objects.create(
-                        cau_hoi=cauhoi,
-                        noi_dung=tc["text"]
-                    )
+        if is_changed:
+            # Nếu có thay đổi câu hỏi, xoá bài nộp cũ để SV điền lại
+            PhieuTraLoi.objects.filter(mau_khao_sat=form).delete()
+            
+            # Xoá câu hỏi cũ và tạo mới
+            form.cau_hoi.all().delete()
+            for i, q in enumerate(new_questions_data):
+                cauhoi = CauHoi.objects.create(
+                    mau_khao_sat=form,
+                    noi_dung=q["title"],
+                    loai_cau_hoi=q["type"],
+                    thu_tu=i,
+                    system_tag=q.get("system_tag", "")
+                )
+                for op in q.get("options", []):
+                    if op.get("text"):
+                        LuaChon.objects.create(cau_hoi=cauhoi, noi_dung_option=op["text"])
+                for tc in q.get("rows", []):
+                    if tc.get("text"):
+                        TieuChiDanhGia.objects.create(cau_hoi=cauhoi, noi_dung=tc["text"])
+            
+            messages.warning(request, "Đã cập nhật câu hỏi và reset danh sách bài nộp để sinh viên điền lại.")
+        else:
+            messages.success(request, "Đã cập nhật thông tin form thành công (Câu hỏi không đổi, bảo lưu bài nộp).")
 
         return redirect("GiangVien:edit_form", public_id=public_id)
 
@@ -344,6 +398,28 @@ def edit_form(request, public_id):
             "stats": dict(stats)
         })
 
+    # ===== LOAD RESPONSES =====
+    responses_list = []
+    phieu_list = PhieuTraLoi.objects.filter(mau_khao_sat=form).select_related('sinh_vien').order_by('-thoi_gian_nop')
+    for phieu in phieu_list:
+        ans_dict = {}
+        for c in phieu.answers.all():
+            if c.cau_hoi_id not in ans_dict:
+                ans_dict[c.cau_hoi_id] = []
+            ans_dict[c.cau_hoi_id].append(c.gia_tri)
+            
+        ans_list = []
+        for q in questions_data:
+            ans = ans_dict.get(q["id"], ["-"])
+            ans_list.append(", ".join(ans) if isinstance(ans, list) else ans)
+
+        responses_list.append({
+            "ma_sv": phieu.sinh_vien.ma_sv,
+            "ho_ten": phieu.sinh_vien.ho_ten,
+            "thoi_gian": timezone.localtime(phieu.thoi_gian_nop).strftime('%d/%m/%Y %H:%M') if phieu.thoi_gian_nop else "-",
+            "answers": ans_list
+        })
+
     return render(request, "GiangVien/tao_form.html", {
         "form": form,
         "questions_json": json.dumps(questions_data),  # Truyền xuống để JS render()
@@ -351,7 +427,10 @@ def edit_form(request, public_id):
         "danh_sach_ky": danh_sach_ky,
         "gvhd_stats": dict(gvhd_counter),
         "is_edit": True,
-        "is_gvpt": get_is_gvpt(request)
+        "is_gvpt": get_is_gvpt(request),
+        "danh_sach_gv_json": json.dumps(danh_sach_gv),
+        "questions_list": questions_data,
+        "responses_list": responses_list
     })
 def xoa_form(request, public_id):
     # Chỉ cho phép xóa nếu là phương thức POST (để bảo mật)
@@ -409,21 +488,32 @@ def save_assign(request):
 
         sv_ids = request.POST.getlist("sv")
         gv_name = request.POST.get("gv")
+        ky_id = request.POST.get("ky_id")
 
-        gv = GiangVien.objects.get(ho_ten=gv_name)
-        ky = KyThucTap.objects.last()
+        if not gv_name:
+            # Chọn "-- Chưa phân --" tức là xoá phân công
+            for sv_id in sv_ids:
+                sv = SinhVien.objects.get(ma_sv=sv_id)
+                PhanCongGVHD.objects.filter(sinh_vien=sv).delete()
+        else:
+            gv = GiangVien.objects.get(ho_ten=gv_name)
+            
+            if ky_id:
+                ky = KyThucTap.objects.get(id=ky_id)
+            else:
+                ky = KyThucTap.objects.order_by("-id").first()
 
-        for sv_id in sv_ids:
-            sv = SinhVien.objects.get(ma_sv=sv_id)
+            for sv_id in sv_ids:
+                sv = SinhVien.objects.get(ma_sv=sv_id)
 
-            PhanCongGVHD.objects.update_or_create(
-                sinh_vien=sv,
-                defaults={
-                    "giang_vien": gv,
-                    "ky": ky,
-                    "trang_thai": 2
-                }
-            )
+                PhanCongGVHD.objects.update_or_create(
+                    sinh_vien=sv,
+                    defaults={
+                        "giang_vien": gv,
+                        "ky": ky,
+                        "trang_thai": 2
+                    }
+                )
 
     return redirect("GiangVien:phan_cong")
 
@@ -445,63 +535,112 @@ from django.http import JsonResponse
 # ========================
 # LẤY FORM NGUYỆN VỌNG
 # ========================
-def get_form_nguyen_vong():
+def get_form_nguyen_vong(ky_id=None):
+    if ky_id:
+        ky = KyThucTap.objects.filter(id=ky_id).first()
+    else:
+        ky = KyThucTap.objects.order_by("-id").first()
 
-    ky = KyThucTap.objects.order_by("-id").first()
-
-    form = MauKhaoSat.objects.filter(
-        ky=ky,
-        cau_hoi__system_tag__in=["GVHD_1", "GVHD_2"]
-    ).distinct().order_by("-ngay_tao").first()
+    form = None
+    if ky:
+        form = MauKhaoSat.objects.filter(
+            ky=ky,
+            cau_hoi__system_tag__in=["GVHD_1", "GVHD_2", "ten_gvhd", "gvhd_1", "gvhd_2"]
+        ).distinct().order_by("-ngay_tao").first()
+        
+        if not form:
+            form = MauKhaoSat.objects.filter(ky=ky).order_by("-ngay_tao").first()
 
     return ky, form
-
 
 # ========================
 # DASHBOARD
 # ========================
 def phan_cong_dashboard(request):
+    ky_id = request.GET.get('ky_id')
+    ky, form = get_form_nguyen_vong(ky_id)
+    ky_list = KyThucTap.objects.all().order_by('-id')
 
-    ky, form = get_form_nguyen_vong()
-
-    if not form:
-        return render(request, "GiangVien/phan_cong.html", {
-            "data": [],
-            "gv_stats": [],
-            "is_gvpt": get_is_gvpt(request)
-        })
-
-    sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
+    # Luôn lấy danh sách sinh viên của kỳ hiện tại
+    if ky:
+        sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
+    else:
+        sinhviens = SinhVien.objects.all()
 
     data = []
+    gv_wish_count = defaultdict(int)
+
+    # 🔥 Build map: plain ho_ten → display name có prefix (ThS./TS./...)
+    PREFIX_MAP = {'Thạc sĩ': 'ThS.', 'Tiến sĩ': 'TS.', 'Phó Giáo sư': 'PGS.TS.', 'Giáo sư': 'GS.TS.'}
+    gv_display_map = {}  # {"Lê Hoàng Nam": "ThS. Lê Hoàng Nam"}
+    for _gv in GiangVien.objects.exclude(chuc_vu='Giáo vụ'):
+        pf = PREFIX_MAP.get(_gv.hoc_vi, '')
+        gv_display_map[_gv.ho_ten] = f"{pf} {_gv.ho_ten}".strip() if pf else _gv.ho_ten
 
     for sv in sinhviens:
-
-        phieu = PhieuTraLoi.objects.filter(
-            sinh_vien=sv,
-            mau_khao_sat=form
-        ).first()
-
         nv1 = ""
         nv2 = ""
         de_tai = ""
         group = ""
+        huong_tc = ""
+        linh_vuc = ""
 
-        if phieu:
-            for a in phieu.answers.all():
-                tag = (a.cau_hoi.system_tag or "").strip().upper()
-                val = (a.gia_tri or "").strip()
+        if form:
+            phieu = PhieuTraLoi.objects.filter(
+                sinh_vien=sv,
+                mau_khao_sat=form
+            ).first()
 
-                if tag == "GVHD_1":
-                    nv1 = val
-                elif tag == "GVHD_2":
-                    nv2 = val
-                elif tag == "DE_TAI":
-                    de_tai = val
-                elif tag == "GROUP":
-                    group = val
+            if phieu:
+                for a in phieu.answers.all():
+                    tag = (a.cau_hoi.system_tag or "").strip().lower()
+                    val = (a.gia_tri or "").strip()
 
-        pc = PhanCongGVHD.objects.filter(sinh_vien=sv, ky=ky).first()
+                    if tag in ["gvhd_1", "ten_gvhd"]:
+                        clean_val = val.split('(')[0].strip() if '(' in val else val
+
+                        if nv1:
+                            nv1 += f"\n{clean_val}"
+                        else:
+                            nv1 = clean_val
+                        gv_wish_count[clean_val.lower()] += 1
+
+                    elif tag == "gvhd_2":
+                        clean_val = val.split('(')[0].strip() if '(' in val else val
+
+                        if nv2:
+                            nv2 += f"\n{clean_val}"
+                        else:
+                            nv2 = clean_val
+                        gv_wish_count[clean_val.lower()] += 1
+                    
+                    elif tag == "de_tai":
+                        if de_tai:
+                            de_tai += f", {val}"
+                        else:
+                            de_tai = val
+                    elif tag == "huong_tiep_can":
+                        if huong_tc:
+                            if val not in huong_tc:
+                                huong_tc += f", {val}"
+                        else:
+                            huong_tc = val
+                        # 🔥 Lĩnh vực = những gì SV điền vào câu hướng tiếp cận
+                        if linh_vuc:
+                            if val not in linh_vuc:
+                                linh_vuc += f"\n{val}"
+                        else:
+                            linh_vuc = val
+                    elif tag in ["group", "hinh_thuc_nhom"]:
+                        # Chỉ lưu nếu SV điền tên thực sự, bỏ qua "Không có", "Không có làm nhóm với ai"...
+                        if val and not val.strip().lower().startswith("không"):
+                            if group:
+                                if val not in group:
+                                    group += f", {val}"
+                            else:
+                                group = val
+
+        pc = PhanCongGVHD.objects.filter(sinh_vien=sv, ky=ky).first() if ky else PhanCongGVHD.objects.filter(sinh_vien=sv).first()
 
         status = ""
         if pc:
@@ -510,39 +649,115 @@ def phan_cong_dashboard(request):
             elif pc.giang_vien.ho_ten == nv2:
                 status = "NV2"
 
+        # 🔥 Tạo danh sách GVHD đề xuất từ nv1+nv2+linh_vuc
+        # value = plain ho_ten (lưu DB), display = tên có prefix (hiện UI)
+        de_xuat_gvhd = []
+        seen_values = set()
+
+        def strip_prefix(name):
+            for p in ['GS.TS. ', 'PGS.TS. ', 'TS. ', 'ThS. ']:
+                if name.startswith(p):
+                    return name[len(p):]
+            return name
+
+        # 1. Từ nguyện vọng
+        for raw in [nv1, nv2]:
+            for gv_name in raw.split("\n"):
+                plain = strip_prefix(gv_name.strip())
+                if plain and plain not in seen_values:
+                    seen_values.add(plain)
+                    de_xuat_gvhd.append({
+                        "value": plain,
+                        "display": gv_display_map.get(plain, plain)
+                    })
+
+        # 2. Từ lĩnh vực: match chuyen_mon
+        if linh_vuc and linh_vuc != "--":
+            import re
+            def clean_text(text):
+                if not text: return ""
+                # Chuyển về chữ thường, xoá khoảng trắng thừa
+                text = text.lower().strip()
+                # Hàm đơn giản bỏ dấu tiếng Việt để so sánh khớp hơn
+                import unicodedata
+                return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+
+            # Tách từ khóa bằng các ký tự phân cách phổ biến (xuống dòng, phẩy, chấm phẩy)
+            raw_keywords = re.split(r'[\n,;]', linh_vuc)
+            keywords = [clean_text(kw) for kw in raw_keywords if len(kw.strip()) > 2]
+            
+            for gv in GiangVien.objects.exclude(chuc_vu='Giáo vụ'):
+                gv_cm_clean = clean_text(gv.chuyen_mon or "")
+                for kw_clean in keywords:
+                    if kw_clean and (kw_clean in gv_cm_clean or gv_cm_clean in kw_clean):
+                        if gv.ho_ten not in seen_values:
+                            seen_values.add(gv.ho_ten)
+                            de_xuat_gvhd.append({
+                                "value": gv.ho_ten,
+                                "display": gv_display_map.get(gv.ho_ten, gv.ho_ten)
+                            })
+                        break
+
+        # 3. Đảm bảo GVHD HIỆN TẠI luôn luôn nằm trong danh sách đề xuất (nếu chưa có) để hiển thị đúng Dropdown
+        if pc and pc.giang_vien:
+            current_gv = pc.giang_vien.ho_ten
+            if current_gv not in seen_values:
+                seen_values.add(current_gv)
+                de_xuat_gvhd.append({
+                    "value": current_gv,
+                    "display": gv_display_map.get(current_gv, current_gv)
+                })
+
         data.append({
             "id": sv.ma_sv,
             "ten": sv.ho_ten,
             "lop": sv.lop,
             "de_tai": de_tai or "--",
+            "huong_tc": huong_tc or "--",
+            "linh_vuc": linh_vuc or "--",
             "nv1": nv1,
             "nv2": nv2,
+            "de_xuat_gvhd": de_xuat_gvhd,
             "group": group or "Không",
             "gvhd": pc.giang_vien.ho_ten if pc else "",
+            "trang_thai": pc.trang_thai if pc else 1,
+            "ly_do_tu_choi": pc.ly_do_tu_choi if pc else "",
             "status": status
         })
 
-    # SORT NV1 lên trước
+    # Ưu tiên những người có nv1 lên trước tiên, sau đó tới người chưa có nv
     data.sort(key=lambda x: (0 if x["nv1"] else 1))
 
     # ===== GV STATS =====
     gv_stats = []
+    gv_assigned_count = defaultdict(int)
+
+    # Tính số lượng SV ĐÃ phân công cho mỗi GVHD trong kỳ hiện tại
+    query = PhanCongGVHD.objects.filter(ky=ky) if ky else PhanCongGVHD.objects.all()
+    for pc in query:
+        if pc.giang_vien:
+            gv_assigned_count[pc.giang_vien.ho_ten] += 1
 
     for gv in GiangVien.objects.all():
-        count = gv_wish_count.get(gv.ho_ten.strip().lower(), 0)
+        count = gv_assigned_count.get(gv.ho_ten, 0)
+        # Chỉ hiện GV nếu có sinh viên được phân công 
+        if count > 0:
+            gv_stats.append({
+                "ten": gv_display_map.get(gv.ho_ten, gv.ho_ten),
+                "count": count,
+                "overload": count > 10
+            })
 
-        gv_stats.append({
-            "ten": gv.ho_ten,
-            "count": count,
-            "overload": count > 10
-        })
+    # Sắp xếp theo số lượng giảm dần
+    gv_stats.sort(key=lambda x: -x["count"])
 
     return render(request, "GiangVien/phan_cong.html", {
         "data": data,
         "gv_stats": gv_stats,
-        "is_gvpt": get_is_gvpt(request)
+        "is_gvpt": get_is_gvpt(request),
+        "ky_list": ky_list,
+        "current_ky": ky
     })
-gv_wish_count = defaultdict(int)
 
 # ========================
 # AUTO ASSIGN (UI)
@@ -564,22 +779,46 @@ def update_phan_cong(request):
 
         sv_id = request.POST.get("sv")
         gv_name = request.POST.get("gv")
+        ky_id = request.POST.get("ky_id")
 
-        sv = SinhVien.objects.get(ma_sv=sv_id)
-        gv = GiangVien.objects.get(ho_ten=gv_name)
+        try:
+            sv = SinhVien.objects.get(ma_sv=sv_id)
+            
+            if not gv_name:
+                # Xoá phân công nếu chọn "-- Chưa phân --"
+                # Nhưng KHÔNG cho xoá nếu đã được Duyệt (trang_thai=2)
+                if PhanCongGVHD.objects.filter(sinh_vien=sv, trang_thai=2).exists():
+                    return JsonResponse({"status": "error", "message": "Phân công này đã được Trưởng bộ môn DUYỆT nên không được xoá!"})
+                
+                PhanCongGVHD.objects.filter(sinh_vien=sv).delete()
+                return JsonResponse({"status": "deleted"})
 
-        ky = KyThucTap.objects.order_by("-id").first()
+            gv = GiangVien.objects.filter(ho_ten=gv_name).first()
+            if not gv:
+                return JsonResponse({"status": "error", "message": f"Giảng viên {gv_name} không tồn tại trong hệ thống."})
+            
+            # Kiểm tra xem phân công hiện tại đã được duyệt chưa (trang_thai=2)
+            # Nếu đã duyệt rồi (trang_thai=2) thì không cho phép ghi đè (sửa)
+            if PhanCongGVHD.objects.filter(sinh_vien=sv, trang_thai=2).exists():
+                return JsonResponse({"status": "error", "message": "Phân công này đã được Trưởng bộ môn DUYỆT nên không được sửa đổi!"})
+            
+            if ky_id and str(ky_id).isdigit():
+                ky = KyThucTap.objects.get(id=ky_id)
+            else:
+                ky = KyThucTap.objects.order_by("-id").first()
 
-        PhanCongGVHD.objects.update_or_create(
-            sinh_vien=sv,
-            defaults={
-                "giang_vien": gv,
-                "ky": ky,
-                "trang_thai": 2
-            }
-        )
-
-        return JsonResponse({"status": "ok"})
+            # Sử dụng cả sinh_vien và ky để lọc chính xác bản ghi cần cập nhật
+            PhanCongGVHD.objects.update_or_create(
+                sinh_vien=sv,
+                ky=ky,
+                defaults={
+                    "giang_vien": gv,
+                    "trang_thai": 1  # Chờ duyệt
+                }
+            )
+            return JsonResponse({"status": "ok"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
 def select_sinh_vien(request):
 
     ky, form = get_form_nguyen_vong()
@@ -717,7 +956,7 @@ def auto_assign(form_id):
                 defaults={
                     "giang_vien": gv,
                     "ky": ky,
-                    "trang_thai": 2
+                    "trang_thai": 1 # Đổi về 1: Chờ duyệt
                 }
             )
 
