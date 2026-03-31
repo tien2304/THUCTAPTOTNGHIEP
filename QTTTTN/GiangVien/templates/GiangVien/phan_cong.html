@@ -9,12 +9,12 @@
 <div class="flex justify-between items-center mb-6">
     <div>
         <h2 class="text-2xl font-bold">Phân công GVHD</h2>
-        <p class="text-gray-500 text-sm">
-            Điều phối giảng viên hướng dẫn theo nguyện vọng sinh viên.
-        </p>
     </div>
 
     <div class="flex gap-3">
+        <button id="btnSave" onclick="saveAll()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-md cursor-pointer">
+            Lưu thay đổi
+        </button>
         <button onclick="goSelect()" class="bg-blue-600 text-white px-4 py-2 rounded-lg">
             ✨ Phân công GVHD
         </button>
@@ -22,16 +22,34 @@
     </div>
 </div>
 
+<!-- KHỐI CHỌN HỌC KỲ NHƯ HÌNH MẪU -->
+<div class="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-100 p-5 mb-6">
+    <label class="text-[12px] font-bold text-slate-500 tracking-wide mb-2 block uppercase">Học kỳ</label>
+    <select onchange="window.location.href='?ky_id='+this.value" class="w-full md:w-[450px] border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 outline-none hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer bg-gray-50/50">
+        {% for ky in ky_list %}
+        <option value="{{ ky.id }}" {% if current_ky and current_ky.id == ky.id %}selected{% endif %}>
+            {{ ky.ten_ky }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
 <div class="grid grid-cols-4 gap-6">
 
 <!-- LEFT -->
 <div class="col-span-3 bg-white rounded-xl p-5 shadow">
 
-<div class="flex justify-between items-center mb-4">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
     <h3 class="font-semibold text-gray-700">Danh sách sinh viên</h3>
 
-    <input placeholder="🔍 Mã SV, Họ tên..."
-    class="border px-3 py-1 rounded text-sm w-52">
+    <div class="flex gap-2">
+        <select id="groupFilter" class="border px-3 py-1 rounded text-sm text-gray-600 outline-none w-40">
+            <option value="">Tất cả hình thức</option>
+            <option value="Cá nhân">Làm cá nhân</option>
+            <option value="Nhóm">Làm nhóm</option>
+        </select>
+        <input id="searchInput" placeholder="🔍 Mã SV, Họ tên..." class="border px-3 py-1 rounded text-sm w-52 outline-none">
+    </div>
 </div>
 
 <table class="w-full text-sm">
@@ -39,56 +57,87 @@
 <tr class="border-b">
 <th class="text-left p-3">Thông tin SV</th>
 <th>Lớp</th>
-<th>Đề tài</th>
+<th>Lĩnh vực</th>
 <th>Nguyện vọng</th>
-<th>GVHD hiện tại</th>
-<th></th>
+<th class="text-center">GVHD hiện tại</th>
 </tr>
 
 {% for s in data %}
-<tr class="border-b hover:bg-gray-50">
+<tr class="student-row border-b hover:bg-gray-50" data-group="{{ s.group }}">
 
 <td class="p-3">
 <b>{{ s.ten }}</b><br>
 <span class="text-gray-400 text-xs">{{ s.id }}</span>
 </td>
 
-<td>{{ s.lop }}</td>
+<td class="text-center align-top py-3">{{ s.lop }}</td>
 
-<!-- 🔥 ĐỀ TÀI -->
-<td>{{ s.de_tai|default:"--" }}</td>
-
-<!-- 🔥 NGUYỆN VỌNG -->
-<td>
-{% if s.nv1 %}
-<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
-NV1: {{ s.nv1 }}
-</span><br>
-{% endif %}
-
-{% if s.nv2 %}
-<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-NV2: {{ s.nv2 }}
-</span>
-{% endif %}
+<!-- 🔥 LĨNH VỰC -->
+<td class="text-xs text-gray-600 text-center py-3 align-top max-w-[200px] px-2 leading-relaxed">
+    {% if s.linh_vuc and s.linh_vuc != '--' %}
+        {{ s.linh_vuc|linebreaksbr }}
+    {% else %}
+        <span class="text-gray-400">--</span>
+    {% endif %}
 </td>
 
-<td>
-{% if s.gvhd %}
-<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-{{ s.gvhd }}
-</span>
-{% else %}
-<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
-Chưa phân
-</span>
-{% endif %}
+<!-- 🔥 NGUYỆN VỌNG (Chứa cả hướng NC và Hình thức) -->
+<td class="align-top py-3 px-2 text-center">
+    <div class="flex flex-col items-center justify-center gap-1 max-w-[380px] mx-auto text-center">
+        {% if s.nv1 %}
+        <div class="text-sm text-gray-800 leading-relaxed">
+            {{ s.nv1|linebreaksbr }}
+        </div>
+        {% endif %}
+
+        {% if s.nv2 %}
+        <div class="text-sm text-gray-800 leading-relaxed mt-1">
+            <span class="font-semibold">NV2:</span> {{ s.nv2|linebreaksbr }}
+        </div>
+        {% endif %}
+
+        {% if s.group and s.group != 'Không' %}
+        <div class="text-xs text-gray-500 font-medium italic mt-0.5">
+            (Nhóm: {{ s.group }})
+        </div>
+        {% endif %}
+    </div>
 </td>
 
-<td>
-<button onclick="openModal('{{ s.id }}')" class="text-blue-500">
-✏️
-</button>
+<td class="text-center py-3">
+    <div class="flex flex-col items-center gap-1">
+        <select onchange="markChanged('{{ s.id }}', this.value, this)"
+            class="border rounded px-2 py-1.5 text-xs w-44 outline-none transition-colors cursor-pointer
+            {% if s.gvhd %}bg-blue-50 border-blue-200 text-blue-700 font-medium
+            {% else %}bg-white border-gray-300 text-gray-600{% endif %}">
+
+            <option value="">-- Chưa phân --</option>
+
+            {% if s.de_xuat_gvhd %}
+                {% for gv in s.de_xuat_gvhd %}
+                <option value="{{ gv.value }}" {% if s.gvhd == gv.value %}selected{% endif %}>
+                    {{ gv.display }}
+                </option>
+                {% endfor %}
+            {% else %}
+                <option value="" disabled class="text-gray-400 italic">Chưa có đề xuất</option>
+            {% endif %}
+        </select>
+        
+        <!-- Hiển thị Trạng thái duyệt -->
+        {% if s.gvhd %}
+            {% if s.trang_thai == 1 %}
+                <span class="text-[10px] bg-yellow-100 text-yellow-700 font-semibold px-2 py-0.5 rounded-full mt-1">Chờ duyệt</span>
+            {% elif s.trang_thai == 2 %}
+                <span class="text-[10px] bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full mt-1">Đã duyệt</span>
+            {% elif s.trang_thai == 3 %}
+                <span class="text-[10px] bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded-full mt-1 cursor-help" title="Lý do: {{ s.ly_do_tu_choi|default:'Không có lý do' }}">Bị từ chối ⚠️</span>
+                {% if s.ly_do_tu_choi %}
+                    <div class="text-[10px] text-red-600 italic max-w-[160px] text-center mt-0.5" style="line-height:1.2;">"{{ s.ly_do_tu_choi }}"</div>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </div>
 </td>
 
 </tr>
@@ -99,35 +148,15 @@ Chưa phân
 </div>
 
 <!-- RIGHT -->
-<div class="bg-white rounded-xl p-5 shadow">
+<div class="bg-white rounded-xl p-5 shadow h-fit">
 
-<h3 class="font-semibold text-gray-700 mb-4">Định mức theo nguyện vọng</h3>
+<h3 class="font-semibold text-gray-700 mb-4">Thống kê số lượng phân công</h3>
 
 {% for gv in gv_stats %}
-<div class="mb-4">
-
-<div class="flex justify-between text-sm mb-1">
-<b>{{ gv.ten }}</b>
-
-{% if gv.count > 10 %}
-<span class="text-red-500">{{ gv.count }}/10</span>
-{% elif gv.count == 10 %}
-<span class="text-green-500">{{ gv.count }}/10</span>
-{% else %}
-<span class="text-blue-500">{{ gv.count }}/10</span>
-{% endif %}
-</div>
-
-<div class="w-full bg-gray-200 h-2 rounded">
-<div class="h-2 rounded
-{% if gv.count > 10 %}bg-red-500
-{% elif gv.count == 10 %}bg-green-500
-{% else %}bg-blue-500
-{% endif %}"
-style="width: {{ gv.count|floatformat:0 }}0%">
-</div>
-</div>
-
+<div class="py-2.5 border-b border-gray-100 last:border-0 text-gray-800 text-sm">
+    <span class="font-medium">{{ gv.ten }}</span>
+    <span class="mx-1 text-gray-500">-</span>
+    <span class="font-bold text-blue-600">{{ gv.count }}</span>
 </div>
 {% endfor %}
 
@@ -135,59 +164,97 @@ style="width: {{ gv.count|floatformat:0 }}0%">
 
 </div>
 
-</div>
-
-<!-- MODAL -->
-<div id="modal" class="fixed inset-0 bg-black/40 hidden flex items-center justify-center">
-
-<div class="bg-white w-[400px] p-6 rounded-xl">
-
-<h3 class="font-semibold mb-4">Chọn GVHD</h3>
-
-{% for gv in gv_stats %}
-<div class="border p-2 mb-2 rounded flex justify-between">
-{{ gv.ten }}
-<input type="radio" name="gv" value="{{ gv.ten }}">
-</div>
-{% endfor %}
-
-<div class="flex justify-end gap-2 mt-4">
-<button onclick="closeModal()" class="bg-gray-200 px-3 py-1 rounded">Hủy</button>
-<button onclick="confirmAssign()" class="bg-blue-600 text-white px-3 py-1 rounded">Xác nhận</button>
-</div>
-
-</div>
 </div>
 
 <script>
-let selectedSV = null;
-
 function goSelect(){
     window.location.href="/giang-vien/phan-cong/select/";
 }
 
-function openModal(id){
-    selectedSV = id;
-    document.getElementById("modal").classList.remove("hidden");
+let pendingChanges = {};
+
+function markChanged(sv_id, gv, selectEl) {
+    pendingChanges[sv_id] = gv;
+    
+    // Đổi màu để nhận diện đã thay đổi
+    selectEl.classList.remove('bg-white', 'bg-blue-50');
+    selectEl.classList.add('bg-yellow-50', 'border-yellow-400', 'text-yellow-800');
+
+    // (Tính năng nút Lưu đã luôn hiển thị để tránh nhầm lẫn)
 }
 
-function closeModal(){
-    document.getElementById("modal").classList.add("hidden");
+function saveAll() {
+    if (Object.keys(pendingChanges).length === 0) {
+        alert("Anh chưa thay đổi Giảng viên nào cả! Hãy chọn đổi Giảng viên ở ô danh sách rồi mới nhấn Lưu nhé.");
+        return;
+    }
+
+    let btn = document.getElementById('btnSave');
+    btn.innerHTML = 'Đang lưu...';
+    btn.disabled = true;
+
+    let promises = [];
+    for (let sv_id in pendingChanges) {
+        let gv = pendingChanges[sv_id];
+        let p = fetch("{% url 'GiangVien:update_phan_cong' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: new URLSearchParams({
+                sv: sv_id,
+                gv: gv,
+                ky_id: '{{ current_ky.id|default:"" }}'
+            })
+        }).then(res => {
+            if (!res.ok) throw new Error("Mã lỗi: " + res.status);
+            return res.json();
+        }).then(data => {
+            if (data.status === "error") throw new Error(data.message);
+            return data;
+        });
+        promises.push(p);
+    }
+    
+    Promise.all(promises).then(() => {
+        location.reload();
+    }).catch(err => {
+        alert("Lưu thất bại! " + err.message);
+        console.error(err);
+        btn.innerHTML = 'Lưu thay đổi';
+        btn.disabled = false;
+    });
 }
 
-function confirmAssign(){
-    let gv = document.querySelector('input[name="gv"]:checked').value;
+// ==============================
+// FILTER LOGIC
+// ==============================
+document.getElementById('searchInput').addEventListener('input', filterTable);
+document.getElementById('groupFilter').addEventListener('change', filterTable);
 
-    fetch("{% url 'GiangVien:update_phan_cong' %}",{
-        method:"POST",
-        headers:{
-            "X-CSRFToken":"{{ csrf_token }}"
-        },
-        body:new URLSearchParams({
-            sv:selectedSV,
-            gv:gv
-        })
-    }).then(()=>location.reload());
+function filterTable() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase();
+    const groupFilter = document.getElementById('groupFilter').value;
+    const rows = document.querySelectorAll('.student-row');
+
+    rows.forEach(row => {
+        const textContent = row.innerText.toLowerCase();
+        let groupMatch = true;
+        
+        const rowGroup = row.getAttribute('data-group') || "Không";
+        
+        if (groupFilter === "Cá nhân") {
+            groupMatch = (rowGroup === "Không" || rowGroup.trim() === "");
+        } else if (groupFilter === "Nhóm") {
+            groupMatch = (rowGroup !== "Không" && rowGroup.trim() !== "");
+        }
+
+        if (textContent.includes(searchText) && groupMatch) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
 }
 </script>
 
