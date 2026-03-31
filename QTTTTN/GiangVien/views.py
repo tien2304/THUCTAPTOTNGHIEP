@@ -153,7 +153,12 @@ def save_diem(request, ma_sv):
 def chi_tiet_bai_nop(request, id):
 
     bai = get_object_or_404(BaiNop, id=id)
-
+    # Nếu giảng viên gửi nhận xét (POST)
+    if request.method == "POST":
+        nhan_xet = request.POST.get('nhan_xet', '').strip()
+        bai.nhan_xet = nhan_xet
+        bai.save()
+        # Có thể thêm thông báo nếu bạn dùng messages
     context = {
         "bai": bai,
         "sv": bai.sinh_vien,

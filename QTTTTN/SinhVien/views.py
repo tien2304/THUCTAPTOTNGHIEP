@@ -103,36 +103,27 @@ def home(request):
                 'sort_time': timezone.make_aware(timezone.datetime.combine(f.ngay_ket_thuc, timezone.datetime.max.time())) if f.ngay_ket_thuc else now
             })
 
-    # ----------------------------------------------------
-    # Lấy thông tin thực tập (Dựa trên form khảo sát)
-    # ----------------------------------------------------
-    thong_tin_thuc_tap = {
-        'ten_cong_ty': None,
-        'dia_chi': None
-    }
 
-    if ky_hien_tai:
-        # Lấy câu trả lời mới nhất
-        answers = ChiTietTraLoi.objects.filter(
-            phieu_tra_loi__sinh_vien=sinh_vien,
-            phieu_tra_loi__mau_khao_sat__ky=ky_hien_tai
-        ).select_related('cau_hoi').order_by('-phieu_tra_loi__thoi_gian_nop')
+        # ==================== THÊM PHẦN NÀY ====================
+        # Ưu tiên lấy từ DB chính (noi_thuc_tap)
+        noi_thuc_tap = sinh_vien.noi_thuc_tap
 
-        for ans in answers:
-            tag = ans.cau_hoi.system_tag
-            if not tag: continue
+        # Nếu chưa có trong DB, thử lấy từ form gần nhất (backup)
+        if not noi_thuc_tap and ky_hien_tai:
+            phieu = PhieuTraLoi.objects.filter(
+                sinh_vien=sinh_vien,
+                mau_khao_sat__ky=ky_hien_tai
+            ).order_by("-id").first()
 
-            # Khớp chính xác với các value trong thẻ <option> của trang tạo form
-            if tag == 'don_vi_tt' and not thong_tin_thuc_tap['ten_cong_ty']:
-                thong_tin_thuc_tap['ten_cong_ty'] = ans.gia_tri
-
-            elif tag == 'dia_diem_dv' and not thong_tin_thuc_tap['dia_chi']:
-                thong_tin_thuc_tap['dia_chi'] = ans.gia_tri
-
-            # Nếu đã tìm thấy cả 2 thì dừng
-            if thong_tin_thuc_tap['ten_cong_ty'] and thong_tin_thuc_tap['dia_chi']:
-                break
-
+            if phieu:
+                for ans in phieu.answers.all():
+                    if (ans.cau_hoi.system_tag or "").strip() == "don_vi_tt":
+                        noi_thuc_tap = ans.gia_tri
+                        # Đồng bộ luôn vào DB chính để lần sau nhanh hơn
+                        sinh_vien.noi_thuc_tap = noi_thuc_tap
+                        sinh_vien.save()
+                        break
+        # =======================================================
     context = {
         'current_page': 'home',
         'sinh_vien': sinh_vien,
@@ -140,7 +131,7 @@ def home(request):
         'giang_vien': giang_vien,
         'danh_sach_nhiem_vu': danh_sach_nhiem_vu,
         'tai_lieu': TaiLieu.objects.filter(ky=ky_hien_tai).order_by('-ngay_cap_nhat')[:5],
-        'thong_tin_thuc_tap': thong_tin_thuc_tap
+        'noi_thuc_tap': noi_thuc_tap,  # ← Truyền xuống template
     }
     return render(request, 'SinhVien/dashboard.html', context)
 

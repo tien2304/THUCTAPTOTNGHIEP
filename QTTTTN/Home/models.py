@@ -159,6 +159,7 @@ class BaiNop(models.Model):
     ten_file = models.CharField(max_length=255)
     thoi_gian_nop = models.DateTimeField(auto_now_add=True)
     trang_thai = models.CharField(max_length=50)
+    nhan_xet = models.TextField(blank=True, null=True)
 class HoiDong(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ten_hoi_dong = models.CharField(max_length=255)

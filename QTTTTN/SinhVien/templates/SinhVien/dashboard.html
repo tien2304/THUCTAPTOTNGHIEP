@@ -22,23 +22,27 @@
 
         <div class="card company-card-v3">
             <div class="company-layout">
-                <div class="company-info-main">
-                    <p class="label-top">ĐƠN VỊ THỰC TẬP HIỆN TẠI</p>
-                    <h2 class="company-name-highlight">
-                        {{ thong_tin_thuc_tap.ten_cong_ty|default:"Chưa thiết lập đơn vị" }}
-                    </h2>
+                <!-- CARD ĐƠN VỊ THỰC TẬP -->
+<div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">
+            🏢
+        </div>
+        <div class="flex-1">
+            <h3 class="font-semibold text-lg text-gray-800">Đơn vị thực tập</h3>
 
-
-                    <div class="location-wrapper">
-                        <svg class="loc-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;">
-                            <path d="M12 21C16 17.5 19 14.4183 19 10C19 6.13401 15.866 3 12 3C8.13401 3 5 6.13401 5 10C5 14.4183 8 17.5 12 21Z" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="12" cy="10" r="1.5" stroke="#007bff" stroke-width="2" fill="none"/>
-                        </svg>
-                        <span class="address-link">
-                            {{ thong_tin_thuc_tap.dia_chi|default:"Chưa cập nhật địa chỉ" }}
-                        </span>
-                    </div>
+            {% if noi_thuc_tap %}
+                <div class="mt-3 text-xl font-medium text-emerald-700">
+                    {{ noi_thuc_tap }}
                 </div>
+            {% else %}
+                <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-700">
+                    Chưa có thông tin đơn vị thực tập.<br>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
                 <div class="building-wrapper">
                   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
