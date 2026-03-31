@@ -4,7 +4,7 @@
 {% block title %}Trang Chủ - MIS{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'SinhVien/css/dashboard.css' %}?v=1.3">
+<link rel="stylesheet" href="{% static 'SinhVien/css/dashboard.css' %}?v=2.0">
 
 <div class="dashboard-container">
 
@@ -21,38 +21,61 @@
         </div>
 
         <div class="card company-card-v3">
-            <div class="company-layout">
-                <div class="company-info-main">
-                    <p class="label-top">ĐƠN VỊ THỰC TẬP HIỆN TẠI</p>
-                    <h2 class="company-name-highlight">
-                        {{ thong_tin_thuc_tap.ten_cong_ty|default:"Chưa thiết lập đơn vị" }}
-                    </h2>
+            <div class="company-info-main">
+                <p class="label-top">ĐƠN VỊ THỰC TẬP HIỆN TẠI</p>
+                <h2 class="company-name-highlight">
+                    {{ thong_tin_thuc_tap.ten_cong_ty|default:"Chưa thiết lập đơn vị" }}
+                </h2>
 
 
-                    <div class="location-wrapper">
-                        <svg class="loc-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;">
-                            <path d="M12 21C16 17.5 19 14.4183 19 10C19 6.13401 15.866 3 12 3C8.13401 3 5 6.13401 5 10C5 14.4183 8 17.5 12 21Z" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="12" cy="10" r="1.5" stroke="#007bff" stroke-width="2" fill="none"/>
-                        </svg>
-                        <span class="address-link">
-                            {{ thong_tin_thuc_tap.dia_chi|default:"Chưa cập nhật địa chỉ" }}
-                        </span>
+            </div>
+        </div>
+
+        <!-- HỘI ĐỒNG BẢO VỆ -->
+        <div class="card">
+            <div class="council-header">
+                <h3 style="margin:0;font-size:16px;font-weight:700;color:#0f172a;">Hội đồng bảo vệ</h3>
+                {% if hoi_dong %}
+                <span class="council-badge">SẮP DIỄN RA</span>
+                {% endif %}
+            </div>
+
+            {% if hoi_dong %}
+            <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+                <div>
+                    <p style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.05em;margin:0 0 4px;">TÊN HỘI ĐỒNG</p>
+                    <p style="margin:0;font-size:14px;font-weight:700;color:#0f172a;line-height:1.4;">{{ hoi_dong.ten_hoi_dong }}</p>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <p style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.05em;margin:0 0 4px;">THỜI GIAN</p>
+                        <p style="margin:0;font-size:14px;font-weight:700;color:#0066CC;display:flex;align-items:center;gap:5px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {{ hoi_dong.thoi_gian|date:"H:i" }}
+                        </p>
+                    </div>
+                    <div>
+                        <p style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.05em;margin:0 0 4px;">NGÀY BẢO VỆ</p>
+                        <p style="margin:0;font-size:14px;font-weight:700;color:#0066CC;display:flex;align-items:center;gap:5px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            {{ hoi_dong.ngay_bao_ve|date:"d/m/Y" }}
+                        </p>
                     </div>
                 </div>
-
-                <div class="building-wrapper">
-                  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 10 H60 V30 H90 V90 H20 Z" fill="#EAEAEA" />
-                    <g fill="#FFFFFF">
-                      <rect x="28" y="20" width="10" height="10" /><rect x="28" y="38" width="10" height="10" />
-                      <rect x="28" y="56" width="10" height="10" /><rect x="28" y="74" width="10" height="10" />
-                      <rect x="45" y="20" width="10" height="10" /><rect x="45" y="38" width="10" height="10" />
-                      <rect x="45" y="56" width="10" height="10" /><rect x="45" y="74" width="10" height="10" />
-                      <rect x="68" y="45" width="10" height="10" /><rect x="68" y="65" width="10" height="10" />
-                    </g>
-                  </svg>
+                <div>
+                    <p style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.05em;margin:0 0 4px;">ĐỊA ĐIỂM</p>
+                    <p style="margin:0;font-size:14px;font-weight:700;color:#0066CC;display:flex;align-items:center;gap:5px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21C16 17.5 19 14.4183 19 10C19 6.13401 15.866 3 12 3C8.13401 3 5 6.13401 5 10C5 14.4183 8 17.5 12 21Z"/><circle cx="12" cy="10" r="1.5" fill="currentColor" stroke="none"/></svg>
+                        {{ hoi_dong.dia_diem }}
+                    </p>
                 </div>
             </div>
+            {% else %}
+            <div style="margin-top:20px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <p style="margin:0;font-size:13px;color:#94a3b8;">Chưa có lịch bảo vệ</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 

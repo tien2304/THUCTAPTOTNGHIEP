@@ -7,7 +7,8 @@ from django.contrib import messages
 from django.db import transaction
 from Home.models import (NhiemVu, SinhVien, BaiNop, NguoiDung,
                          MauKhaoSat, TaiLieu, PhanCongGVHD,
-                         PhieuTraLoi, ChiTietTraLoi, BangDiem)
+                         PhieuTraLoi, ChiTietTraLoi, BangDiem,
+                         HoiDong, HoiDong_SinhVien)
 
 
 @login_required
@@ -133,6 +134,16 @@ def home(request):
             if thong_tin_thuc_tap['ten_cong_ty'] and thong_tin_thuc_tap['dia_chi']:
                 break
 
+    # Lấy thông tin hội đồng bảo vệ của sinh viên
+    hoi_dong = None
+    if ky_hien_tai:
+        hd_sv = HoiDong_SinhVien.objects.filter(
+            sinh_vien=sinh_vien,
+            hoi_dong__ky=ky_hien_tai
+        ).select_related('hoi_dong').first()
+        if hd_sv:
+            hoi_dong = hd_sv.hoi_dong
+
     context = {
         'current_page': 'home',
         'sinh_vien': sinh_vien,
@@ -140,7 +151,8 @@ def home(request):
         'giang_vien': giang_vien,
         'danh_sach_nhiem_vu': danh_sach_nhiem_vu,
         'tai_lieu': TaiLieu.objects.filter(ky=ky_hien_tai).order_by('-ngay_cap_nhat')[:5],
-        'thong_tin_thuc_tap': thong_tin_thuc_tap
+        'thong_tin_thuc_tap': thong_tin_thuc_tap,
+        'hoi_dong': hoi_dong,
     }
     return render(request, 'SinhVien/dashboard.html', context)
 
