@@ -58,13 +58,10 @@ class SinhVien(models.Model):
     ho_ten = models.CharField(max_length=255)
     lop = models.CharField(max_length=50)
     ky_hien_tai = models.ForeignKey(KyThucTap, on_delete=models.SET_NULL, null=True)
-    
+    noi_thuc_tap = models.CharField(max_length=255, null=True, blank=True)
     
     def __str__(self):
         return f"{self.ma_sv} - {self.ho_ten}"
-class SinhVien_KyThucTap(models.Model):
-    sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
-    ky_thuc_tap = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
 # --- NHÓM 3: KHẢO SÁT ĐỘNG (SURVEY MODULE) ---
 import uuid
 class MauKhaoSat(models.Model):
@@ -120,7 +117,8 @@ class PhanCongGVHD(models.Model):
     giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ngay_phan_cong = models.DateTimeField(auto_now_add=True)
-    trang_thai = models.IntegerField(default=1)  # 1: Chờ, 2: Đã phân công
+    trang_thai = models.IntegerField(default=1)  # 1: Chờ duyệt, 2: Đã phê duyệt, 3: Bị từ chối
+    ly_do_tu_choi = models.TextField(blank=True, null=True)
 class PhanCongGVPT(models.Model):
     giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
@@ -162,6 +160,7 @@ class BaiNop(models.Model):
     ten_file = models.CharField(max_length=255)
     thoi_gian_nop = models.DateTimeField(auto_now_add=True)
     trang_thai = models.CharField(max_length=50)
+    nhan_xet = models.TextField(blank=True, null=True)
 class HoiDong(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ten_hoi_dong = models.CharField(max_length=255)
@@ -174,6 +173,9 @@ class HoiDong_GiangVien(models.Model):
 class HoiDong_SinhVien(models.Model):
     hoi_dong = models.ForeignKey(HoiDong, on_delete=models.CASCADE)
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('sinh_vien', 'hoi_dong')
 class TaiLieu(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     mo_ta = models.TextField()

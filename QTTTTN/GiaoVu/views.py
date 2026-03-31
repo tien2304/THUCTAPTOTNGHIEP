@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Q
-from Home.models import KyThucTap, SinhVien, GiangVien, TaiLieu,NhiemVu
+from Home.models import KyThucTap, SinhVien, GiangVien, TaiLieu, NhiemVu, PhanCongGVHD
 from Home.utils import sync_user_account
 from datetime import datetime
 
@@ -462,3 +462,83 @@ def nhiem_vu_view(request):
         'nhiem_vu_list': nhiem_vu_list,
     }
     return render(request, 'GiaoVu/nhiem_vu.html', context)
+
+def giang_vien_hd_view(request):
+    """Trang xem Giảng viên hướng dẫn – Giáo Vụ."""
+    all_ky = KyThucTap.objects.all().order_by('-id')
+    ky_id = request.GET.get('ky_id')
+    
+    if ky_id:
+        selected_ky = KyThucTap.objects.filter(id=ky_id).first()
+    else:
+        selected_ky = all_ky.first()
+        
+    ds_phan_cong = []
+    if selected_ky:
+        phan_cong_qs = PhanCongGVHD.objects.filter(ky=selected_ky, trang_thai=2).select_related('sinh_vien', 'giang_vien')
+        
+        gv_dict = {}
+        for pc in phan_cong_qs:
+            gv = pc.giang_vien
+            sv = pc.sinh_vien
+            if gv not in gv_dict:
+                gv_dict[gv] = []
+            gv_dict[gv].append(sv)
+            
+        for gv, danh_sach_sv in gv_dict.items():
+            ds_phan_cong.append({
+                'giang_vien': gv,
+                'so_luong': len(danh_sach_sv),
+                'ds_sv': sorted(danh_sach_sv, key=lambda x: x.ma_sv)
+            })
+            
+    # Sắp xếp theo số lượng sv HD giảm dần
+    ds_phan_cong = sorted(ds_phan_cong, key=lambda x: x['so_luong'], reverse=True)
+
+    context = {
+        'current_page': 'giangvienhd',
+        'all_ky': all_ky,
+        'selected_ky': selected_ky,
+        'selected_ky_id': selected_ky.id if selected_ky else None,
+        'ds_phan_cong': ds_phan_cong,
+    }
+    return render(request, 'GiaoVu/giang_vien_hd.html', context)
+
+
+def chi_tiet_gvhd_view(request, ma_gv):
+    """Trang xem danh sách sinh viên được hướng dẫn bởi 1 giảng viên cụ thể của Giáo vụ"""
+    ky_id = request.GET.get('ky_id')
+    giang_vien = GiangVien.objects.filter(ma_gv=ma_gv).first()
+    
+    if not giang_vien:
+        messages.error(request, "Không tìm thấy giảng viên này.")
+        return redirect('GiaoVu:giaovu_giangvienhd')
+        
+    ky = None
+    ds_phan_cong = []
+    
+    if ky_id:
+        ky = KyThucTap.objects.filter(id=ky_id).first()
+        if ky:
+            ds_phan_cong = PhanCongGVHD.objects.filter(giang_vien=giang_vien, ky=ky).select_related('sinh_vien', 'ky')
+            
+    raw_hoc_vi = giang_vien.hoc_vi
+    if raw_hoc_vi == 'Thạc sĩ':
+        hoc_vi_tat = 'ThS'
+    elif raw_hoc_vi == 'Tiến sĩ':
+        hoc_vi_tat = 'TS'
+    elif raw_hoc_vi == 'Phó Giáo sư':
+        hoc_vi_tat = 'PGS'
+    elif raw_hoc_vi == 'Giáo sư':
+        hoc_vi_tat = 'GS'
+    else:
+        hoc_vi_tat = raw_hoc_vi
+            
+    context = {
+        'current_page': 'giangvienhd',
+        'giang_vien': giang_vien,
+        'hoc_vi_tat': hoc_vi_tat,
+        'ky': ky,
+        'ds_phan_cong': ds_phan_cong,
+    }
+    return render(request, 'GiaoVu/chi_tiet_gvhd.html', context)

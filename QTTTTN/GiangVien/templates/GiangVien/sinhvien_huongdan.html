@@ -1,91 +1,97 @@
 {% extends "GiangVien/Home.html" %}
 {% load static %}
 
-{% block title %}Sinh viên hướng dẫn{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'GiangVien/css/sinhvien_huongdan.css' %}">
-{% endblock %}
-
 {% block content %}
 
-<div class="page-header">
-    <h1>Sinh viên hướng dẫn</h1>
+<div class="p-6 bg-gray-50 min-h-screen">
+<script src="https://cdn.tailwindcss.com"></script>
 
-    <div class="header-actions">
-        <button class="btn-primary">Tạo lịch hẹn mới</button>
-        <button class="btn-secondary">Xuất báo cáo (Excel)</button>
-    </div>
+<!-- HEADER -->
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Sinh viên của tôi</h1>
 </div>
 
-<div class="card">
+<!-- CARD -->
+<div class="bg-white rounded-xl shadow p-5">
 
-    <div class="card-header">
-        <h3>Danh sách Sinh viên Hướng dẫn</h3>
+<div class="flex justify-between items-center mb-4">
+    <h3 class="font-semibold text-gray-700">
+        Danh sách Sinh viên Hướng dẫn
+    </h3>
 
-        <div class="search-box">
-            <input type="text" placeholder="Tìm kiếm sinh viên...">
-        </div>
-    </div>
+    <input type="text" placeholder="🔍 Tìm kiếm sinh viên..."
+    class="border px-3 py-2 rounded-lg text-sm w-64">
+</div>
 
-    <table class="student-table">
-        <thead>
-            <tr>
-                <th>TÊN SINH VIÊN</th>
-                <th>NƠI THỰC TẬP</th>
-                <th>TRẠNG THÁI</th>
-                <th>THAO TÁC</th>
-            </tr>
-        </thead>
+<table class="w-full text-sm">
 
-        <tbody>
+<thead class="text-gray-400 border-b">
+<tr>
+<th class="text-left p-3">Tên sinh viên</th>
+<th class="text-left">Nơi thực tập</th>
+<th class="text-left">Thao tác</th>
+</tr>
+</thead>
+
+<tbody>
 
 {% for item in danh_sach %}
+<tr class="border-b hover:bg-gray-50 transition">
 
-<tr>
+<td class="p-3">
+<div class="flex items-center gap-3">
 
-<td class="student">
-
-<div class="avatar blue">
+<div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">
 {{ item.sinh_vien.ho_ten|slice:":2" }}
 </div>
 
 <div>
-<div class="name">{{ item.sinh_vien.ho_ten }}</div>
-<div class="major">{{ item.sinh_vien.lop }}</div>
+<div class="font-medium text-gray-800">
+{{ item.sinh_vien.ho_ten }}
+</div>
+<div class="text-gray-400 text-xs">
+{{ item.sinh_vien.lop }}
+</div>
 </div>
 
+</div>
 </td>
 
 <td>
+    <form method="POST" action="{% url 'GiangVien:update_noi_tt' item.sinh_vien.ma_sv %}">
+        {% csrf_token %}
 
-<div class="company">Kỳ thực tập</div>
-<div class="job">{{ item.ky.ten_ky }}</div>
+        <input name="noi_tt"
+               value="{{ item.noi_thuc_tap }}"
+               placeholder="Nhập nơi thực tập..."
+               class="border px-2 py-1 rounded text-sm w-40">
 
+        <button class="text-blue-500 text-sm ml-1">
+            Lưu
+        </button>
+    </form>
 </td>
 
 <td>
-<span class="status doing">
-
-{% if item.trang_thai == 1 %}
-Chờ phân công
-{% else %}
-Đã phân công
-{% endif %}
-
-</span>
-</td>
-
-<td>
-<a href="#">Xem bài nộp</a>
+<a href="{% url 'GiangVien:chi_tiet_sv' item.sinh_vien.ma_sv %}"
+   class="text-blue-600 hover:underline">Xem bài nộp →
+</a>
 </td>
 
 </tr>
-
+{% empty %}
+<tr>
+<td colspan="3" class="text-center text-gray-400 py-6">
+Không có sinh viên nào
+</td>
+</tr>
 {% endfor %}
 
 </tbody>
-    </table>
+
+</table>
+
+</div>
 
 </div>
 

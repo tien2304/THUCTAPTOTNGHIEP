@@ -242,4 +242,5 @@ svg {
     margin-left: var(--sidebar-width);
     flex: 1;
     min-height: 100vh;
+    padding: 24px 32px;
 }

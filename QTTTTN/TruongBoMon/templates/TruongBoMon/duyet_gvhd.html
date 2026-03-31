@@ -1,0 +1,143 @@
+{% extends 'TruongBoMon/home.html' %}
+{% load static %}
+
+{% block title %}Duyệt Giảng Viên Hướng Dẫn{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'TruongBoMon/css/phan_cong_gvpt.css' %}">
+<style>
+    .page-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .filter-card {
+        background-color: white;
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+        border: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .filter-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+    .filter-select {
+        padding: 0.5rem 2.2rem 0.5rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background-color: #f8fafc;
+        color: #0f172a;
+        font-weight: 500;
+        outline: none;
+        appearance: none;
+        cursor: pointer;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1em;
+    }
+    
+    /* Giao diện Dạng Card / Grid */
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .gv-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1rem; /* Thu nhỏ padding */
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        transition: all 0.2s;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+    }
+    .gv-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+    }
+    .gv-name {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+    .gv-count {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #64748b; /* Bỏ màu nổi, dùng màu xám bình thường */
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-pending { background-color: #fef3c7; color: #b45309; }
+    .status-approved { background-color: #d1fae5; color: #047857; }
+
+    /* Ẩn overflow không cần thiết */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 class="page-title">Duyệt Phân công Giảng viên Hướng dẫn</h1>
+    </div>
+
+    <!-- Khối chọn kỳ -->
+    <div class="filter-card">
+        <form method="GET" action="{% url 'TruongBoMon:duyet_gvhd' %}" id="kyForm" style="margin: 0; display: flex; align-items: center; gap: 1rem;">
+            <label class="filter-label" for="ky_id">HỌC KỲ</label>
+            <select name="ky_id" id="ky_id" class="filter-select" onchange="document.getElementById('kyForm').submit()">
+                {% for ky in ky_list %}
+                    <option value="{{ ky.id }}" {% if selected_ky and selected_ky.id == ky.id %}selected{% endif %}>{{ ky.ten_ky }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <!-- Danh sách dạng Grid -->
+    <div class="card-grid">
+        {% if ds_phan_cong %}
+            {% for item in ds_phan_cong %}
+            <div class="gv-card" onclick="window.location.href='{% url 'TruongBoMon:chi_tiet_gvhd' item.giang_vien.ma_gv %}?ky_id={{ selected_ky_id|default:'' }}'">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="gv-name">{{ item.giang_vien.ho_ten }}</div>
+                    <span class="gv-count">{{ item.so_luong }} SV</span>
+                </div>
+                <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #e2e8f0; text-align: right;">
+                    <span style="font-size: 0.875rem; color: #3b82f6; font-weight: 600;">Xem chi tiết &rarr;</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: #94a3b8; background: white; border-radius: 0.75rem; border: 1px dashed #cbd5e1;">
+                Hiện tại chưa có dữ liệu phân công giảng viên hướng dẫn cho kỳ này.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
+{% endblock %}

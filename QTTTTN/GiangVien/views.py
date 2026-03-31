@@ -1,8 +1,10 @@
 from django.shortcuts import render
-from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from Home.models import (GiangVien, PhanCongGVPT,SinhVien,
-                         PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon,
+                         PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon, BaiNop, NhiemVu, BangDiem, KyThucTap,
                          KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia, HoiDong, HoiDong_SinhVien,HoiDong_GiangVien)
+from django.shortcuts import get_object_or_404
+from django.contrib import messages
 
 def home_view(request):
     """Trang chủ dành cho Giảng Viên."""
@@ -24,17 +26,167 @@ def home_view(request):
 
 def sinhvien_huongdan(request):
 
-    danh_sach = PhanCongGVHD.objects.select_related(
-        'sinh_vien', 'giang_vien', 'ky'
-    )
+    ma_gv = request.user.username  # username = ma_gv
+    gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
+
+    danh_sach = PhanCongGVHD.objects.filter(
+        giang_vien=gv,
+        trang_thai=2 # CHỈ SHOW KHI TRƯỞNG BỘ MÔN ĐÃ DUYỆT
+    ).select_related('sinh_vien', 'ky')
+
+    for item in danh_sach:
+        sv = item.sinh_vien
+
+        # 🔥 ƯU TIÊN 1: DB chính
+        if sv.noi_thuc_tap:
+            item.noi_thuc_tap = sv.noi_thuc_tap
+            continue
+
+        # 🔥 ƯU TIÊN 2: lấy từ form
+        phieu = PhieuTraLoi.objects.filter(
+            sinh_vien=sv
+        ).order_by("-id").first()
+
+        noi_tt = ""
+
+        if phieu:
+            for ans in phieu.answers.all():
+                tag = (ans.cau_hoi.system_tag or "").strip()
+
+                if tag == "don_vi_tt":
+                    noi_tt = ans.gia_tri
+
+                    # 🔥 SAVE LUÔN vào DB chính (rất hay)
+                    sv.noi_thuc_tap = noi_tt
+                    sv.save()
+                    break
+
+        item.noi_thuc_tap = noi_tt or ""
 
     context = {
         'danh_sach': danh_sach,
-        'current_page': 'home'
+        'current_page': 'sinhvien',
+        'is_gvpt': get_is_gvpt(request)
     }
 
     return render(request, 'GiangVien/sinhvien_huongdan.html', context)
 
+def chi_tiet_sinh_vien(request, ma_sv):
+
+    sv = get_object_or_404(SinhVien, ma_sv=ma_sv)
+
+    # 🔥 lấy kỳ hiện tại
+    ky = sv.ky_hien_tai
+
+    # 🔥 lấy tất cả nhiệm vụ (milestone)
+    nhiem_vus = NhiemVu.objects.filter(ky=ky).order_by("han_nop")
+
+    milestones = []
+
+    for nv in nhiem_vus:
+
+        bai_nop = BaiNop.objects.filter(
+            sinh_vien=sv,
+            nhiem_vu=nv
+        ).first()
+
+        if bai_nop:
+            status = "ĐÃ NỘP"
+            file = bai_nop.ten_file
+            file_url = bai_nop.file_path.url
+            ngay = bai_nop.thoi_gian_nop
+            bai_id = bai_nop.id  # ✅ có thì mới lấy
+        else:
+            status = "CHƯA NỘP"
+            file = "--"
+            file_url = "#"
+            ngay = "--"
+            bai_id = None  # ✅ tránh lỗi
+
+        milestones.append({
+            "id": bai_id,
+            "ten": nv.ten_nhiem_vu,
+            "ngay": ngay,
+            "file": file,
+            "file_url": file_url,
+            "status": status,
+            "is_submitted": True if bai_nop else False  # 🔥 thêm dòng này
+        })
+
+    # 🔥 lấy điểm nếu đã có
+    bang_diem = BangDiem.objects.filter(
+        sinh_vien=sv,
+        ky=ky
+    ).order_by('-id').first()
+
+    context = {
+        "sv": sv,
+        "milestones": milestones,
+        "bang_diem": bang_diem,
+        "is_gvpt": get_is_gvpt(request)
+    }
+
+    return render(
+        request,
+        "GiangVien/chi_tiet_sinh_vien.html",
+        context
+    )
+from django.views.decorators.http import require_POST
+
+@require_POST
+def save_diem(request, ma_sv):
+
+    sv = SinhVien.objects.get(ma_sv=ma_sv)
+    ky = sv.ky_hien_tai or KyThucTap.objects.order_by('-id').first()
+
+    diem = request.POST.get("diem")
+
+    if diem:
+        diem = float(diem)
+
+    bd, _ = BangDiem.objects.get_or_create(
+        sinh_vien=sv,
+        ky=ky
+    )
+
+    bd.diem_qua_trinh = diem
+    bd.save()
+
+    return redirect("GiangVien:chi_tiet_sv", ma_sv=ma_sv)
+def chi_tiet_bai_nop(request, id):
+
+    bai = get_object_or_404(BaiNop, id=id)
+    # Nếu giảng viên gửi nhận xét (POST)
+    if request.method == "POST":
+        nhan_xet = request.POST.get('nhan_xet', '').strip()
+        bai.nhan_xet = nhan_xet
+        bai.save()
+        # Có thể thêm thông báo nếu bạn dùng messages
+    context = {
+        "bai": bai,
+        "sv": bai.sinh_vien,
+        "nv": bai.nhiem_vu,
+        "is_gvpt": get_is_gvpt(request)
+    }
+
+    return render(
+        request,
+        "GiangVien/chi_tiet_bai_nop.html",
+        context
+    )
+
+from django.views.decorators.http import require_POST
+
+@require_POST
+def update_noi_thuc_tap(request, ma_sv):
+    sv = SinhVien.objects.get(ma_sv=ma_sv)
+    noi_tt = request.POST.get("noi_tt")
+
+    if noi_tt:
+        sv.noi_thuc_tap = noi_tt
+        sv.save()
+
+    return redirect("GiangVien:sinhvien_huongdan")
 import json
 from django.shortcuts import render,redirect
 def get_is_gvpt(request):
@@ -51,13 +203,22 @@ def form_list(request):
         "forms": forms,
         "current_page": "form_list",
         "is_gvpt": get_is_gvpt(request)    })
-
-
 def tao_form(request):
     # Lấy tất cả các kỳ thực tập từ database
     # Phải dùng đúng tên biến 'danh_sach_ky' như trong file HTML của ông
     danh_sach_ky = KyThucTap.objects.all().order_by("-id")
     ky_moi_nhat = danh_sach_ky.first()
+    
+    # Danh sách giảng viên để tự động điền vào tạo form đánh giá (loại Giáo vụ và thêm học vị)
+    gvs = GiangVien.objects.exclude(chuc_vu='Giáo vụ').order_by('ho_ten')
+    danh_sach_gv = []
+    prefix_map = {'Thạc sĩ': 'ThS.', 'Tiến sĩ': 'TS.', 'Phó Giáo sư': 'PGS.TS.', 'Giáo sư': 'GS.TS.'}
+    for gv in gvs:
+        prefix = prefix_map.get(gv.hoc_vi, '')
+        hovaten = f"{prefix} {gv.ho_ten}".strip() if prefix else gv.ho_ten
+        if gv.chuyen_mon:
+            hovaten += f" ({gv.chuyen_mon})"
+        danh_sach_gv.append({'ma_gv': gv.ma_gv, 'ho_ten': hovaten})
 
     if request.method == "POST":
         raw = request.POST.get("form_data")
@@ -102,7 +263,8 @@ def tao_form(request):
     return render(request, "GiangVien/tao_form.html", {
         "danh_sach_ky": danh_sach_ky,
         "ky_moi_nhat": ky_moi_nhat,
-        "is_gvpt": get_is_gvpt(request)
+        "is_gvpt": get_is_gvpt(request),
+        "danh_sach_gv_json": json.dumps(danh_sach_gv)
     })
 
 def form_detail(request, public_id):
@@ -121,6 +283,17 @@ from collections import Counter
 def edit_form(request, public_id):
     form = get_object_or_404(MauKhaoSat, public_id=public_id)
     danh_sach_ky = KyThucTap.objects.all().order_by("-id")
+    
+    # Danh sách giảng viên
+    gvs = GiangVien.objects.exclude(chuc_vu='Giáo vụ').order_by('ho_ten')
+    danh_sach_gv = []
+    prefix_map = {'Thạc sĩ': 'ThS.', 'Tiến sĩ': 'TS.', 'Phó Giáo sư': 'PGS.TS.', 'Giáo sư': 'GS.TS.'}
+    for gv in gvs:
+        prefix = prefix_map.get(gv.hoc_vi, '')
+        hovaten = f"{prefix} {gv.ho_ten}".strip() if prefix else gv.ho_ten
+        if gv.chuyen_mon:
+            hovaten += f" ({gv.chuyen_mon})"
+        danh_sach_gv.append({'ma_gv': gv.ma_gv, 'ho_ten': hovaten})
 
     if request.method == "POST":
         data = json.loads(request.POST.get("form_data"))
@@ -138,34 +311,62 @@ def edit_form(request, public_id):
 
         form.save()
 
-        # 2. Xóa câu hỏi cũ để ghi đè (hoặc cập nhật tùy logic của ông)
-        form.cau_hoi.all().delete()
+        form.save()
 
-        # 3. Lưu danh sách câu hỏi mới
-        for i, q in enumerate(data["questions"]):
-            cauhoi = CauHoi.objects.create(
-                mau_khao_sat=form,
-                noi_dung=q["title"],
-                loai_cau_hoi=q["type"],
-                thu_tu=i,
-                system_tag=q.get("system_tag", "")
-            )
+        # So sánh câu hỏi cũ và mới để quyết định có reset bài nộp hay không
+        old_questions = list(form.cau_hoi.all().order_by('thu_tu'))
+        new_questions_data = data.get("questions", [])
 
-            # Lưu Options (Cho Radio, Checkbox, Select)
-            for op in q.get("options", []):
-                if op.get("text"):  # Chỉ lưu nếu có nội dung
-                    LuaChon.objects.create(
-                        cau_hoi=cauhoi,
-                        noi_dung_option=op["text"]
-                    )
+        is_changed = False
+        if len(old_questions) != len(new_questions_data):
+            is_changed = True
+        else:
+            for i, q in enumerate(new_questions_data):
+                old_q = old_questions[i]
+                if (old_q.noi_dung != q["title"] or 
+                    old_q.loai_cau_hoi != q["type"] or 
+                    (old_q.system_tag or "") != (q.get("system_tag", ""))):
+                    is_changed = True
+                    break
+                
+                # Kiểm tra options
+                old_opts = list(old_q.options.all().order_by('id'))
+                new_opts = q.get("options", [])
+                if len(old_opts) != len([o for o in new_opts if o.get("text")]):
+                    is_changed = True
+                    break
+                
+                # Kiểm tra rows (Tiêu chí)
+                old_rows = list(old_q.tieuchidanhgia_set.all().order_by('id'))
+                new_rows = q.get("rows", [])
+                if len(old_rows) != len([r for r in new_rows if r.get("text")]):
+                    is_changed = True
+                    break
 
-            # SỬA TẠI ĐÂY: Đổi 'criteria' thành 'rows' để khớp với JS
-            for tc in q.get("rows", []):
-                if tc.get("text"):
-                    TieuChiDanhGia.objects.create(
-                        cau_hoi=cauhoi,
-                        noi_dung=tc["text"]
-                    )
+        if is_changed:
+            # Nếu có thay đổi câu hỏi, xoá bài nộp cũ để SV điền lại
+            PhieuTraLoi.objects.filter(mau_khao_sat=form).delete()
+            
+            # Xoá câu hỏi cũ và tạo mới
+            form.cau_hoi.all().delete()
+            for i, q in enumerate(new_questions_data):
+                cauhoi = CauHoi.objects.create(
+                    mau_khao_sat=form,
+                    noi_dung=q["title"],
+                    loai_cau_hoi=q["type"],
+                    thu_tu=i,
+                    system_tag=q.get("system_tag", "")
+                )
+                for op in q.get("options", []):
+                    if op.get("text"):
+                        LuaChon.objects.create(cau_hoi=cauhoi, noi_dung_option=op["text"])
+                for tc in q.get("rows", []):
+                    if tc.get("text"):
+                        TieuChiDanhGia.objects.create(cau_hoi=cauhoi, noi_dung=tc["text"])
+            
+            messages.warning(request, "Đã cập nhật câu hỏi và reset danh sách bài nộp để sinh viên điền lại.")
+        else:
+            messages.success(request, "Đã cập nhật thông tin form thành công (Câu hỏi không đổi, bảo lưu bài nộp).")
 
         return redirect("GiangVien:edit_form", public_id=public_id)
 
@@ -197,6 +398,28 @@ def edit_form(request, public_id):
             "stats": dict(stats)
         })
 
+    # ===== LOAD RESPONSES =====
+    responses_list = []
+    phieu_list = PhieuTraLoi.objects.filter(mau_khao_sat=form).select_related('sinh_vien').order_by('-thoi_gian_nop')
+    for phieu in phieu_list:
+        ans_dict = {}
+        for c in phieu.answers.all():
+            if c.cau_hoi_id not in ans_dict:
+                ans_dict[c.cau_hoi_id] = []
+            ans_dict[c.cau_hoi_id].append(c.gia_tri)
+            
+        ans_list = []
+        for q in questions_data:
+            ans = ans_dict.get(q["id"], ["-"])
+            ans_list.append(", ".join(ans) if isinstance(ans, list) else ans)
+
+        responses_list.append({
+            "ma_sv": phieu.sinh_vien.ma_sv,
+            "ho_ten": phieu.sinh_vien.ho_ten,
+            "thoi_gian": timezone.localtime(phieu.thoi_gian_nop).strftime('%d/%m/%Y %H:%M') if phieu.thoi_gian_nop else "-",
+            "answers": ans_list
+        })
+
     return render(request, "GiangVien/tao_form.html", {
         "form": form,
         "questions_json": json.dumps(questions_data),  # Truyền xuống để JS render()
@@ -204,16 +427,17 @@ def edit_form(request, public_id):
         "danh_sach_ky": danh_sach_ky,
         "gvhd_stats": dict(gvhd_counter),
         "is_edit": True,
-        "is_gvpt": get_is_gvpt(request)
+        "is_gvpt": get_is_gvpt(request),
+        "danh_sach_gv_json": json.dumps(danh_sach_gv),
+        "questions_list": questions_data,
+        "responses_list": responses_list
     })
-
 def xoa_form(request, public_id):
     # Chỉ cho phép xóa nếu là phương thức POST (để bảo mật)
     if request.method == "POST":
         form = get_object_or_404(MauKhaoSat, public_id=public_id)
         form.delete()
     return redirect("GiangVien:form_list")
-
 def public_form(request, public_id):
 
     form = MauKhaoSat.objects.get(public_id=public_id)
@@ -231,8 +455,10 @@ def submit_form(request,public_id):
 
         form = MauKhaoSat.objects.get(public_id=public_id)
 
+        sv = SinhVien.objects.get(ma_sv=request.user.username)
+
         phieu = PhieuTraLoi.objects.create(
-                sinh_vien=SinhVien.objects.first(),
+            sinh_vien=sv,
             mau_khao_sat=form
         )
 
@@ -240,14 +466,391 @@ def submit_form(request,public_id):
             if key.startswith("question_"):
                 values = request.POST.getlist(key)
 
+                cau_hoi_id = key.replace("question_", "")
+                cau_hoi = CauHoi.objects.get(id=cau_hoi_id)
+
                 for v in values:
                     ChiTietTraLoi.objects.create(
                         phieu_tra_loi=phieu,
-                        cau_hoi_id=key.replace("question_", ""),
+                        cau_hoi=cau_hoi,
                         gia_tri=v
                     )
 
+                    # 🔥 AUTO LƯU NƠI THỰC TẬP
+                    if (cau_hoi.system_tag or "").strip() == "don_vi_tt":
+                        sv.noi_thuc_tap = v
+                        sv.save()
+
         return render(request, "Forms/success.html")
+def save_assign(request):
+
+    if request.method == "POST":
+
+        sv_ids = request.POST.getlist("sv")
+        gv_name = request.POST.get("gv")
+        ky_id = request.POST.get("ky_id")
+
+        if not gv_name:
+            # Chọn "-- Chưa phân --" tức là xoá phân công
+            for sv_id in sv_ids:
+                sv = SinhVien.objects.get(ma_sv=sv_id)
+                PhanCongGVHD.objects.filter(sinh_vien=sv).delete()
+        else:
+            gv = GiangVien.objects.get(ho_ten=gv_name)
+            
+            if ky_id:
+                ky = KyThucTap.objects.get(id=ky_id)
+            else:
+                ky = KyThucTap.objects.order_by("-id").first()
+
+            for sv_id in sv_ids:
+                sv = SinhVien.objects.get(ma_sv=sv_id)
+
+                PhanCongGVHD.objects.update_or_create(
+                    sinh_vien=sv,
+                    defaults={
+                        "giang_vien": gv,
+                        "ky": ky,
+                        "trang_thai": 2
+                    }
+                )
+
+    return redirect("GiangVien:phan_cong")
+
+def confirm_assign(request):
+
+    if request.method == "POST":
+
+        sv_ids = request.POST.getlist("sv")
+
+        gvs = GiangVien.objects.all()
+
+        return render(request, "GiangVien/select_gv.html", {
+            "sv_ids": sv_ids,
+            "gvs": gvs
+        })
+from collections import defaultdict
+from django.http import JsonResponse
+
+# ========================
+# LẤY FORM NGUYỆN VỌNG
+# ========================
+def get_form_nguyen_vong(ky_id=None):
+    if ky_id:
+        ky = KyThucTap.objects.filter(id=ky_id).first()
+    else:
+        ky = KyThucTap.objects.order_by("-id").first()
+
+    form = None
+    if ky:
+        form = MauKhaoSat.objects.filter(
+            ky=ky,
+            cau_hoi__system_tag__in=["GVHD_1", "GVHD_2", "ten_gvhd", "gvhd_1", "gvhd_2"]
+        ).distinct().order_by("-ngay_tao").first()
+        
+        if not form:
+            form = MauKhaoSat.objects.filter(ky=ky).order_by("-ngay_tao").first()
+
+    return ky, form
+
+# ========================
+# DASHBOARD
+# ========================
+def phan_cong_dashboard(request):
+    ky_id = request.GET.get('ky_id')
+    ky, form = get_form_nguyen_vong(ky_id)
+    ky_list = KyThucTap.objects.all().order_by('-id')
+
+    # Luôn lấy danh sách sinh viên của kỳ hiện tại
+    if ky:
+        sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
+    else:
+        sinhviens = SinhVien.objects.all()
+
+    data = []
+    gv_wish_count = defaultdict(int)
+
+    # 🔥 Build map: plain ho_ten → display name có prefix (ThS./TS./...)
+    PREFIX_MAP = {'Thạc sĩ': 'ThS.', 'Tiến sĩ': 'TS.', 'Phó Giáo sư': 'PGS.TS.', 'Giáo sư': 'GS.TS.'}
+    gv_display_map = {}  # {"Lê Hoàng Nam": "ThS. Lê Hoàng Nam"}
+    for _gv in GiangVien.objects.exclude(chuc_vu='Giáo vụ'):
+        pf = PREFIX_MAP.get(_gv.hoc_vi, '')
+        gv_display_map[_gv.ho_ten] = f"{pf} {_gv.ho_ten}".strip() if pf else _gv.ho_ten
+
+    for sv in sinhviens:
+        nv1 = ""
+        nv2 = ""
+        de_tai = ""
+        group = ""
+        huong_tc = ""
+        linh_vuc = ""
+
+        if form:
+            phieu = PhieuTraLoi.objects.filter(
+                sinh_vien=sv,
+                mau_khao_sat=form
+            ).first()
+
+            if phieu:
+                for a in phieu.answers.all():
+                    tag = (a.cau_hoi.system_tag or "").strip().lower()
+                    val = (a.gia_tri or "").strip()
+
+                    if tag in ["gvhd_1", "ten_gvhd"]:
+                        clean_val = val.split('(')[0].strip() if '(' in val else val
+
+                        if nv1:
+                            nv1 += f"\n{clean_val}"
+                        else:
+                            nv1 = clean_val
+                        gv_wish_count[clean_val.lower()] += 1
+
+                    elif tag == "gvhd_2":
+                        clean_val = val.split('(')[0].strip() if '(' in val else val
+
+                        if nv2:
+                            nv2 += f"\n{clean_val}"
+                        else:
+                            nv2 = clean_val
+                        gv_wish_count[clean_val.lower()] += 1
+                    
+                    elif tag == "de_tai":
+                        if de_tai:
+                            de_tai += f", {val}"
+                        else:
+                            de_tai = val
+                    elif tag == "huong_tiep_can":
+                        if huong_tc:
+                            if val not in huong_tc:
+                                huong_tc += f", {val}"
+                        else:
+                            huong_tc = val
+                        # 🔥 Lĩnh vực = những gì SV điền vào câu hướng tiếp cận
+                        if linh_vuc:
+                            if val not in linh_vuc:
+                                linh_vuc += f"\n{val}"
+                        else:
+                            linh_vuc = val
+                    elif tag in ["group", "hinh_thuc_nhom"]:
+                        # Chỉ lưu nếu SV điền tên thực sự, bỏ qua "Không có", "Không có làm nhóm với ai"...
+                        if val and not val.strip().lower().startswith("không"):
+                            if group:
+                                if val not in group:
+                                    group += f", {val}"
+                            else:
+                                group = val
+
+        pc = PhanCongGVHD.objects.filter(sinh_vien=sv, ky=ky).first() if ky else PhanCongGVHD.objects.filter(sinh_vien=sv).first()
+
+        status = ""
+        if pc:
+            if pc.giang_vien.ho_ten == nv1:
+                status = "NV1"
+            elif pc.giang_vien.ho_ten == nv2:
+                status = "NV2"
+
+        # 🔥 Tạo danh sách GVHD đề xuất từ nv1+nv2+linh_vuc
+        # value = plain ho_ten (lưu DB), display = tên có prefix (hiện UI)
+        de_xuat_gvhd = []
+        seen_values = set()
+
+        def strip_prefix(name):
+            for p in ['GS.TS. ', 'PGS.TS. ', 'TS. ', 'ThS. ']:
+                if name.startswith(p):
+                    return name[len(p):]
+            return name
+
+        # 1. Từ nguyện vọng
+        for raw in [nv1, nv2]:
+            for gv_name in raw.split("\n"):
+                plain = strip_prefix(gv_name.strip())
+                if plain and plain not in seen_values:
+                    seen_values.add(plain)
+                    de_xuat_gvhd.append({
+                        "value": plain,
+                        "display": gv_display_map.get(plain, plain)
+                    })
+
+        # 2. Từ lĩnh vực: match chuyen_mon
+        if linh_vuc and linh_vuc != "--":
+            import re
+            def clean_text(text):
+                if not text: return ""
+                # Chuyển về chữ thường, xoá khoảng trắng thừa
+                text = text.lower().strip()
+                # Hàm đơn giản bỏ dấu tiếng Việt để so sánh khớp hơn
+                import unicodedata
+                return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+
+            # Tách từ khóa bằng các ký tự phân cách phổ biến (xuống dòng, phẩy, chấm phẩy)
+            raw_keywords = re.split(r'[\n,;]', linh_vuc)
+            keywords = [clean_text(kw) for kw in raw_keywords if len(kw.strip()) > 2]
+            
+            for gv in GiangVien.objects.exclude(chuc_vu='Giáo vụ'):
+                gv_cm_clean = clean_text(gv.chuyen_mon or "")
+                for kw_clean in keywords:
+                    if kw_clean and (kw_clean in gv_cm_clean or gv_cm_clean in kw_clean):
+                        if gv.ho_ten not in seen_values:
+                            seen_values.add(gv.ho_ten)
+                            de_xuat_gvhd.append({
+                                "value": gv.ho_ten,
+                                "display": gv_display_map.get(gv.ho_ten, gv.ho_ten)
+                            })
+                        break
+
+        # 3. Đảm bảo GVHD HIỆN TẠI luôn luôn nằm trong danh sách đề xuất (nếu chưa có) để hiển thị đúng Dropdown
+        if pc and pc.giang_vien:
+            current_gv = pc.giang_vien.ho_ten
+            if current_gv not in seen_values:
+                seen_values.add(current_gv)
+                de_xuat_gvhd.append({
+                    "value": current_gv,
+                    "display": gv_display_map.get(current_gv, current_gv)
+                })
+
+        data.append({
+            "id": sv.ma_sv,
+            "ten": sv.ho_ten,
+            "lop": sv.lop,
+            "de_tai": de_tai or "--",
+            "huong_tc": huong_tc or "--",
+            "linh_vuc": linh_vuc or "--",
+            "nv1": nv1,
+            "nv2": nv2,
+            "de_xuat_gvhd": de_xuat_gvhd,
+            "group": group or "Không",
+            "gvhd": pc.giang_vien.ho_ten if pc else "",
+            "trang_thai": pc.trang_thai if pc else 1,
+            "ly_do_tu_choi": pc.ly_do_tu_choi if pc else "",
+            "status": status
+        })
+
+    # Ưu tiên những người có nv1 lên trước tiên, sau đó tới người chưa có nv
+    data.sort(key=lambda x: (0 if x["nv1"] else 1))
+
+    # ===== GV STATS =====
+    gv_stats = []
+    gv_assigned_count = defaultdict(int)
+
+    # Tính số lượng SV ĐÃ phân công cho mỗi GVHD trong kỳ hiện tại
+    query = PhanCongGVHD.objects.filter(ky=ky) if ky else PhanCongGVHD.objects.all()
+    for pc in query:
+        if pc.giang_vien:
+            gv_assigned_count[pc.giang_vien.ho_ten] += 1
+
+    for gv in GiangVien.objects.all():
+        count = gv_assigned_count.get(gv.ho_ten, 0)
+        # Chỉ hiện GV nếu có sinh viên được phân công 
+        if count > 0:
+            gv_stats.append({
+                "ten": gv_display_map.get(gv.ho_ten, gv.ho_ten),
+                "count": count,
+                "overload": count > 10
+            })
+
+    # Sắp xếp theo số lượng giảm dần
+    gv_stats.sort(key=lambda x: -x["count"])
+
+    return render(request, "GiangVien/phan_cong.html", {
+        "data": data,
+        "gv_stats": gv_stats,
+        "is_gvpt": get_is_gvpt(request),
+        "ky_list": ky_list,
+        "current_ky": ky
+    })
+
+# ========================
+# AUTO ASSIGN (UI)
+# ========================
+# RUN AUTO
+# ========================
+def run_auto_assign_ui(request):
+    ky, form = get_form_nguyen_vong()
+    auto_assign(form.id)
+    return redirect("GiangVien:phan_cong")
+
+
+# ========================
+# UPDATE MANUAL
+# ========================
+def update_phan_cong(request):
+
+    if request.method == "POST":
+
+        sv_id = request.POST.get("sv")
+        gv_name = request.POST.get("gv")
+        ky_id = request.POST.get("ky_id")
+
+        try:
+            sv = SinhVien.objects.get(ma_sv=sv_id)
+            
+            if not gv_name:
+                # Xoá phân công nếu chọn "-- Chưa phân --"
+                # Nhưng KHÔNG cho xoá nếu đã được Duyệt (trang_thai=2)
+                if PhanCongGVHD.objects.filter(sinh_vien=sv, trang_thai=2).exists():
+                    return JsonResponse({"status": "error", "message": "Phân công này đã được Trưởng bộ môn DUYỆT nên không được xoá!"})
+                
+                PhanCongGVHD.objects.filter(sinh_vien=sv).delete()
+                return JsonResponse({"status": "deleted"})
+
+            gv = GiangVien.objects.filter(ho_ten=gv_name).first()
+            if not gv:
+                return JsonResponse({"status": "error", "message": f"Giảng viên {gv_name} không tồn tại trong hệ thống."})
+            
+            # Kiểm tra xem phân công hiện tại đã được duyệt chưa (trang_thai=2)
+            # Nếu đã duyệt rồi (trang_thai=2) thì không cho phép ghi đè (sửa)
+            if PhanCongGVHD.objects.filter(sinh_vien=sv, trang_thai=2).exists():
+                return JsonResponse({"status": "error", "message": "Phân công này đã được Trưởng bộ môn DUYỆT nên không được sửa đổi!"})
+            
+            if ky_id and str(ky_id).isdigit():
+                ky = KyThucTap.objects.get(id=ky_id)
+            else:
+                ky = KyThucTap.objects.order_by("-id").first()
+
+            # Sử dụng cả sinh_vien và ky để lọc chính xác bản ghi cần cập nhật
+            PhanCongGVHD.objects.update_or_create(
+                sinh_vien=sv,
+                ky=ky,
+                defaults={
+                    "giang_vien": gv,
+                    "trang_thai": 1  # Chờ duyệt
+                }
+            )
+            return JsonResponse({"status": "ok"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+def select_sinh_vien(request):
+
+    ky, form = get_form_nguyen_vong()
+
+    sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
+
+    data = []
+
+    for sv in sinhviens:
+
+        phieu = PhieuTraLoi.objects.filter(
+            sinh_vien=sv,
+            mau_khao_sat=form
+        ).first()
+
+        nv = ""
+
+        if phieu:
+            for a in phieu.answers.select_related("cau_hoi"):
+                if a.cau_hoi.system_tag == "GVHD_1":
+                    nv = a.gia_tri
+
+        data.append({
+            "id": sv.ma_sv,
+            "ten": sv.ho_ten,
+            "lop": sv.lop,
+            "nv": nv
+        })
+
+    return render(request, "GiangVien/select_sv.html", {
+        "data": data
+    })
 
 # BUILD PROFILE
 # ========================
@@ -277,63 +880,85 @@ def build_profiles(form):
 # ========================
 def auto_assign(form_id):
 
+    ky = KyThucTap.objects.order_by("-id").first()
     form = MauKhaoSat.objects.get(id=form_id)
-    sv_data = build_profiles(form)
 
-    gvs = list(GiangVien.objects.all())
-    gv_count = defaultdict(int)
+    sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
 
-    for pc in PhanCongGVHD.objects.all():
-        gv_count[pc.giang_vien] += 1
+    # ===== LOAD hiện tại =====
+    gv_load = defaultdict(int)
 
-    def score(sv, gv):
+    for pc in PhanCongGVHD.objects.filter(ky=ky):
+        key = pc.giang_vien.ho_ten.strip().lower()
+        gv_load[key] += 1
 
-        s = 0
+    # ===== LOAD NGUYỆN VỌNG =====
+    sv_data = []
 
-        if sv.get("GVHD_1") == gv.ho_ten:
-            s += 3
-        elif sv.get("GVHD_2") == gv.ho_ten:
-            s += 2
+    for sv in sinhviens:
 
-        if sv.get("HUONG_1", "").lower() in gv.chuyen_mon.lower():
-            s += 2
-        elif sv.get("HUONG_2", "").lower() in gv.chuyen_mon.lower():
-            s += 1
-
-        if sv.get("GROUP") == "Có":
-            s += 1
-
-        return s
-
-    for sv, profile in sv_data.items():
-
-        best = None
-        best_score = -1
-
-        for gv in gvs:
-
-            if gv_count[gv] >= 10:
-                continue
-
-            sc = score(profile, gv)
-
-            if sc > best_score:
-                best_score = sc
-                best = gv
-
-        if not best:
-            best = min(gvs, key=lambda g: gv_count[g])
-
-        PhanCongGVHD.objects.update_or_create(
+        phieu = PhieuTraLoi.objects.filter(
             sinh_vien=sv,
-            defaults={
-                "giang_vien": best,
-                "ky": form.ky,
-                "trang_thai": 2
-            }
-        )
+            mau_khao_sat=form
+        ).first()
 
-        gv_count[best] += 1
+        nv1 = ""
+        nv2 = ""
+        de_tai = ""
+        group = ""
+
+        if phieu:
+            for a in phieu.answers.all():
+                tag = (a.cau_hoi.system_tag or "").strip().upper()
+                val = (a.gia_tri or "").strip()
+
+                if tag == "GVHD_1":
+                    nv1 = val
+                elif tag == "GVHD_2":
+                    nv2 = val
+                elif tag == "DE_TAI":
+                    de_tai = val
+                elif tag == "GROUP":
+                    group = val
+
+        sv_data.append({
+            "sv": sv,
+            "nv1": nv1,
+            "nv2": nv2
+        })
+
+    # ===== AUTO ASSIGN =====
+    for item in sv_data:
+
+        sv = item["sv"]
+        assigned = None
+
+        # 🔥 NV1
+        if item["nv1"]:
+            key = item["nv1"].lower()
+            if gv_load[key] < 10:
+                assigned = item["nv1"]
+                gv_load[key] += 1
+
+        # 🔥 NV2
+        if not assigned and item["nv2"]:
+            key = item["nv2"].lower()
+            if gv_load[key] < 10:
+                assigned = item["nv2"]
+                gv_load[key] += 1
+
+        # SAVE
+        if assigned:
+            gv = GiangVien.objects.get(ho_ten=assigned)
+
+            PhanCongGVHD.objects.update_or_create(
+                sinh_vien=sv,
+                defaults={
+                    "giang_vien": gv,
+                    "ky": ky,
+                    "trang_thai": 1 # Đổi về 1: Chờ duyệt
+                }
+            )
 
 from django.http import HttpResponse
 import json
@@ -349,47 +974,117 @@ def run_auto_assign(request, form_id):
 
 def hoi_dong_list(request):
 
-    if not get_is_gvpt(request):
-        return redirect("GiangVien:giangvien_home")
+    ma_gv = request.user.username
+    gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
 
-    hoidongs = HoiDong.objects.all()
+    is_gvpt = get_is_gvpt(request)
+
+    # 👑 GV PHỤ TRÁCH → thấy tất cả
+    if is_gvpt:
+        hoidongs = HoiDong.objects.all()
+
+    # 👨‍🏫 GV thường → chỉ thấy hội đồng mình thuộc
+    else:
+        hoidongs = HoiDong.objects.filter(
+            hoidong_giangvien__giang_vien=gv
+        ).distinct()
 
     return render(request, "GiangVien/hoi_dong_list.html", {
         "hoidongs": hoidongs,
         "current_page": "hoi_dong",
-        "is_gvpt": get_is_gvpt(request)
+        "is_gvpt": is_gvpt
     })
 
 def tao_hoi_dong(request):
 
     if not get_is_gvpt(request):
-        return redirect("GiangVien:giangvien_home")
+        return redirect("GiangVien:hoi_dong_list")
+    ky = KyThucTap.objects.last()
+
+    sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
 
     if request.method == "POST":
-        thoi_gian = request.POST.get("thoi_gian")
+
+        gv_ids = request.POST.getlist("giang_vien")
+        sv_ids = request.POST.get("sinh_vien_ids").split(",")
+
         hd = HoiDong.objects.create(
             ten_hoi_dong=request.POST.get("ten"),
             ngay_bao_ve=request.POST.get("ngay"),
             dia_diem=request.POST.get("dia_diem"),
-            thoi_gian=thoi_gian,
+            thoi_gian=request.POST.get("thoi_gian"),
             ky=KyThucTap.objects.last()
         )
 
-        gv_ids = request.POST.getlist("giang_vien")
-
+        # GV
         for gv_id in gv_ids:
             HoiDong_GiangVien.objects.create(
                 hoi_dong=hd,
                 giang_vien_id=gv_id
             )
 
+        # SV
+        # SV
+        for sv_id in sv_ids:
+            if not sv_id:
+                continue
+
+            sv = SinhVien.objects.get(ma_sv=sv_id)
+
+            # 🔥 CHẶN: SV đã có hội đồng trong cùng kỳ
+            da_co = HoiDong_SinhVien.objects.filter(
+                sinh_vien=sv,
+                hoi_dong__ky=hd.ky
+            ).exists()
+
+            if da_co:
+                continue  # ❌ bỏ luôn
+
+            gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
+
+            # ❌ CHẶN GVHD
+            if gvhd and gvhd.giang_vien.ma_gv in gv_ids:
+                continue
+
+            HoiDong_SinhVien.objects.create(
+                hoi_dong=hd,
+                sinh_vien=sv
+            )
+
         return redirect("GiangVien:hoi_dong_detail", id=hd.id)
 
     return render(request, "GiangVien/tao_hoi_dong.html", {
         "giangviens": GiangVien.objects.all(),
-        "is_gvpt": get_is_gvpt(request)
+        "sinhviens": sinhviens,  # 👈 THÊM DÒNG NÀY
+        "is_gvpt": True,
+        "current_page": "hoi_dong"
     })
+def load_sinh_vien(request):
+    ky = KyThucTap.objects.last()
 
+    sv_da_co = HoiDong_SinhVien.objects.filter(
+        hoi_dong__ky=ky
+    ).values_list("sinh_vien_id", flat=True)
+
+    sinhviens = SinhVien.objects.filter(
+        ky_hien_tai=ky
+    ).exclude(
+        ma_sv__in=sv_da_co
+    )
+
+    data = []
+
+    for sv in sinhviens:
+        gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
+
+        data.append({
+            "id": sv.ma_sv,
+            "ten": sv.ho_ten,
+            "lop": sv.lop,
+            "gvhd": gvhd.giang_vien.ma_gv if gvhd else ""
+        })
+
+    return JsonResponse(data, safe=False)
 def them_sinh_vien(request, id):
 
     hoidong = HoiDong.objects.get(id=id)
@@ -398,16 +1093,25 @@ def them_sinh_vien(request, id):
 
         for sv_id in request.POST.getlist("sinh_vien"):
 
-            sv = SinhVien.objects.get(pk=sv_id)
+            sv = SinhVien.objects.get(ma_sv=sv_id)
+
+            # 🔥 CHẶN TRÙNG HỘI ĐỒNG
+            da_co = HoiDong_SinhVien.objects.filter(
+                sinh_vien=sv,
+                hoi_dong__ky=hoidong.ky
+            ).exists()
+
+            if da_co:
+                continue
 
             gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
 
             if gvhd:
                 if HoiDong_GiangVien.objects.filter(
-                    hoi_dong=hoidong,
-                    giang_vien=gvhd.giang_vien
+                        hoi_dong=hoidong,
+                        giang_vien=gvhd.giang_vien
                 ).exists():
-                    continue  # ❌ bỏ nếu trùng GVHD
+                    continue
 
             HoiDong_SinhVien.objects.create(
                 hoi_dong=hoidong,
@@ -422,16 +1126,64 @@ def them_sinh_vien(request, id):
 
     })
 
-def hoi_dong_detail(request, id):
-    hoidong = HoiDong.objects.get(id=id)
 
-    giangviens = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong)
-    sinhviens = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong)
+def hoi_dong_detail(request, id):
+    hoidong = get_object_or_404(HoiDong, id=id)
+    is_gvpt = get_is_gvpt(request)
+    ma_gv = request.user.username
+    gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
+
+    if not is_gvpt and gv:
+        if not HoiDong_GiangVien.objects.filter(hoi_dong=hoidong, giang_vien=gv).exists():
+            return redirect("GiangVien:hoi_dong_list")
+
+    giangviens = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
+
+    # Lấy danh sách sinh viên + điểm
+    sv_list = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
+
+    data_sv = []
+    for item in sv_list:
+        sv = item.sinh_vien
+
+        # SỬA TẠI ĐÂY: Truy vấn bằng ma_sv cụ thể để tránh lỗi mapping đối tượng
+        bd = BangDiem.objects.filter(
+            sinh_vien_id=sv.ma_sv,
+            ky_id=hoidong.ky_id
+        ).first()
+
+        diem_value = None
+        if bd:
+            # Đảm bảo lấy đúng trường diem_bao_cao (điểm hội đồng)
+            diem_value = bd.diem_bao_cao
+
+        data_sv.append({
+            "sv": sv,
+            "diem": diem_value,
+        })
 
     return render(request, "GiangVien/hoi_dong_detail.html", {
         "hoidong": hoidong,
         "giangviens": giangviens,
-        "sinhviens": sinhviens,
-        "is_gvpt": get_is_gvpt(request)
-
+        "sinhviens": data_sv,  # Key này phải khớp với {% for item in sinhviens %}
+        "is_gvpt": is_gvpt,
+        "current_page": "hoi_dong"
     })
+
+@require_POST
+def cham_diem_hoi_dong(request, id, ma_sv):
+    sv = get_object_or_404(SinhVien, ma_sv=ma_sv)
+    hoidong = get_object_or_404(HoiDong, id=id)
+    diem_str = request.POST.get("diem")
+
+    if diem_str:
+        # Sử dụng update_or_create để đảm bảo không tạo bản ghi rác
+        bd, created = BangDiem.objects.update_or_create(
+            sinh_vien=sv,
+            ky=hoidong.ky,
+            defaults={'diem_bao_cao': float(diem_str)}
+        )
+        # Gọi hàm tính tổng kết nếu có
+        bd.calculate_total()
+
+    return redirect("GiangVien:hoi_dong_detail", id=id)
