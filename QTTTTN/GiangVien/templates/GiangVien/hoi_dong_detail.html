@@ -3,145 +3,104 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <div class="p-6 bg-gray-50 min-h-screen">
-
-<!-- ===== HEADER ===== -->
-<div class="bg-white rounded-xl shadow p-6 mb-6">
-
-    <div class="flex justify-between items-center">
-        <div>
-
-            <h1 class="text-2xl font-bold mt-2">
-                {{ hoidong.ten_hoi_dong }}
-            </h1>
-
-            <div class="flex gap-6 text-gray-500 mt-3 text-sm">
-                <span>{{ hoidong.ngay_bao_ve }}</span>
-                <span> {{ hoidong.thoi_gian }}</span>
-                <span>📍 {{ hoidong.dia_diem }}</span>
+    <!-- HEADER -->
+    <div class="bg-white rounded-xl shadow p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">{{ hoidong.ten_hoi_dong }}</h1>
+                <div class="flex gap-6 text-gray-500 mt-3 text-sm">
+                    <span>{{ hoidong.ngay_bao_ve }}</span>
+                    <span>{{ hoidong.thoi_gian }}</span>
+                    <span>📍 {{ hoidong.dia_diem }}</span>
+                </div>
             </div>
         </div>
-
-        <!-- 🔥 CHỈ GVPT MỚI THẤY -->
-
     </div>
 
-</div>
+    <!-- TABS -->
+    <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex gap-6 border-b mb-6">
+            <button onclick="showTab('gv')" id="tab-gv" class="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">Thành viên Hội đồng</button>
+            <button onclick="showTab('sv')" id="tab-sv" class="pb-2 text-gray-500">Danh sách Sinh viên</button>
+        </div>
 
-<!-- ===== TABS ===== -->
-<div class="bg-white rounded-xl shadow p-6">
+        <!-- TAB GV -->
+        <div id="tab-content-gv">
+            <table class="w-full text-sm">
+                <thead class="text-gray-500 border-b">
+                    <tr>
+                        <th class="py-2 text-left">STT</th>
+                        <th class="text-left">Mã GV</th>
+                        <th class="text-left">Họ và tên</th>
+                        <th class="text-left">Đơn vị</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for gv in giangviens %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-3">{{ forloop.counter }}</td>
+                        <td>{{ gv.giang_vien.ma_gv }}</td>
+                        <td>{{ gv.giang_vien.ho_ten }}</td>
+                        <td>{{ gv.giang_vien.khoa }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-    <div class="flex gap-6 border-b mb-6">
-        <button onclick="showTab('gv')" id="tab-gv"
-            class="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">
-            Thành viên Hội đồng
-        </button>
+        <!-- TAB SV + CHẤM ĐIỂM -->
+        <div id="tab-content-sv" class="hidden">
+            <h2 class="text-lg font-semibold mb-6">Danh sách sinh viên bảo vệ</h2>
 
-        <button onclick="showTab('sv')" id="tab-sv"
-            class="pb-2 text-gray-500">
-            Danh sách Sinh viên
-        </button>
-    </div>
-
-    <!-- ===== TAB GIẢNG VIÊN ===== -->
-    <div id="tab-content-gv">
-
-        <table class="w-full text-sm">
-            <thead class="text-gray-500 border-b">
-                <tr>
-                    <th class="py-2 text-left">STT</th>
-                    <th class="text-left">Mã GV</th>
-                    <th class="text-left">Họ và tên</th>
-                    <th class="text-left">Đơn vị</th>
-
-                    {% if is_gvpt %}
-                    <th class="text-center">Thao tác</th>
-                    {% endif %}
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for gv in giangviens %}
+            <table class="w-full text-sm">
+                <thead class="text-gray-500 border-b">
+                    <tr>
+                        <th class="py-3 text-left">Mã SV</th>
+                        <th class="text-left">Họ tên</th>
+                        <th class="text-left">Lớp</th>
+                        <th class="text-left">Điểm báo cáo</th>
+                        <th class="text-left">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in sinhviens %}
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="py-3">{{ forloop.counter }}</td>
-                    <td>{{ gv.giang_vien.ma_gv }}</td>
-                    <td>{{ gv.giang_vien.ho_ten }}</td>
-                    <td>{{ gv.giang_vien.khoa }}</td>
+                    <td class="py-4 font-medium text-blue-600">{{ item.sv.ma_sv }}</td>
+                    <td class="py-4">{{ item.sv.ho_ten }}</td>
+                    <td class="py-4">{{ item.sv.lop }}</td>
 
-                    {% if is_gvpt %}
-                    <td class="text-center">
-                        <button class="text-red-500">🗑</button>
-                    </td>
-                    {% endif %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    <!-- CHẤM ĐIỂM (LUÔN HIỂN THỊ & CÓ THỂ SỬA) -->
+                    <td class="py-4">
+    {% if item.diem is not None %}
+        <!-- ✅ HIỂN THỊ ĐIỂM -->
+        <span class="inline-block px-4 py-2 rounded-xl bg-gray-100 font-semibold text-gray-700">
+            {{ item.diem|floatformat:1 }}
+        </span>
+    {% else %}
+        <!-- ✅ CHO NHẬP ĐIỂM -->
+        <form method="POST"
+              action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
+              class="flex items-center gap-3">
+            {% csrf_token %}
 
-    </div>
+            <input type="number"
+                   step="0.1"
+                   min="0"
+                   max="10"
+                   name="diem"
+                   class="border border-gray-300 focus:border-blue-500 px-4 py-2 rounded-xl w-28 text-center font-medium"
+                   placeholder="Nhập điểm">
 
-
-<!-- ===== TAB SINH VIÊN ===== -->
-<div id="tab-content-sv" class="hidden">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-lg font-semibold text-gray-800">Danh sách sinh viên bảo vệ</h2>
-
-        {% if is_gvpt %}
-        <a href="{% url 'GiangVien:them_sinh_vien' hoidong.id %}"
-           class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition">
-            + Thêm sinh viên
-        </a>
-        {% endif %}
-    </div>
-
-    <table class="w-full text-sm">
-        <thead class="text-gray-500 border-b">
-            <tr>
-                <th class="py-3 text-left">Mã SV</th>
-                <th class="text-left">Họ tên</th>
-                <th class="text-left">Lớp</th>
-                <th class="text-left">Điểm báo cáo</th>
-                <th class="text-left">Trạng thái</th>
-                <th class="text-center">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for item in sinhviens %}
-        <tr class="border-b hover:bg-gray-50">
-            <td class="py-4 font-medium text-blue-600">{{ item.sv.ma_sv }}</td>
-            <td class="py-4">{{ item.sv.ho_ten }}</td>
-            <td class="py-4">{{ item.sv.lop }}</td>
-
-<!-- === CỘT ĐIỂM BÁO CÁO - DEBUG MẠNH === -->
-<td class="py-4">
-    <form method="POST"
-          action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
-          class="flex items-center gap-3">
-        {% csrf_token %}
-
-        <input type="number"
-               step="0.1"
-               min="0"
-               max="10"
-               name="diem"
-               value="{% if item.diem is not None %}{{ item.diem|floatformat:1 }}{% endif %}"
-               class="border border-gray-300 focus:border-blue-500 px-4 py-2 rounded-xl w-28 text-center font-medium"
-               placeholder="Nhập điểm">
-
-        <button type="submit"
-                class="px-6 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap
-                {% if item.diem is not None %}
-                    bg-gray-500 text-white cursor-not-allowed
-                {% else %}
-                    bg-blue-600 hover:bg-blue-700 text-white
-                {% endif %}"
-                {% if item.diem is not None %}disabled{% endif %}>
-            {% if item.diem is not None %}Đã lưu{% else %}Chấm điểm{% endif %}
-        </button>
-    </form>
+            <button type="submit"
+                    class="px-6 py-2.5 rounded-xl text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white">
+                Chấm điểm
+            </button>
+        </form>
+    {% endif %}
 </td>
 
-            <!-- Trạng thái -->
-<td class="py-4">
+                    <!-- Trạng thái -->
+                    <td class="py-4">
     {% if item.diem is not None %}
         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
             ✓ Đã chấm
@@ -152,34 +111,28 @@
         </span>
     {% endif %}
 </td>
-            <td class="py-4 text-center text-gray-400"></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-</div>
-
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<!-- ===== JS TAB ===== -->
 <script>
-function showTab(type){
-
-    document.getElementById("tab-content-gv").classList.add("hidden");
-    document.getElementById("tab-content-sv").classList.add("hidden");
-
-    document.getElementById("tab-gv").classList.remove("border-blue-600","text-blue-600");
-    document.getElementById("tab-sv").classList.remove("border-blue-600","text-blue-600");
+function showTab(type) {
+    document.getElementById("tab-content-gv").classList.add("hidden")
+    document.getElementById("tab-content-sv").classList.add("hidden")
+    document.getElementById("tab-gv").classList.remove("border-blue-600","text-blue-600")
+    document.getElementById("tab-sv").classList.remove("border-blue-600","text-blue-600")
 
     if(type==="gv"){
-        document.getElementById("tab-content-gv").classList.remove("hidden");
-        document.getElementById("tab-gv").classList.add("border-blue-600","text-blue-600");
-    }else{
-        document.getElementById("tab-content-sv").classList.remove("hidden");
-        document.getElementById("tab-sv").classList.add("border-blue-600","text-blue-600");
+        document.getElementById("tab-content-gv").classList.remove("hidden")
+        document.getElementById("tab-gv").classList.add("border-blue-600","text-blue-600")
+    } else {
+        document.getElementById("tab-content-sv").classList.remove("hidden")
+        document.getElementById("tab-sv").classList.add("border-blue-600","text-blue-600")
     }
 }
 </script>
-
 {% endblock %}

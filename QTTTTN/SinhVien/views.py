@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from Home.models import (NhiemVu, SinhVien, BaiNop, NguoiDung,
-                         MauKhaoSat, TaiLieu, PhanCongGVHD, PhieuTraLoi, ChiTietTraLoi)
+                         MauKhaoSat, TaiLieu, PhanCongGVHD,
+                         PhieuTraLoi, ChiTietTraLoi, BangDiem)
 
 
 @login_required
@@ -103,13 +104,35 @@ def home(request):
                 'sort_time': timezone.make_aware(timezone.datetime.combine(f.ngay_ket_thuc, timezone.datetime.max.time())) if f.ngay_ket_thuc else now
             })
 
+
+        # ==================== THÊM PHẦN NÀY ====================
+        # Ưu tiên lấy từ DB chính (noi_thuc_tap)
+        noi_thuc_tap = sinh_vien.noi_thuc_tap
+
+        # Nếu chưa có trong DB, thử lấy từ form gần nhất (backup)
+        if not noi_thuc_tap and ky_hien_tai:
+            phieu = PhieuTraLoi.objects.filter(
+                sinh_vien=sinh_vien,
+                mau_khao_sat__ky=ky_hien_tai
+            ).order_by("-id").first()
+
+            if phieu:
+                for ans in phieu.answers.all():
+                    if (ans.cau_hoi.system_tag or "").strip() == "don_vi_tt":
+                        noi_thuc_tap = ans.gia_tri
+                        # Đồng bộ luôn vào DB chính để lần sau nhanh hơn
+                        sinh_vien.noi_thuc_tap = noi_thuc_tap
+                        sinh_vien.save()
+                        break
+        # =======================================================
     context = {
         'current_page': 'home',
         'sinh_vien': sinh_vien,
         'ky_hien_tai': ky_hien_tai,
         'giang_vien': giang_vien,
         'danh_sach_nhiem_vu': danh_sach_nhiem_vu,
-        'tai_lieu': TaiLieu.objects.filter(ky=ky_hien_tai).order_by('-ngay_cap_nhat')[:5]
+        'tai_lieu': TaiLieu.objects.filter(ky=ky_hien_tai).order_by('-ngay_cap_nhat')[:5],
+        'noi_thuc_tap': noi_thuc_tap,  # ← Truyền xuống template
     }
     return render(request, 'SinhVien/dashboard.html', context)
 
@@ -128,6 +151,9 @@ def nhiem_vu(request):
         ky=sinh_vien.ky_hien_tai
     ).order_by('-han_nop')
 
+    status_filter = request.GET.get('status', 'all')
+    task_list = []
+
     # Gắn trạng thái bài nộp vào nhiệm vụ
     for task in tasks:
         # Lấy bản ghi bài nộp thực sự từ DB
@@ -143,8 +169,17 @@ def nhiem_vu(request):
             else:
                 task.trang_thai = "pending"
 
+        if status_filter == 'done' and task.trang_thai != 'done':
+            continue
+        if status_filter == 'pending' and task.trang_thai != 'pending':
+            continue
+        if status_filter == 'late' and task.trang_thai != 'late':
+            continue
+            
+        task_list.append(task)
+
     # Phân trang
-    paginator = Paginator(tasks, 4)
+    paginator = Paginator(task_list, 4)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -160,17 +195,50 @@ def nhiem_vu(request):
 def xem_diem(request):
     try:
         nguoi_dung = NguoiDung.objects.get(user=request.user)
-        sinh_vien = SinhVien.objects.get(ma_sv=nguoi_dung.username)
-        # Kiểm tra xem có thuộc tính cong_ty không
-        cong_ty = sinh_vien.cong_ty if hasattr(sinh_vien, 'cong_ty') else None
+        sinh_vien = SinhVien.objects.select_related('ky_hien_tai').get(ma_sv=nguoi_dung.username)
+        ky_hien_tai = sinh_vien.ky_hien_tai
+
+        # Lấy điểm từ BangDiem
+        bang_diem = BangDiem.objects.filter(sinh_vien=sinh_vien, ky=ky_hien_tai).first()
+        diem_tk = bang_diem.diem_tong_ket if (bang_diem and bang_diem.diem_tong_ket is not None) else "Chưa có"
+
     except (NguoiDung.DoesNotExist, SinhVien.DoesNotExist):
-        sinh_vien = None
-        cong_ty = None
+        return render(request, 'SinhVien/xem_diem.html', {'error': 'Không tìm thấy hồ sơ'})
+
+    # --- LOGIC LẤY THÔNG TIN TỪ FORM KHẢO SÁT ---
+    thong_tin_thuc_tap = {
+        'ten_cong_ty': None,
+        'dia_chi': None,
+        'de_tai': None  # <--- Thêm mới cái này
+    }
+
+    if ky_hien_tai:
+        # Lấy tất cả câu trả lời của SV này trong kỳ này
+        answers = ChiTietTraLoi.objects.filter(
+            phieu_tra_loi__sinh_vien=sinh_vien,
+            phieu_tra_loi__mau_khao_sat__ky=ky_hien_tai
+        ).select_related('cau_hoi').order_by('-phieu_tra_loi__thoi_gian_nop')
+
+        for ans in answers:
+            tag = ans.cau_hoi.system_tag
+            if not tag: continue
+
+            if tag == 'don_vi_tt' and not thong_tin_thuc_tap['ten_cong_ty']:
+                thong_tin_thuc_tap['ten_cong_ty'] = ans.gia_tri
+            elif tag == 'dia_diem_dv' and not thong_tin_thuc_tap['dia_chi']:
+                thong_tin_thuc_tap['dia_chi'] = ans.gia_tri
+            elif tag == 'de_tai_tt' and not thong_tin_thuc_tap['de_tai']:  # <--- Quét tag de_tai_tt
+                thong_tin_thuc_tap['de_tai'] = ans.gia_tri
+
+            # Nếu tìm đủ rồi thì dừng vòng lặp cho nhẹ máy
+            if all(thong_tin_thuc_tap.values()):
+                break
 
     context = {
         'current_page': 'xem_diem',
         'sinh_vien': sinh_vien,
-        'cong_ty': cong_ty
+        'diem_tk': diem_tk,
+        'thong_tin_thuc_tap': thong_tin_thuc_tap
     }
     return render(request, 'SinhVien/xem_diem.html', context)
 

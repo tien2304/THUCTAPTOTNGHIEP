@@ -4,7 +4,7 @@
 {% block title %}Nhiệm vụ & Nộp bài{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'SinhVien/css/nhiemvu_nopbai.css' %}">
+<link rel="stylesheet" href="{% static 'SinhVien/css/nhiemvu_nopbai.css' %}?v=1.6">
 
 <div class="task-page">
 
@@ -22,11 +22,11 @@
 
             <h3>Danh sách nhiệm vụ nộp bài</h3>
 
-            <select class="task-filter">
-                <option>Tất cả trạng thái</option>
-                <option>Đã nộp</option>
-                <option>Chưa nộp</option>
-                <option>Trễ</option>
+            <select class="task-filter" onchange="window.location.href='?status=' + this.value;">
+                <option value="all" {% if request.GET.status == 'all' or not request.GET.status %}selected{% endif %}>Tất cả trạng thái</option>
+                <option value="done" {% if request.GET.status == 'done' %}selected{% endif %}>Đã nộp</option>
+                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Chưa nộp</option>
+                <option value="late" {% if request.GET.status == 'late' %}selected{% endif %}>Trễ</option>
             </select>
 
         </div>
@@ -82,11 +82,21 @@
                                     data-filename="{{ task.thong_tin_nop.ten_file }}"
                                     data-filesize="{{ task.thong_tin_nop.file_path.size|filesizeformat }}"
                                     data-submittime="{{ task.thong_tin_nop.thoi_gian_nop|date:'Y-m-d H:i:s' }}"
-                                    data-fileurl="{{ task.thong_tin_nop.file_path.url }}">
+                                    data-fileurl="{{ task.thong_tin_nop.file_path.url }}"
+                                    data-task-id="{{ task.id }}"
+                                    data-task-name="{{ task.ten_nhiem_vu|escapejs }}"
+                                    data-deadline-iso="{{ task.han_nop|date:'Y-m-d\TH:i:s' }}"
+                                    data-deadline-display="{{ task.han_nop|date:'H:i d/m/Y' }}"
+                                    data-task-rule="{{ task.mo_ta }}">
                                 Xem lại
                             </button>
                         {% else %}
-                            <button class="btn-submit open-submit-modal" ...>
+                            <button class="btn-submit open-submit-modal"
+                                    data-task-id="{{ task.id }}"
+                                    data-task-name="{{ task.ten_nhiem_vu|escapejs }}"
+                                    data-deadline-iso="{{ task.han_nop|date:'Y-m-d\TH:i:s' }}"
+                                    data-deadline-display="{{ task.han_nop|date:'H:i d/m/Y' }}"
+                                    data-task-rule="{{ task.mo_ta }}">
                                 Nộp bài
                             </button>
                         {% endif %}
@@ -119,7 +129,7 @@
             <div class="pagination-pages">
 
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">‹</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">‹</a>
                 {% else %}
                 <span class="page-btn disabled">‹</span>
                 {% endif %}
@@ -128,12 +138,12 @@
                 {% if page_obj.number == num %}
                 <span class="page-btn active">{{ num }}</span>
                 {% else %}
-                <a href="?page={{ num }}" class="page-btn">{{ num }}</a>
+                <a href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">{{ num }}</a>
                 {% endif %}
                 {% endfor %}
 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="page-btn">›</a>
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">›</a>
                 {% else %}
                 <span class="page-btn disabled">›</span>
                 {% endif %}
@@ -151,7 +161,9 @@
 
 <div id="submitModal" class="submit-modal">
 
-    <div class="submit-modal-content">
+    <form class="submit-modal-content" id="submitForm" method="POST" enctype="multipart/form-data" action="{% url 'SinhVien:nop_bai_action' %}">
+        {% csrf_token %}
+        <input type="hidden" name="task_id" id="modalTaskId">
 
         <div class="submit-modal-header">
             <h3 id="modalTaskTitle">Nộp bài</h3>
@@ -186,7 +198,7 @@
 
             <label class="upload-btn">
                 Chọn file từ máy tính
-                <input type="file" hidden id="fileInput" accept=".pdf,.doc,.docx,.zip,.rar">
+                <input type="file" name="file_nop" hidden id="fileInput" accept=".pdf,.doc,.docx,.zip,.rar" required>
             </label>
 
             <p class="upload-note">
@@ -196,11 +208,11 @@
         </div>
 
         <div class="modal-actions">
-            <button class="btn-cancel">Huỷ bỏ</button>
-            <button class="btn-submit">Nộp bài ngay</button>
+            <button type="button" class="btn-cancel">Huỷ bỏ</button>
+            <button type="submit" class="btn-submit">Nộp bài ngay</button>
         </div>
 
-    </div>
+    </form>
 
 </div>
 
@@ -209,7 +221,6 @@
     <div class="submit-modal-content modal-xem-lai">
         <div class="review-header">
             <div class="header-left">
-                <span class="icon-doc">📄</span>
                 <h3>Xem lại bài nộp</h3>
             </div>
             <span class="close-review">×</span>
@@ -249,7 +260,7 @@
                                 <div id="rvFileSize" class="fsize"></div>
                             </div>
                         </div>
-                        <a id="rvDownloadLink" href="#" download="" style="text-decoration: none;">
+                        <a id="rvDownloadLink" href="#" target="_blank" style="text-decoration: none;">
                             <span class="download-btn" title="Tải xuống">
                                 <div class="dl-container">
                                     <svg class="dl-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -277,307 +288,135 @@
     const reviewModal = document.getElementById("reviewModal");
     const fileInput = document.getElementById("fileInput");
 
-    let currentRow = null;
-
-    // đóng tất cả modal
     function closeAllModals() {
         submitModal.style.display = "none";
         reviewModal.style.display = "none";
     }
 
-    // nút đóng
     document.querySelectorAll(".close-modal, .close-review, .btn-cancel").forEach(btn => {
         btn.onclick = closeAllModals;
     });
 
-
-    // =======================
-    // MỞ POPUP NỘP BÀI
-    // =======================
-
     document.addEventListener("click", function (e) {
-
+        // 1. MỞ POPUP NỘP BÀI
         if (e.target.classList.contains("open-submit-modal")) {
-
             const btn = e.target;
-            currentRow = btn.closest("tr");
-
-            const taskName = btn.dataset.taskName;
-            const rule = btn.dataset.taskRule;
-
-            document.getElementById("modalTaskTitle").innerText = "Nộp " + taskName;
-            document.getElementById("modalTaskRule").innerText = rule;
-
+            document.getElementById("modalTaskId").value = btn.dataset.taskId;
+            document.getElementById("modalTaskTitle").innerText = "Nộp " + btn.dataset.taskName;
+            document.getElementById("modalTaskRule").innerText = btn.dataset.taskRule;
             submitModal.style.display = "flex";
         }
 
-    });
-
-
-    // =======================
-    // NỘP BÀI
-    // =======================
-
-    document.querySelector("#submitModal .btn-submit").onclick = function () {
-
-        if (fileInput.files.length === 0) {
-            alert("Vui lòng chọn file!");
-            return;
-        }
-
-        const file = fileInput.files[0];
-        const now = new Date();
-
-        // lấy hạn nộp từ bảng
-        const deadlineStr = currentRow.cells[1].innerText.trim();
-        const [day, month, year] = deadlineStr.split("/");
-
-        const deadline = new Date(year, month - 1, day, 23, 59, 59);
-
-        // lưu dữ liệu vào row
-        currentRow.dataset.filename = file.name;
-        currentRow.dataset.filesize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
-        currentRow.dataset.submittime = now;
-
-        // đổi trạng thái
-        const badge = currentRow.querySelector(".status-badge");
-
-        if (now > deadline) {
-            badge.innerText = "Trễ";
-            badge.className = "status-badge late";
-        }
-        else {
-            badge.innerText = "Đã nộp";
-            badge.className = "status-badge done";
-        }
-
-        // Save actual file for download in data url format
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            currentRow.dataset.filedata = e.target.result;
-        };
-        reader.readAsDataURL(file);
-
-        // đổi nút
-        const btn = currentRow.querySelector("button");
-        btn.innerText = "Xem lại";
-        btn.className = "btn-view";
-
-        closeAllModals();
-
-        alert("Nộp bài thành công!");
-    };
-
-
-
-    // =======================
-    // XEM LẠI
-    // =======================
-
-    document.addEventListener("click", function (e) {
-
+        // 2. MỞ POPUP XEM LẠI
         if (e.target.classList.contains("btn-view")) {
+            const btn = e.target.closest(".btn-view");
+            const row = btn.closest("tr");
 
-            const row = e.target.closest("tr");
+            const deadlineIso = btn.dataset.deadlineIso;
+            const deadlineDate = new Date(deadlineIso);
+            const now = new Date(); // Lấy thời gian hiện tại để check quá hạn
 
-            const deadlineStr = row.cells[1].innerText.trim();
-            const status = row.querySelector(".status-badge").innerText;
-
-            const fileName = row.dataset.filename || "Chưa có file";
-            const fileSize = row.dataset.filesize || "";
-
-            const submitTime = row.dataset.submittime ? new Date(row.dataset.submittime) : null;
-
-            document.getElementById("rvDeadline").innerText = deadlineStr + ", 23:59";
-
-            document.getElementById("rvFileName").innerText = fileName;
-            document.getElementById("rvFileSize").innerText = fileSize;
-
-            // trạng thái
-            if (status.includes("Đã nộp")) {
-                document.getElementById("rvStatus").innerHTML =
-                    `<span class="status-badge done">Đã nộp</span>`;
-            } else {
-                document.getElementById("rvStatus").innerHTML =
-                    `<span class="status-badge late">Trễ</span>`;
-            }
-
-            // Set file icon using robust standalone SVGs
-            const iconContainer = document.getElementById("rvFileIcon");
-            const lowerName = fileName.toLowerCase();
-
-            let iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#94a3b8"/>
-            <path d="M14 2V8H20" fill="#64748b"/>
-            <text x="6" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="6.5">FILE</text>
-        </svg>`; // default
-
-            if (lowerName.endsWith(".pdf")) {
-                iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#e02424"/>
-                <path d="M14 2V8H20" fill="#b91c1c"/>
-                <text x="6" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="7">PDF</text>
-            </svg>`;
-            } else if (lowerName.endsWith(".doc") || lowerName.endsWith(".docx")) {
-                iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#2b579a"/>
-                <path d="M14 2V8H20" fill="#1e3a8a"/>
-                <text x="5.5" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="6.5">DOC</text>
-            </svg>`;
-            }
-            iconContainer.innerHTML = iconHtml;
-
-            // Download functionality
-            const fileData = row.dataset.filedata;
-            const downloadLink = document.getElementById("rvDownloadLink");
-
-            if (fileData) {
-                downloadLink.href = fileData;
-                downloadLink.download = fileName;
-                downloadLink.style.display = "inline-block"; // Show the link if we have file data
-            } else {
-                // For files already in database without data URL in this session
-                // Replace '#' with real backend URL logic if available e.g. `/download/${taskId}`
-                downloadLink.href = "#";
-                downloadLink.removeAttribute("download");
-
-                downloadLink.onclick = function (e) {
-                    if (this.getAttribute('href') === "#") {
-                        e.preventDefault();
-                        alert("Tính năng tải về chưa khả dụng cho bài nộp cũ.");
-                    }
-                };
-            }
-
-            // thời gian
-            const timeBox = document.getElementById("rvTimeBox");
-
-            const [dayStr, monthStr, yearStr] = deadlineStr.split("/");
-            const deadlineDate = new Date(yearStr, monthStr - 1, dayStr, 23, 59, 59);
+            const submitTimeStr = btn.dataset.submittime;
+            const submitTime = submitTimeStr ? new Date(submitTimeStr.replace(' ', 'T')) : null;
             const daysOfWeek = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
-            const strDayOfWeek = daysOfWeek[deadlineDate.getDay()];
-            document.getElementById("rvDeadline").innerText = `${strDayOfWeek}, ${dayStr} Tháng ${monthStr}, ${yearStr}, 23:59`;
+
+            // Hiển thị Ngày hết hạn
+            const hh = String(deadlineDate.getHours()).padStart(2, '0');
+            const mm = String(deadlineDate.getMinutes()).padStart(2, '0');
+            const d = String(deadlineDate.getDate()).padStart(2, '0');
+            const m = String(deadlineDate.getMonth() + 1).padStart(2, '0');
+            const y = deadlineDate.getFullYear();
+            document.getElementById("rvDeadline").innerText = `${daysOfWeek[deadlineDate.getDay()]}, ${d}/${m}/${y} lúc ${hh}:${mm}`;
+
+            // Xử lý Thời gian còn lại & Nộp sớm/trễ
+            const timeBox = document.getElementById("rvTimeBox");
+            const clockIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; margin-top:-1px"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+
+            const calculateTime = (ms) => {
+                const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+                let res = "";
+                if (days > 0) res += `${days} ngày `;
+                if (hours > 0) res += `${hours} giờ `;
+                if (mins > 0 || (days === 0 && hours === 0)) res += `${mins} phút`;
+                return res.trim();
+            };
 
             if (submitTime) {
                 const diff = deadlineDate - submitTime;
-
                 if (diff > 0) {
-                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    timeBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:-2px"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Bài tập đã được nộp sớm ${days} ngày ${hours} giờ`;
-                    timeBox.style.background = "#eff6ff"; // Màu xanh blue nhạt
-                    timeBox.style.color = "#3b82f6";
+                    timeBox.innerHTML = `${clockIcon} Bài tập đã được nộp sớm ${calculateTime(diff)}`;
+                    timeBox.style.background = "#eff6ff"; timeBox.style.color = "#3b82f6";
                 } else {
-                    timeBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:-2px"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Bài tập nộp trễ`;
-                    timeBox.style.background = "#fee2e2"; // Màu đỏ nhạt
-                    timeBox.style.color = "#ef4444";
+                    timeBox.innerHTML = `${clockIcon} Bài tập nộp trễ ${calculateTime(Math.abs(diff))}`;
+                    timeBox.style.background = "#fee2e2"; timeBox.style.color = "#ef4444";
                 }
-
-                const hr = submitTime.getHours().toString().padStart(2, '0');
-                const min = submitTime.getMinutes().toString().padStart(2, '0');
-                const dSub = submitTime.getDate().toString().padStart(2, '0');
-                const mSub = (submitTime.getMonth() + 1).toString().padStart(2, '0');
-                const ySub = submitTime.getFullYear();
-
-                document.getElementById("rvLastModified").innerText = `${daysOfWeek[submitTime.getDay()]}, ${dSub} Tháng ${mSub}, ${ySub}, ${hr}:${min}`;
-                document.getElementById("rvFileSize").innerText = `${fileSize} • Đã tải lên vào ${hr}:${min}`;
+                const sH = String(submitTime.getHours()).padStart(2, '0');
+                const sM = String(submitTime.getMinutes()).padStart(2, '0');
+                document.getElementById("rvLastModified").innerText = `${daysOfWeek[submitTime.getDay()]}, ${submitTime.getDate()}/${submitTime.getMonth()+1}/${submitTime.getFullYear()} lúc ${sH}:${sM}`;
             }
-            else {
-                document.getElementById("rvLastModified").innerText = "Chưa có dữ liệu";
-                timeBox.innerText = "Chưa nộp bài";
-                timeBox.style.background = "#e5e7eb";
-                timeBox.style.color = "#374151";
-                document.getElementById("rvFileSize").innerText = fileSize;
+
+            // Xử lý Logic Disable nút "Sửa bài nộp"
+            const btnEdit = document.querySelector(".btn-edit-submission");
+            if (now > deadlineDate) {
+                // Nếu đã quá hạn nộp bài
+                btnEdit.disabled = true;
+                btnEdit.innerText = "Đã hết hạn sửa bài";
+                btnEdit.style.opacity = "0.5";
+                btnEdit.style.cursor = "not-allowed";
+                btnEdit.style.backgroundColor = "#f3f4f6";
+                btnEdit.style.color = "#9ca3af";
+            } else {
+                // Nếu vẫn còn trong hạn
+                btnEdit.disabled = false;
+                btnEdit.innerText = "Sửa bài nộp";
+                btnEdit.style.opacity = "1";
+                btnEdit.style.cursor = "pointer";
+                btnEdit.style.backgroundColor = ""; // Reset về CSS gốc
+                btnEdit.style.color = "";
             }
+
+            // Xử lý Icon File (Giữ nguyên)
+            const fileName = btn.dataset.filename || "Chưa có file";
+            document.getElementById("rvFileName").innerText = fileName;
+            document.getElementById("rvFileSize").innerText = btn.dataset.filesize || "";
+            document.getElementById("rvDownloadLink").href = btn.dataset.fileurl || "#";
+            const iconContainer = document.getElementById("rvFileIcon");
+            const lowerName = fileName.toLowerCase();
+            let iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#94a3b8"/><path d="M14 2V8H20" fill="#64748b"/><text x="6" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="6.5">FILE</text></svg>`;
+            if (lowerName.endsWith(".pdf")) {
+                iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#e02424"/><path d="M14 2V8H20" fill="#b91c1c"/><text x="6" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="7">PDF</text></svg>`;
+            } else if (lowerName.endsWith(".doc") || lowerName.endsWith(".docx")) {
+                iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#2b579a"/><path d="M14 2V8H20" fill="#1e3a8a"/><text x="5.5" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="6.5">DOC</text></svg>`;
+            } else if (lowerName.endsWith(".zip") || lowerName.endsWith(".rar")) {
+                iconHtml = `<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M6 2C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2H6Z" fill="#a855f7"/><path d="M14 2V8H20" fill="#7e22ce"/><text x="6" y="17" fill="white" font-family="sans-serif" font-weight="bold" font-size="6.5">ZIP</text></svg>`;
+            }
+            iconContainer.innerHTML = iconHtml;
+
+            const statusBadge = row.querySelector(".status-badge");
+            document.getElementById("rvStatus").innerHTML = statusBadge.outerHTML;
+            document.getElementById("modalTaskId").value = btn.dataset.taskId;
+            document.getElementById("modalTaskTitle").innerText = "Sửa " + btn.dataset.taskName;
+            document.getElementById("modalTaskRule").innerText = btn.dataset.taskRule;
 
             reviewModal.style.display = "flex";
-
         }
-
     });
-
-
-
-    // =======================
-    // SỬA BÀI NỘP
-    // =======================
 
     document.querySelector(".btn-edit-submission").onclick = function () {
-
-        closeAllModals();
-        submitModal.style.display = "flex";
-
+        if (!this.disabled) {
+            closeAllModals();
+            submitModal.style.display = "flex";
+        }
     };
 
-
-
-    // =======================
-    // HIỂN THỊ TÊN FILE VÀ KÉO THẢ
-    // =======================
-
-    const uploadBox = document.querySelector(".upload-box");
-    const uploadNote = document.querySelector(".upload-note");
-
-    // Khi chọn file bằng nút bấm
-    fileInput.addEventListener("change", function () {
-        if (this.files.length > 0) {
-            uploadNote.innerText = "Đã chọn: " + this.files[0].name;
-            uploadBox.classList.remove("dragging");
-        }
-    });
-
-    // Các sự kiện kéo thả
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        uploadBox.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    // Hiệu ứng khi kéo file vào vùng
-    ['dragenter', 'dragover'].forEach(eventName => {
-        uploadBox.addEventListener(eventName, () => {
-            uploadBox.classList.add("dragging");
-        }, false);
-    });
-
-    // Xóa hiệu ứng khi kéo file ra ngoài hoặc thả
-    ['dragleave', 'drop'].forEach(eventName => {
-        uploadBox.addEventListener(eventName, () => {
-            uploadBox.classList.remove("dragging");
-        }, false);
-    });
-
-    // Kéo thả file thành công
-    uploadBox.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-        let dt = e.dataTransfer;
-        let files = dt.files;
-
-        if (files.length > 0) {
-            // Kiểm tra định dạng nếu cần
-            const allowedTypes = [".pdf", ".doc", ".docx", ".zip", ".rar"];
-            const fileName = files[0].name.toLowerCase();
-            const isValid = allowedTypes.some(type => fileName.endsWith(type));
-
-             if (!isValid) {
-                 alert("Chỉ hỗ trợ file PDF, DOCX, ZIP hoặc RAR!");
-                 return;
-             }
-
-            // Gán file vào input bằng DataTransfer
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(files[0]);
-            fileInput.files = dataTransfer.files;
-
-            // Cập nhật giao diện
-            let event = new Event('change');
-            fileInput.dispatchEvent(event);
-        }
-    }
+    document.getElementById("submitForm").onsubmit = function(e) {
+        if (fileInput.files.length === 0) { e.preventDefault(); alert("Vui lòng chọn file!"); }
+    };
+    fileInput.onchange = function() {
+        if(this.files.length > 0) document.querySelector(".upload-note").innerText = "Đã chọn: " + this.files[0].name;
+    };
 </script>
 
 {% endblock %}

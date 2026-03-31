@@ -156,7 +156,12 @@ def save_diem(request, ma_sv):
 def chi_tiet_bai_nop(request, id):
 
     bai = get_object_or_404(BaiNop, id=id)
-
+    # Nếu giảng viên gửi nhận xét (POST)
+    if request.method == "POST":
+        nhan_xet = request.POST.get('nhan_xet', '').strip()
+        bai.nhan_xet = nhan_xet
+        bai.save()
+        # Có thể thêm thông báo nếu bạn dùng messages
     context = {
         "bai": bai,
         "sv": bai.sinh_vien,
@@ -1019,11 +1024,21 @@ def tao_hoi_dong(request):
             )
 
         # SV
+        # SV
         for sv_id in sv_ids:
             if not sv_id:
                 continue
 
             sv = SinhVien.objects.get(ma_sv=sv_id)
+
+            # 🔥 CHẶN: SV đã có hội đồng trong cùng kỳ
+            da_co = HoiDong_SinhVien.objects.filter(
+                sinh_vien=sv,
+                hoi_dong__ky=hd.ky
+            ).exists()
+
+            if da_co:
+                continue  # ❌ bỏ luôn
 
             gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
 
@@ -1080,14 +1095,23 @@ def them_sinh_vien(request, id):
 
             sv = SinhVien.objects.get(ma_sv=sv_id)
 
+            # 🔥 CHẶN TRÙNG HỘI ĐỒNG
+            da_co = HoiDong_SinhVien.objects.filter(
+                sinh_vien=sv,
+                hoi_dong__ky=hoidong.ky
+            ).exists()
+
+            if da_co:
+                continue
+
             gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
 
             if gvhd:
                 if HoiDong_GiangVien.objects.filter(
-                    hoi_dong=hoidong,
-                    giang_vien=gvhd.giang_vien
+                        hoi_dong=hoidong,
+                        giang_vien=gvhd.giang_vien
                 ).exists():
-                    continue  # ❌ bỏ nếu trùng GVHD
+                    continue
 
             HoiDong_SinhVien.objects.create(
                 hoi_dong=hoidong,
