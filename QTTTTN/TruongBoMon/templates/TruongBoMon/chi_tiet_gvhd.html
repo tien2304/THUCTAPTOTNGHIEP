@@ -1,0 +1,189 @@
+{% extends 'TruongBoMon/home.html' %}
+{% load static %}
+
+{% block title %}Chi Tiết Sinh Viên Hướng Dẫn{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        color: #475569;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .btn-back:hover {
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    .card-detail {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .data-table th {
+        background-color: #f8fafc;
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 600;
+        border-bottom: 1px solid #e2e8f0;
+        text-transform: uppercase;
+    }
+    .data-table td {
+        padding: 1rem 1.5rem;
+        color: #1e293b;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .data-table tr:hover td {
+        background-color: #f8fafc;
+    }
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .status-badge {
+        padding: 0.35rem 1rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-block;
+    }
+    .status-approved {
+        background-color: #d1fae5;
+        color: #047857;
+    }
+    .status-pending {
+        background-color: #fef3c7;
+        color: #b45309;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="header-actions">
+        <!-- Quay lại -->
+        <a href="{% url 'TruongBoMon:duyet_gvhd' %}{% if ky %}?ky_id={{ ky.id }}{% endif %}" class="btn-back">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Quay lại 
+        </a>
+    </div>
+
+    <!-- Tiêu đề trang mới -->
+    <div class="page-header" style="justify-content: space-between;">
+        <div>
+            <h1 class="page-title">Danh sách sinh viên hướng dẫn: {{ hoc_vi_tat }}. {{ giang_vien.ho_ten }}</h1>
+        </div>
+        
+        <!-- Các nút duyệt chuyên biệt cho GV này -->
+        <div class="action-buttons" style="display: flex; gap: 0.75rem;">
+            <!-- Nút Từ chối mở Modal -->
+            <button onclick="document.getElementById('rejectModal').style.display='flex'" style="background-color: #ef4444; color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#dc2626'" onmouseout="this.style.backgroundColor='#ef4444'">
+                Từ chối
+            </button>
+            
+            <!-- Nút Phê duyệt -->
+            <form method="POST" action="{% url 'TruongBoMon:action_duyet_gvhd' %}" style="margin: 0;" onsubmit="return confirm('Bạn có chắc chắn muốn PHÊ DUYỆT phân công của giảng viên này không?');">
+                {% csrf_token %}
+                <input type="hidden" name="ky_id" value="{{ ky.id|default:'' }}">
+                <input type="hidden" name="ma_gv" value="{{ giang_vien.ma_gv }}">
+                <input type="hidden" name="action" value="approve">
+                <button type="submit" style="background-color: #059669; color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#047857'" onmouseout="this.style.backgroundColor='#059669'">
+                    Phê duyệt
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bảng danh sách sinh viên -->
+    <div class="card-detail">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%; text-align: center;">STT</th>
+                    <th style="width: 20%;">MÃ SV</th>
+                    <th style="width: 50%; text-align: center;">HỌ TÊN SINH VIÊN</th>
+                    <th style="width: 20%;">LỚP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if ds_phan_cong %}
+                    {% for pc in ds_phan_cong %}
+                    <tr>
+                        <td style="text-align: center; color: #64748b; font-weight: 500;">{{ forloop.counter }}</td>
+                        <td style="font-weight: 600; color: #0f172a;">{{ pc.sinh_vien.ma_sv }}</td>
+                        <td style="text-align: center;">{{ pc.sinh_vien.ho_ten }}</td>
+                        <td style="color: #475569;">{{ pc.sinh_vien.lop }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #94a3b8; padding: 4rem 1rem;">
+                            Hiện tại không có sinh viên nào được phân công cho giảng viên này.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Từ chối (đặt dưới cùng) -->
+<div id="rejectModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 0.75rem; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <h2 style="margin-top: 0; color: #1e293b; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Lý do từ chối phân công</h2>
+        <form method="POST" action="{% url 'TruongBoMon:action_duyet_gvhd' %}">
+            {% csrf_token %}
+            <input type="hidden" name="ky_id" value="{{ ky.id|default:'' }}">
+            <input type="hidden" name="ma_gv" value="{{ giang_vien.ma_gv }}">
+            <input type="hidden" name="action" value="reject">
+            <textarea name="ly_do_tu_choi" rows="4" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem; font-family: inherit; margin-bottom: 1.5rem;" placeholder="Nhập lý do chi tiết..." required></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" onclick="document.getElementById('rejectModal').style.display='none'" style="background: white; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500;">Hủy</button>
+                <button type="submit" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Xác nhận từ chối</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
