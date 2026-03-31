@@ -35,7 +35,7 @@ path('hoi-dong/<int:id>/', views.hoi_dong_detail, name='hoi_dong_detail'),
 path('hoi-dong/<int:id>/them-sv/', views.them_sinh_vien, name='them_sinh_vien'),
 path('hoi-dong/<int:id>/cham-diem/<str:ma_sv>/',views.cham_diem_hoi_dong,name='cham_diem_hoi_dong'),
 
-
+path('hoi-dong/load-sv/', views.load_sinh_vien),
 
 
 ]

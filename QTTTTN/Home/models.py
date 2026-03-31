@@ -62,9 +62,6 @@ class SinhVien(models.Model):
     
     def __str__(self):
         return f"{self.ma_sv} - {self.ho_ten}"
-class SinhVien_KyThucTap(models.Model):
-    sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
-    ky_thuc_tap = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
 # --- NHÓM 3: KHẢO SÁT ĐỘNG (SURVEY MODULE) ---
 import uuid
 class MauKhaoSat(models.Model):

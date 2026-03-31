@@ -79,84 +79,85 @@
 
     </div>
 
-    <!-- ===== TAB SINH VIÊN ===== -->
-    <div id="tab-content-sv" class="hidden">
 
-        <div class="flex justify-between mb-4">
-            <h2 class="font-semibold">Danh sách sinh viên bảo vệ</h2>
+<!-- ===== TAB SINH VIÊN ===== -->
+<div id="tab-content-sv" class="hidden">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-semibold text-gray-800">Danh sách sinh viên bảo vệ</h2>
 
-            <!-- 🔥 CHỈ GVPT MỚI THÊM SV -->
-            {% if is_gvpt %}
-            <a href="{% url 'GiangVien:them_sinh_vien' hoidong.id %}"
-               class="bg-blue-600 text-white px-4 py-2 rounded-lg">
-               + Thêm sinh viên
-            </a>
-            {% endif %}
-        </div>
-
-        <table class="w-full text-sm">
-<thead class="text-gray-500 border-b">
-<tr>
-    <th class="py-2 text-left">Mã SV</th>
-    <th>Họ tên</th>
-    <th>Lớp</th>
-    <th>Điểm báo cáo</th>
-    <th>Trạng thái</th>
-    <th>Thao tác</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for item in sinhviens %}
-<tr class="border-b hover:bg-gray-50">
-
-<td class="py-3 text-blue-600">
-{{ item.sv.ma_sv }}
-</td>
-
-<td>{{ item.sv.ho_ten }}</td>
-<td>{{ item.sv.lop }}</td>
-
-<td>
-<form method="POST"
-      action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}">
-{% csrf_token %}
-
-<input type="number" step="0.1"
-       name="diem"
-       value="{{ item.diem|default:'' }}"
-       class="border px-2 py-1 rounded w-20
-       {% if item.diem != None %}bg-gray-100{% endif %}"
-       {% if item.diem != None %}readonly{% endif %}>
-   {% if item.diem != None %}
-<span class="text-green-600 text-xs font-semibold">
-Đã chấm
-</span>
-{% else %}
-<span class="text-gray-400 text-xs">
-Chưa chấm
-</span>
-{% endif %}
-
-
-<td>
-<button class="bg-blue-600 text-white px-3 py-1 rounded
-        {% if item.diem != None %}opacity-50 cursor-not-allowed{% endif %}"
-        {% if item.diem != None %}disabled{% endif %}>
-Chấm điểm
-</button>
-</form>
-</td>
-
-</tr>
-{% endfor %}
-
-</tbody>
-</table>
-
+        {% if is_gvpt %}
+        <a href="{% url 'GiangVien:them_sinh_vien' hoidong.id %}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition">
+            + Thêm sinh viên
+        </a>
+        {% endif %}
     </div>
 
+    <table class="w-full text-sm">
+        <thead class="text-gray-500 border-b">
+            <tr>
+                <th class="py-3 text-left">Mã SV</th>
+                <th class="text-left">Họ tên</th>
+                <th class="text-left">Lớp</th>
+                <th class="text-left">Điểm báo cáo</th>
+                <th class="text-left">Trạng thái</th>
+                <th class="text-center">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for item in sinhviens %}
+        <tr class="border-b hover:bg-gray-50">
+            <td class="py-4 font-medium text-blue-600">{{ item.sv.ma_sv }}</td>
+            <td class="py-4">{{ item.sv.ho_ten }}</td>
+            <td class="py-4">{{ item.sv.lop }}</td>
+
+<!-- === CỘT ĐIỂM BÁO CÁO - DEBUG MẠNH === -->
+<td class="py-4">
+    <form method="POST"
+          action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
+          class="flex items-center gap-3">
+        {% csrf_token %}
+
+        <input type="number"
+               step="0.1"
+               min="0"
+               max="10"
+               name="diem"
+               value="{% if item.diem is not None %}{{ item.diem|floatformat:1 }}{% endif %}"
+               class="border border-gray-300 focus:border-blue-500 px-4 py-2 rounded-xl w-28 text-center font-medium"
+               placeholder="Nhập điểm">
+
+        <button type="submit"
+                class="px-6 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap
+                {% if item.diem is not None %}
+                    bg-gray-500 text-white cursor-not-allowed
+                {% else %}
+                    bg-blue-600 hover:bg-blue-700 text-white
+                {% endif %}"
+                {% if item.diem is not None %}disabled{% endif %}>
+            {% if item.diem is not None %}Đã lưu{% else %}Chấm điểm{% endif %}
+        </button>
+    </form>
+</td>
+
+            <!-- Trạng thái -->
+<td class="py-4">
+    {% if item.diem is not None %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            ✓ Đã chấm
+        </span>
+    {% else %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+            Chưa chấm
+        </span>
+    {% endif %}
+</td>
+            <td class="py-4 text-center text-gray-400"></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 </div>
 
 </div>
