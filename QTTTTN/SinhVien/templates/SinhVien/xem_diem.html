@@ -4,7 +4,7 @@
 {% block title %}Kết quả học tập{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'SinhVien/css/xem_diem.css' %}">
+<link rel="stylesheet" href="{% static 'SinhVien/css/xem_diem.css' %}?v=1.2">
 {% endblock %}
 
 {% block content %}
@@ -29,50 +29,32 @@
                     <span class="info-value">{{ sinh_vien.lop }}</span>
                 </div>
             </div>
-
-            <div class="info-topic">
-                <span class="info-label">Đề tài thực tập</span>
-                <span class="info-value text-blue-600 font-medium">
-                    {{ thong_tin_thuc_tap.de_tai|default:"Chưa cập nhật đề tài" }}
-                </span>
-            </div>
         </div>
 
         <div class="score-card">
             <h3 class="score-caption">ĐIỂM TỔNG KẾT</h3>
             <svg viewBox="0 0 24 24" fill="none" class="medal-icon" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
-                <circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/>
-                <path d="M7.7 13.25V21.5L12 18L16.3 21.5V13.25" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="9" r="6" stroke="currentColor" stroke-width="2" />
+                <circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="2" />
+                <path d="M7.7 13.25V21.5L12 18L16.3 21.5V13.25" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <div class="score-value">{{ diem_tong_ket }}</div>
         </div>
 
         <div class="company-card">
             <div class="company-header">
-                <div class="company-icon-box">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1877F2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="4" y="3" width="8" height="18"></rect>
-                        <rect x="12" y="8" width="8" height="13"></rect>
-                    </svg>
-                </div>
-                <h3 class="company-title">Đơn vị thực tập</h3>
+                <h3 class="card-caption">CHI TIẾT THỰC TẬP</h3>
             </div>
 
             <div class="company-info">
-                <span class="company-label">Tên công ty</span>
+                <span class="company-label">Nơi thực tập</span>
                 <span class="company-name">{{ thong_tin_thuc_tap.ten_cong_ty|default:"Chưa hoàn thành khảo sát" }}</span>
             </div>
 
-            <div class="company-address-box">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-                <div class="address-content">
-                    <span class="company-label">Địa chỉ</span>
-                    <span class="company-address">{{ thong_tin_thuc_tap.dia_chi|default:"Chưa cập nhật địa chỉ" }}</span>
-                </div>
+            <div class="company-info">
+                <span class="company-label">Tên đề tài</span>
+                <span class="company-name">{{ thong_tin_thuc_tap.de_tai|default:"Chưa cập nhật đề tài" }}</span>
             </div>
         </div>
     </div>

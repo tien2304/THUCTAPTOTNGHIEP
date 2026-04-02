@@ -24,15 +24,15 @@
 .grades-grid {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
+    gap: 20px; /* Tăng gap một chút cho thoáng */
+    align-items: stretch; /* Ép các card trong cùng 1 hàng phải cao bằng nhau */
 }
 
 /* Card Styles */
 .info-card, .company-card {
     background: #ffffff;
     border-radius: 12px;
-    padding: 24px;
+    padding: 18px 22px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     border: 1px solid #e2e8f0;
 }
@@ -43,8 +43,8 @@
     text-transform: uppercase;
     color: #3b82f6;
     font-weight: 800;
-    margin-bottom: 8px;
     letter-spacing: 0.5px;
+    margin-bottom: 16px;
 }
 
 .student-name {
@@ -58,10 +58,9 @@
 
 .info-row {
     display: flex;
-    gap: 15%; /* Spacing between columns */
-    margin-bottom: 24px;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 24px;
+    gap: 15%;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .info-col {
@@ -93,18 +92,19 @@
 
 /* Score Card */
 .score-card {
-    background: #1890ff; /* Màu xanh chuẩn như mockup */
+    background: linear-gradient(135deg, #1890ff 0%, #0071e3 100%); /* Thêm gradient cho xịn */
     border-radius: 12px;
     color: #ffffff;
-    height: 190px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(24, 144, 255, 0.2);
+    height: 100%; /* Ép cao bằng info-card */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 15px; /* Khoảng cách giữa chữ và số */
+    justify-content: center; /* Căn giữa nội dung theo chiều dọc */
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(24, 144, 255, 0.15);
+    padding: 24px;
+    box-sizing: border-box; /* Đảm bảo padding không làm tràn khung */
 }
 
 .score-caption {
@@ -144,30 +144,20 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
-.company-icon-box {
-    background: #eff6ff;
-    color: #3b82f6;
-    padding: 7px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
 .company-title {
-    font-size: 18px;
+    font-size: 13px;
     font-weight: 800;
-    color: #1e293b;
     margin: 0;
 }
 
 .company-info {
     display: flex;
     flex-direction: column;
-    margin-bottom: 20px;
+    padding-top: 14px;
 }
 
 .company-address-box {
@@ -176,9 +166,7 @@
     gap: 10px;
 }
 
-.location-icon {
-    margin-top: 3.5px;
-}
+
 
 .address-content {
     display: flex;
