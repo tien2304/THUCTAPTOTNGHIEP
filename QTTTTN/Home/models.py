@@ -140,15 +140,45 @@ class BangDiem(models.Model):
 
     class Meta:
         unique_together = ('sinh_vien', 'ky')
+
     def calculate_total(self):
         tyle = TyLeDiem.objects.filter(ky=self.ky).first()
-        if tyle and self.diem_qua_trinh and self.diem_doanh_nghiep and self.diem_bao_cao:
+        if tyle:
+            # Sử dụng 'or 0' để nếu điểm là None thì vẫn tính toán được, không bị lỗi logic
+            d_qt = self.diem_qua_trinh or 0
+            d_dn = self.diem_doanh_nghiep or 0
+            d_bc = self.diem_bao_cao or 0
+
             self.diem_tong_ket = (
+                    (d_qt * tyle.diem_gvhd) +
+                    (d_dn * tyle.diem_doanhnghiep) +
+                    (d_bc * tyle.diem_hoidong)
+            )
+            # Làm tròn 2 chữ số
+            self.diem_tong_ket = round(self.diem_tong_ket, 2)
+            # Chỉ save() nếu cần, hoặc để hàm save() mặc định gọi nó
+
+    def save(self, *args, **kwargs):
+        # 1. Tìm tỷ lệ điểm của kỳ này
+        tyle = TyLeDiem.objects.filter(ky=self.ky).first()
+
+        # 2. KIỂM TRA ĐIỀU KIỆN: Phải có tỷ lệ AND (cả 3 điểm đều không phải None)
+        if tyle and (self.diem_qua_trinh is not None) and \
+                (self.diem_doanh_nghiep is not None) and \
+                (self.diem_bao_cao is not None):
+
+            # Tính toán và gán vào diem_tong_ket
+            self.diem_tong_ket = round(
                 (self.diem_qua_trinh * tyle.diem_gvhd) +
                 (self.diem_doanh_nghiep * tyle.diem_doanhnghiep) +
-                (self.diem_bao_cao * tyle.diem_hoidong)
+                (self.diem_bao_cao * tyle.diem_hoidong), 2
             )
-            self.save()
+        else:
+            # Nếu thiếu 1 trong 3 điểm, để tổng kết là None (NULL)
+            self.diem_tong_ket = None
+
+        super(BangDiem, self).save(*args, **kwargs)
+
 # --- NHÓM 5: CHUYÊN MÔN (NHIỆM VỤ, HỘI ĐỒNG, TÀI LIỆU) ---
 class NhiemVu(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
