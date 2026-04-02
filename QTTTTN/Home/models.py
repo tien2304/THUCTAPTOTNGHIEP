@@ -59,7 +59,7 @@ class SinhVien(models.Model):
     lop = models.CharField(max_length=50)
     ky_hien_tai = models.ForeignKey(KyThucTap, on_delete=models.SET_NULL, null=True)
     noi_thuc_tap = models.CharField(max_length=255, null=True, blank=True)
-    
+    ten_de_tai = models.CharField(max_length=500, blank=True, null=True, verbose_name="Tên đề tài thực tập")
     def __str__(self):
         return f"{self.ma_sv} - {self.ho_ten}"
 # --- NHÓM 3: KHẢO SÁT ĐỘNG (SURVEY MODULE) ---
@@ -138,6 +138,8 @@ class BangDiem(models.Model):
     diem_bao_cao = models.FloatField(null=True, blank=True)         # Hội đồng nhập
     diem_tong_ket = models.FloatField(null=True, blank=True)
 
+    class Meta:
+        unique_together = ('sinh_vien', 'ky')
     def calculate_total(self):
         tyle = TyLeDiem.objects.filter(ky=self.ky).first()
         if tyle and self.diem_qua_trinh and self.diem_doanh_nghiep and self.diem_bao_cao:
@@ -161,10 +163,12 @@ class BaiNop(models.Model):
     thoi_gian_nop = models.DateTimeField(auto_now_add=True)
     trang_thai = models.CharField(max_length=50)
     nhan_xet = models.TextField(blank=True, null=True)
+
 class HoiDong(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ten_hoi_dong = models.CharField(max_length=255)
-    thoi_gian = models.DateTimeField()
+    thoi_gian_bat_dau = models.DateTimeField()
+    thoi_gian_ket_thuc = models.DateTimeField()
     dia_diem = models.CharField(max_length=255)
     ngay_bao_ve = models.DateField()
 class HoiDong_GiangVien(models.Model):

@@ -1,272 +1,235 @@
 {% extends "GiangVien/Home.html" %}
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- DATATABLE -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<!-- SELECT2 -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-<div class="p-6">
-
-    <!-- HEADER -->
-    <div class="flex justify-between mb-6">
-        <h1 class="text-2xl font-bold">Tạo hội đồng mới</h1>
-
+<div class="p-6 max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Tạo hội đồng bảo vệ mới</h1>
         <button form="form-hoi-dong"
-            class="bg-blue-600 text-white px-4 py-2 rounded">
-            + Tạo hội đồng
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2">
+            <span>✅</span> Tạo hội đồng
         </button>
     </div>
 
     <form method="POST" id="form-hoi-dong">
         {% csrf_token %}
 
-        <!-- CARD -->
-        <div class="bg-white p-6 rounded-xl shadow mb-6">
+        <!-- Thông tin cơ bản -->
+        <!-- Thông tin cơ bản -->
+<div class="bg-white p-6 rounded-xl shadow mb-8">
+    <div class="grid grid-cols-2 gap-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tên hội đồng <span class="text-red-500">*</span></label>
+            <input name="ten" required placeholder="Ví dụ: Hội đồng bảo vệ đợt 1 - 2026"
+                   class="border border-gray-300 p-3 rounded-lg w-full focus:border-blue-500 outline-none">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Ngày bảo vệ <span class="text-red-500">*</span></label>
+            <input type="date" name="ngay" required
+                   class="border border-gray-300 p-3 rounded-lg w-full focus:border-blue-500 outline-none">
+        </div>
+    </div>
 
-            <div class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-2 gap-6 mt-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian bắt đầu <span class="text-red-500">*</span></label>
+            <input type="datetime-local" name="thoi_gian_bat_dau" required
+                   class="border border-gray-300 p-3 rounded-lg w-full focus:border-blue-500 outline-none">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian kết thúc <span class="text-red-500">*</span></label>
+            <input type="datetime-local" name="thoi_gian_ket_thuc" required
+                   class="border border-gray-300 p-3 rounded-lg w-full focus:border-blue-500 outline-none">
+        </div>
+    </div>
 
-                <input name="ten" placeholder="Tên hội đồng"
-                    class="border p-2 rounded">
+    <div class="mt-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Địa điểm <span class="text-red-500">*</span></label>
+        <input name="dia_diem" required placeholder="Phòng 401 - Nhà A"
+               class="border border-gray-300 p-3 rounded-lg w-full focus:border-blue-500 outline-none">
+    </div>
+</div>
 
-                <input type="date" name="ngay"
-                    class="border p-2 rounded">
-
-                <input name="dia_diem" placeholder="Địa điểm"
-                    class="border p-2 rounded">
-
-            </div>
-
-            <input type="datetime-local" name="thoi_gian"
-                class="border p-2 rounded w-full mt-4">
-
-            <!-- SELECT2 GV -->
-            <div class="mt-6">
-                <label class="font-medium">Thành viên hội đồng</label>
-
-                <select id="select-gv" name="giang_vien" multiple style="width:100%">
-                    {% for gv in giangviens %}
-                    <option value="{{gv.ma_gv}}">{{gv.ho_ten}}</option>
-                    {% endfor %}
-                </select>
-
-                <p id="error-gv" class="text-red-500 text-sm hidden">
-                    ❌ Tối thiểu 2 giảng viên
-                </p>
-
-                <p id="error-gvhd" class="text-red-500 text-sm hidden">
-                    ❌ Có GVHD trong hội đồng
-                </p>
-            </div>
-
+        <!-- Thành viên Hội đồng -->
+        <div class="bg-white p-6 rounded-xl shadow mb-8">
+            <label class="block text-sm font-medium text-gray-700 mb-3">
+                Thành viên Hội đồng <span class="text-red-500">*</span>
+            </label>
+            <select id="select-gv" name="giang_vien" multiple="multiple" style="width: 100%;" required>
+                {% for gv in giangviens %}
+                    <option value="{{ gv.ma_gv }}">{{ gv.ho_ten }} ({{ gv.ma_gv }})</option>
+                {% endfor %}
+            </select>
+            <p id="error-gv" class="text-red-500 text-sm hidden mt-2">❌ Phải chọn ít nhất 2 giảng viên</p>
+            <p id="error-gvhd" class="text-red-500 text-sm hidden mt-2">❌ Không được chọn GVHD của sinh viên vào cùng hội đồng</p>
         </div>
 
-        <!-- CARD SINH VIÊN -->
+        <!-- Danh sách sinh viên -->
         <div class="bg-white p-6 rounded-xl shadow">
-
-            <div class="flex justify-between mb-4">
-                <h2 class="font-semibold">Danh sách sinh viên</h2>
-
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-semibold text-lg">Danh sách sinh viên bảo vệ</h2>
                 <button type="button" onclick="openPopup()"
-                    class="text-blue-600">
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2">
                     + Thêm sinh viên
                 </button>
             </div>
-
-<table id="sv-table" class="w-full text-sm">
-    <thead class="bg-gray-100">
+            <table id="sv-table" class="w-full text-sm">
+                <thead class="bg-gray-100">
                     <tr>
-                        <th>Mã SV</th>
-                        <th>Tên</th>
-                        <th>Lớp</th>
-                        <th>GVHD</th>
-                        <th>Thao tác</th> <!-- 👈 THÊM -->
-                        <th></th>
+                        <th class="text-left py-3">Mã SV</th>
+                        <th class="text-left py-3">Họ tên</th>
+                        <th class="text-left py-3">Lớp</th>
+                        <th class="text-left py-3">GVHD</th>
+                        <th class="text-center py-3 w-20">Thao tác</th>
                     </tr>
                 </thead>
-
                 <tbody id="table-sv"></tbody>
             </table>
-
         </div>
 
         <input type="hidden" name="sinh_vien_ids" id="sv-hidden">
-
     </form>
 </div>
 
-<!-- POPUP -->
-<!-- POPUP -->
-<div id="popup" class="fixed inset-0 bg-black/40 hidden flex items-center justify-center">
-    <div class="bg-white p-6 rounded w-[700px]">
-
-        <h2 class="font-bold mb-4">Chọn sinh viên</h2>
-
-        <input id="search" placeholder="Tìm kiếm..."
-            class="border p-2 w-full mb-3">
-
-        <div id="list-sv" class="max-h-[350px] overflow-y-auto border rounded"></div>
-
-        <div class="flex justify-end gap-3 mt-4">
-            <button onclick="closePopup()" class="px-4 py-2 bg-gray-300 rounded">
-                Đóng
-            </button>
-
-            <button onclick="addSelectedSV()" class="px-4 py-2 bg-blue-600 text-white rounded">
-                Thêm đã chọn
-            </button>
+<!-- Popup -->
+<div id="popup" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50">
+    <div class="bg-white w-[680px] rounded-2xl p-6 max-h-[90vh] flex flex-col">
+        <h2 class="font-bold text-xl mb-4">Chọn sinh viên</h2>
+        <input id="search" placeholder="Tìm theo mã SV hoặc họ tên..."
+               class="border w-full p-3 rounded-lg mb-4 focus:border-blue-500 outline-none">
+        <div id="list-sv" class="flex-1 overflow-y-auto"></div>
+        <div class="flex justify-end mt-6">
+            <button onclick="closePopup()"
+                    class="px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-lg">Đóng</button>
         </div>
     </div>
 </div>
 
 <script>
-let selectedSV = []
-let tempSelected = []
-let table = null
-
-// INIT SELECT2
-$('#select-gv').select2({
-    placeholder: "Chọn giảng viên"
-})
-
-// DATATABLE
-$(document).ready(function () {
-    table = $('#sv-table').DataTable({
-        pageLength: 5,
-        destroy: true,   // 👈 thêm dòng này
-        searching: true
+// Khởi tạo Select2 và DataTable
+$(document).ready(function() {
+    $('#select-gv').select2({
+        placeholder: "Chọn giảng viên (ít nhất 2 người)",
+        allowClear: true,
+        width: '100%'
     });
-})
 
-// ==========================
-// LOAD SV
-// ==========================
-function openPopup(){
+    // DataTable
+    window.table = $('#sv-table').DataTable({
+        pageLength: 10,
+        searching: false,
+        ordering: true,
+        language: {
+            emptyTable: "Chưa có sinh viên nào được chọn",
+            info: "Hiển thị _START_ đến _END_ / _TOTAL_"
+        }
+    });
 
-    $("#popup").removeClass("hidden")
+    // Load danh sách sinh viên ban đầu (khi chưa chọn GV nào)
+    loadAvailableStudents();
+});
 
-    let selectedGV = $('#select-gv').val() || []
+// Khi thay đổi giảng viên → lọc sinh viên hợp lệ
+$('#select-gv').on('change', function() {
+    loadAvailableStudents();
+});
 
-    fetch("/giang-vien/hoi-dong/load-sv/")
-    .then(res=>res.json())
-    .then(data=>{
+let selectedSV = [];
 
-        let html = ""
+// Load sinh viên hợp lệ (đã lọc theo GV đã chọn)
+function loadAvailableStudents() {
+    let selectedGVs = $('#select-gv').val() || [];
 
-        data.forEach(sv=>{
-
-            // ❌ CHẶN GVHD TRÙNG
-            if(selectedGV.includes(sv.gvhd)){
-                return
+    fetch(`/giang-vien/hoi-dong/load-sv/?gvs=${selectedGVs.join(',')}`)
+        .then(res => res.json())
+        .then(data => {
+            let html = "";
+            if (data.length === 0) {
+                html = '<p class="text-center text-gray-400 py-12">Không còn sinh viên nào phù hợp.<br>Tất cả sinh viên của GV đã chọn đều bị loại.</p>';
+            } else {
+                data.forEach(sv => {
+                    html += `
+                        <div class="flex justify-between items-center p-3 border-b hover:bg-gray-50 group">
+                            <div>
+                                <span class="font-medium">${sv.ten}</span>
+                                <span class="text-gray-500 text-sm ml-2">(${sv.id} - ${sv.lop})</span>
+                                <span class="ml-3 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">
+                                    GVHD: ${sv.gvhd || 'Chưa phân công'}
+                                </span>
+                            </div>
+                            <button onclick="addSV('${sv.id}','${sv.ten.replace(/'/g, "\\'")}','${sv.lop}','${sv.gvhd}')"
+                                    class="bg-blue-600 text-white text-sm px-5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition">
+                                Chọn
+                            </button>
+                        </div>`;
+                });
             }
-
-            html += `
-                <label class="flex items-center justify-between p-2 border-b hover:bg-gray-50">
-                    <div>
-                        <b>${sv.ten}</b><br>
-                        <span class="text-sm text-gray-500">${sv.lop}</span>
-                    </div>
-
-                    <input type="checkbox" value="${sv.id}"
-                        data-ten="${sv.ten}"
-                        data-lop="${sv.lop}"
-                        data-gvhd="${sv.gvhd}"
-                        class="sv-checkbox">
-                </label>
-            `
+            document.getElementById("list-sv").innerHTML = html || '<p class="text-center text-gray-400 py-12">Không còn sinh viên nào để thêm</p>';
         })
+        .catch(() => {
+            document.getElementById("list-sv").innerHTML = '<p class="text-red-500 text-center py-8">Lỗi khi tải danh sách sinh viên</p>';
+        });
+}
 
-        document.getElementById("list-sv").innerHTML = html
-    })
+function openPopup(){
+    $("#popup").removeClass("hidden");
 }
 
 function closePopup(){
-    $("#popup").addClass("hidden")
+    $("#popup").addClass("hidden");
 }
 
-// ==========================
-// ADD MULTI
-// ==========================
-function addSelectedSV(){
-
-    let checkboxes = document.querySelectorAll(".sv-checkbox:checked")
-
-    checkboxes.forEach(cb=>{
-
-        let id = cb.value
-
-        if(selectedSV.find(x => x.id == id)) return
-
-        selectedSV.push({
-            id: id,
-            ten: cb.dataset.ten,
-            lop: cb.dataset.lop,
-            gvhd: cb.dataset.gvhd
-        })
-    })
-
-    renderTable()
-    closePopup()
+function addSV(id, ten, lop, gvhd){
+    if(selectedSV.find(x => x.id === id)) return;
+    selectedSV.push({id, ten, lop, gvhd});
+    renderTable();
 }
 
-// ==========================
-// REMOVE
-// ==========================
 function removeSV(id){
-    selectedSV = selectedSV.filter(x=>x.id!=id)
-    renderTable()
+    selectedSV = selectedSV.filter(x => x.id !== id);
+    renderTable();
 }
 
-// ==========================
-// RENDER TABLE
-// ==========================
 function renderTable(){
-
-    if(!table) return
-
-    table.clear()
-
-    selectedSV.forEach(sv=>{
-        table.row.add([
+    window.table.clear();
+    selectedSV.forEach(sv => {
+        window.table.row.add([
             sv.id,
             sv.ten,
             sv.lop,
-            sv.gvhd,
-            `<button onclick="removeSV('${sv.id}')" class="text-red-500">Xóa</button>`
-        ])
-    })
-
-    table.draw(false) // 👈 QUAN TRỌNG
-
-    // update hidden input
-    document.getElementById("sv-hidden").value =
-        selectedSV.map(x=>x.id).join(",")
+            sv.gvhd || '<span class="text-amber-600">Chưa phân</span>',
+            `<button onclick="removeSV('${sv.id}')" class="text-red-600 hover:text-red-800 text-2xl leading-none">×</button>`
+        ]);
+    });
+    window.table.draw();
+    document.getElementById("sv-hidden").value = selectedSV.map(x => x.id).join(",");
 }
 
-// ==========================
-// VALIDATE
-// ==========================
+// Validate trước khi submit
 document.getElementById("form-hoi-dong").addEventListener("submit", function(e){
+    let selectedGv = $('#select-gv').val() || [];
 
-    let gv = $('#select-gv').val()
-
-    if(!gv || gv.length < 2){
-        e.preventDefault()
-        $("#error-gv").removeClass("hidden")
-        return
+    if(selectedGv.length < 2){
+        e.preventDefault();
+        $("#error-gv").removeClass("hidden");
+        return false;
     }
+    $("#error-gv").addClass("hidden");
 
-    let conflict = selectedSV.some(sv => gv.includes(sv.gvhd))
-
+    let conflict = selectedSV.some(sv => selectedGv.includes(sv.gvhd));
     if(conflict){
-        e.preventDefault()
-        $("#error-gvhd").removeClass("hidden")
+        e.preventDefault();
+        $("#error-gvhd").removeClass("hidden");
+        return false;
+    } else {
+        $("#error-gvhd").addClass("hidden");
     }
-})
+});
 </script>
 
 {% endblock %}
