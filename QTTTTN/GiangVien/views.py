@@ -26,23 +26,42 @@ def home_view(request):
 
 def sinhvien_huongdan(request):
 
-    ma_gv = request.user.username  # username = ma_gv
+    ma_gv = request.user.username
     gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
+
+    ky_id = request.GET.get("ky")
+    query = request.GET.get("q")   # 🔥 THÊM DÒNG NÀY
 
     danh_sach = PhanCongGVHD.objects.filter(
         giang_vien=gv,
-        trang_thai=2 # CHỈ SHOW KHI TRƯỞNG BỘ MÔN ĐÃ DUYỆT
+        trang_thai=2
     ).select_related('sinh_vien', 'ky')
+
+    # 🔥 FILTER KỲ
+    if ky_id:
+        danh_sach = danh_sach.filter(ky_id=ky_id)
+
+    # 🔥 SEARCH
+    if query:
+        danh_sach = danh_sach.filter(
+            Q(sinh_vien__ma_sv__icontains=query) |
+            Q(sinh_vien__ho_ten__icontains=query) |
+            Q(sinh_vien__lop__icontains=query)
+        )
+
+    ky_list = KyThucTap.objects.all().order_by('-id')
+
+    current_ky = None
+    if ky_id:
+        current_ky = KyThucTap.objects.filter(id=ky_id).first()
 
     for item in danh_sach:
         sv = item.sinh_vien
 
-        # 🔥 ƯU TIÊN 1: DB chính
         if sv.noi_thuc_tap:
             item.noi_thuc_tap = sv.noi_thuc_tap
             continue
 
-        # 🔥 ƯU TIÊN 2: lấy từ form
         phieu = PhieuTraLoi.objects.filter(
             sinh_vien=sv
         ).order_by("-id").first()
@@ -52,11 +71,8 @@ def sinhvien_huongdan(request):
         if phieu:
             for ans in phieu.answers.all():
                 tag = (ans.cau_hoi.system_tag or "").strip()
-
                 if tag == "don_vi_tt":
                     noi_tt = ans.gia_tri
-
-                    # 🔥 SAVE LUÔN vào DB chính (rất hay)
                     sv.noi_thuc_tap = noi_tt
                     sv.save()
                     break
@@ -65,6 +81,9 @@ def sinhvien_huongdan(request):
 
     context = {
         'danh_sach': danh_sach,
+        'ky_list': ky_list,
+        'current_ky': current_ky,   # 🔥 thêm
+        'query': query,  # 🔥 QUAN TRỌNG
         'current_page': 'sinhvien',
         'is_gvpt': get_is_gvpt(request)
     }
@@ -178,14 +197,18 @@ def chi_tiet_bai_nop(request, id):
 from django.views.decorators.http import require_POST
 
 @require_POST
-def update_noi_thuc_tap(request, ma_sv):
+def update_sinh_vien_info(request, ma_sv):
     sv = SinhVien.objects.get(ma_sv=ma_sv)
-    noi_tt = request.POST.get("noi_tt")
 
+    ten_de_tai = request.POST.get('ten_de_tai', '').strip()
+    noi_tt = request.POST.get('noi_tt', '').strip()
+
+    if ten_de_tai:
+        sv.ten_de_tai = ten_de_tai
     if noi_tt:
         sv.noi_thuc_tap = noi_tt
-        sv.save()
 
+    sv.save()
     return redirect("GiangVien:sinhvien_huongdan")
 import json
 from django.shortcuts import render,redirect
@@ -482,55 +505,54 @@ def submit_form(request,public_id):
                         sv.save()
 
         return render(request, "Forms/success.html")
-def save_assign(request):
+# def save_assign(request):
+#
+#     if request.method == "POST":
+#
+#         sv_ids = request.POST.getlist("sv")
+#         gv_name = request.POST.get("gv")
+#         ky_id = request.POST.get("ky_id")
+#
+#         if not gv_name:
+#             # Chọn "-- Chưa phân --" tức là xoá phân công
+#             for sv_id in sv_ids:
+#                 sv = SinhVien.objects.get(ma_sv=sv_id)
+#                 PhanCongGVHD.objects.filter(sinh_vien=sv).delete()
+#         else:
+#             gv = GiangVien.objects.get(ho_ten=gv_name)
+#
+#             if ky_id:
+#                 ky = KyThucTap.objects.get(id=ky_id)
+#             else:
+#                 ky = KyThucTap.objects.order_by("-id").first()
+#
+#             for sv_id in sv_ids:
+#                 sv = SinhVien.objects.get(ma_sv=sv_id)
+#
+#                 PhanCongGVHD.objects.update_or_create(
+#                     sinh_vien=sv,
+#                     defaults={
+#                         "giang_vien": gv,
+#                         "ky": ky,
+#                         "trang_thai": 2
+#                     }
+#                 )
+#
+#     return redirect("GiangVien:phan_cong")
+#
+# def confirm_assign(request):
+#
+#     if request.method == "POST":
+#
+#         sv_ids = request.POST.getlist("sv")
+#
+#         gvs = GiangVien.objects.all()
+#
+#         return render(request, "GiangVien/select_gv.html", {
+#             "sv_ids": sv_ids,
+#             "gvs": gvs
+#         })
 
-    if request.method == "POST":
-
-        sv_ids = request.POST.getlist("sv")
-        gv_name = request.POST.get("gv")
-        ky_id = request.POST.get("ky_id")
-
-        if not gv_name:
-            # Chọn "-- Chưa phân --" tức là xoá phân công
-            for sv_id in sv_ids:
-                sv = SinhVien.objects.get(ma_sv=sv_id)
-                PhanCongGVHD.objects.filter(sinh_vien=sv).delete()
-        else:
-            gv = GiangVien.objects.get(ho_ten=gv_name)
-            
-            if ky_id:
-                ky = KyThucTap.objects.get(id=ky_id)
-            else:
-                ky = KyThucTap.objects.order_by("-id").first()
-
-            for sv_id in sv_ids:
-                sv = SinhVien.objects.get(ma_sv=sv_id)
-
-                PhanCongGVHD.objects.update_or_create(
-                    sinh_vien=sv,
-                    defaults={
-                        "giang_vien": gv,
-                        "ky": ky,
-                        "trang_thai": 2
-                    }
-                )
-
-    return redirect("GiangVien:phan_cong")
-
-def confirm_assign(request):
-
-    if request.method == "POST":
-
-        sv_ids = request.POST.getlist("sv")
-
-        gvs = GiangVien.objects.all()
-
-        return render(request, "GiangVien/select_gv.html", {
-            "sv_ids": sv_ids,
-            "gvs": gvs
-        })
-from collections import defaultdict
-from django.http import JsonResponse
 
 # ========================
 # LẤY FORM NGUYỆN VỌNG
@@ -763,11 +785,7 @@ def phan_cong_dashboard(request):
 # AUTO ASSIGN (UI)
 # ========================
 # RUN AUTO
-# ========================
-def run_auto_assign_ui(request):
-    ky, form = get_form_nguyen_vong()
-    auto_assign(form.id)
-    return redirect("GiangVien:phan_cong")
+
 
 
 # ========================
@@ -819,264 +837,276 @@ def update_phan_cong(request):
             return JsonResponse({"status": "ok"})
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
-def select_sinh_vien(request):
+# def select_sinh_vien(request):
+#
+#     ky, form = get_form_nguyen_vong()
+#
+#     sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
+#
+#     data = []
+#
+#     for sv in sinhviens:
+#
+#         phieu = PhieuTraLoi.objects.filter(
+#             sinh_vien=sv,
+#             mau_khao_sat=form
+#         ).first()
+#
+#         nv = ""
+#
+#         if phieu:
+#             for a in phieu.answers.select_related("cau_hoi"):
+#                 if a.cau_hoi.system_tag == "GVHD_1":
+#                     nv = a.gia_tri
+#
+#         data.append({
+#             "id": sv.ma_sv,
+#             "ten": sv.ho_ten,
+#             "lop": sv.lop,
+#             "nv": nv
+#         })
+#
+#     return render(request, "GiangVien/select_sv.html", {
+#         "data": data
+#     })
+#
+# # BUILD PROFILE
+# # ========================
+# def build_profiles(form):
+#
+#     answers = ChiTietTraLoi.objects.select_related(
+#         "phieu_tra_loi__sinh_vien",
+#         "cau_hoi"
+#     ).filter(
+#         phieu_tra_loi__mau_khao_sat=form
+#     )
+#
+#     data = defaultdict(dict)
+#
+#     for ans in answers:
+#         sv = ans.phieu_tra_loi.sinh_vien
+#         tag = ans.cau_hoi.system_tag
+#
+#         if tag:
+#             data[sv][tag] = ans.gia_tri
+#
+#     return data
+#
+#
+# # ========================
+# # AUTO ASSIGN
+# # ========================
+# def auto_assign(form_id):
+#
+#     ky = KyThucTap.objects.order_by("-id").first()
+#     form = MauKhaoSat.objects.get(id=form_id)
+#
+#     sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
+#
+#     # ===== LOAD hiện tại =====
+#     gv_load = defaultdict(int)
+#
+#     for pc in PhanCongGVHD.objects.filter(ky=ky):
+#         key = pc.giang_vien.ho_ten.strip().lower()
+#         gv_load[key] += 1
+#
+#     # ===== LOAD NGUYỆN VỌNG =====
+#     sv_data = []
+#
+#     for sv in sinhviens:
+#
+#         phieu = PhieuTraLoi.objects.filter(
+#             sinh_vien=sv,
+#             mau_khao_sat=form
+#         ).first()
+#
+#         nv1 = ""
+#         nv2 = ""
+#         de_tai = ""
+#         group = ""
+#
+#         if phieu:
+#             for a in phieu.answers.all():
+#                 tag = (a.cau_hoi.system_tag or "").strip().upper()
+#                 val = (a.gia_tri or "").strip()
+#
+#                 if tag == "GVHD_1":
+#                     nv1 = val
+#                 elif tag == "GVHD_2":
+#                     nv2 = val
+#                 elif tag == "DE_TAI":
+#                     de_tai = val
+#                 elif tag == "GROUP":
+#                     group = val
+#
+#         sv_data.append({
+#             "sv": sv,
+#             "nv1": nv1,
+#             "nv2": nv2
+#         })
+#
+#     # ===== AUTO ASSIGN =====
+#     for item in sv_data:
+#
+#         sv = item["sv"]
+#         assigned = None
+#
+#         # 🔥 NV1
+#         if item["nv1"]:
+#             key = item["nv1"].lower()
+#             if gv_load[key] < 10:
+#                 assigned = item["nv1"]
+#                 gv_load[key] += 1
+#
+#         # 🔥 NV2
+#         if not assigned and item["nv2"]:
+#             key = item["nv2"].lower()
+#             if gv_load[key] < 10:
+#                 assigned = item["nv2"]
+#                 gv_load[key] += 1
+#
+#         # SAVE
+#         if assigned:
+#             gv = GiangVien.objects.get(ho_ten=assigned)
+#
+#             PhanCongGVHD.objects.update_or_create(
+#                 sinh_vien=sv,
+#                 defaults={
+#                     "giang_vien": gv,
+#                     "ky": ky,
+#                     "trang_thai": 1 # Đổi về 1: Chờ duyệt
+#                 }
+#             )
 
-    ky, form = get_form_nguyen_vong()
-
-    sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
-
-    data = []
-
-    for sv in sinhviens:
-
-        phieu = PhieuTraLoi.objects.filter(
-            sinh_vien=sv,
-            mau_khao_sat=form
-        ).first()
-
-        nv = ""
-
-        if phieu:
-            for a in phieu.answers.select_related("cau_hoi"):
-                if a.cau_hoi.system_tag == "GVHD_1":
-                    nv = a.gia_tri
-
-        data.append({
-            "id": sv.ma_sv,
-            "ten": sv.ho_ten,
-            "lop": sv.lop,
-            "nv": nv
-        })
-
-    return render(request, "GiangVien/select_sv.html", {
-        "data": data
-    })
-
-# BUILD PROFILE
-# ========================
-def build_profiles(form):
-
-    answers = ChiTietTraLoi.objects.select_related(
-        "phieu_tra_loi__sinh_vien",
-        "cau_hoi"
-    ).filter(
-        phieu_tra_loi__mau_khao_sat=form
-    )
-
-    data = defaultdict(dict)
-
-    for ans in answers:
-        sv = ans.phieu_tra_loi.sinh_vien
-        tag = ans.cau_hoi.system_tag
-
-        if tag:
-            data[sv][tag] = ans.gia_tri
-
-    return data
-
-
-# ========================
-# AUTO ASSIGN
-# ========================
-def auto_assign(form_id):
-
-    ky = KyThucTap.objects.order_by("-id").first()
-    form = MauKhaoSat.objects.get(id=form_id)
-
-    sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
-
-    # ===== LOAD hiện tại =====
-    gv_load = defaultdict(int)
-
-    for pc in PhanCongGVHD.objects.filter(ky=ky):
-        key = pc.giang_vien.ho_ten.strip().lower()
-        gv_load[key] += 1
-
-    # ===== LOAD NGUYỆN VỌNG =====
-    sv_data = []
-
-    for sv in sinhviens:
-
-        phieu = PhieuTraLoi.objects.filter(
-            sinh_vien=sv,
-            mau_khao_sat=form
-        ).first()
-
-        nv1 = ""
-        nv2 = ""
-        de_tai = ""
-        group = ""
-
-        if phieu:
-            for a in phieu.answers.all():
-                tag = (a.cau_hoi.system_tag or "").strip().upper()
-                val = (a.gia_tri or "").strip()
-
-                if tag == "GVHD_1":
-                    nv1 = val
-                elif tag == "GVHD_2":
-                    nv2 = val
-                elif tag == "DE_TAI":
-                    de_tai = val
-                elif tag == "GROUP":
-                    group = val
-
-        sv_data.append({
-            "sv": sv,
-            "nv1": nv1,
-            "nv2": nv2
-        })
-
-    # ===== AUTO ASSIGN =====
-    for item in sv_data:
-
-        sv = item["sv"]
-        assigned = None
-
-        # 🔥 NV1
-        if item["nv1"]:
-            key = item["nv1"].lower()
-            if gv_load[key] < 10:
-                assigned = item["nv1"]
-                gv_load[key] += 1
-
-        # 🔥 NV2
-        if not assigned and item["nv2"]:
-            key = item["nv2"].lower()
-            if gv_load[key] < 10:
-                assigned = item["nv2"]
-                gv_load[key] += 1
-
-        # SAVE
-        if assigned:
-            gv = GiangVien.objects.get(ho_ten=assigned)
-
-            PhanCongGVHD.objects.update_or_create(
-                sinh_vien=sv,
-                defaults={
-                    "giang_vien": gv,
-                    "ky": ky,
-                    "trang_thai": 1 # Đổi về 1: Chờ duyệt
-                }
-            )
-
-from django.http import HttpResponse
 import json
 from collections import defaultdict
-# ========================
-# RUN AUTO ASSIGN
-# ========================
-def run_auto_assign(request, form_id):
-
-    auto_assign(form_id)
-
-    return HttpResponse("Đã phân công xong")
 
 def hoi_dong_list(request):
-
     ma_gv = request.user.username
     gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
-
     is_gvpt = get_is_gvpt(request)
 
-    # 👑 GV PHỤ TRÁCH → thấy tất cả
-    if is_gvpt:
-        hoidongs = HoiDong.objects.all()
+    tab = request.GET.get('tab', 'my')
+    ky_id = request.GET.get('ky')   # Lấy kỳ từ filter
 
-    # 👨‍🏫 GV thường → chỉ thấy hội đồng mình thuộc
+    # Lấy danh sách tất cả kỳ để hiển thị trong dropdown
+    ky_list = KyThucTap.objects.all().order_by('-id')
+
+    # Xác định queryset hội đồng
+    if is_gvpt:
+        if tab == 'all':
+            # GVPT xem tất cả hội đồng
+            hoidongs = HoiDong.objects.select_related('ky').all()
+        else:
+            # GVPT xem hội đồng của mình
+            hoidongs = HoiDong.objects.filter(
+                hoidong_giangvien__giang_vien=gv
+            ).select_related('ky').distinct()
     else:
+        # GV thường chỉ xem hội đồng mình tham gia
         hoidongs = HoiDong.objects.filter(
             hoidong_giangvien__giang_vien=gv
-        ).distinct()
+        ).select_related('ky').distinct()
 
-    return render(request, "GiangVien/hoi_dong_list.html", {
+    # Áp dụng lọc theo Kỳ thực tập (nếu có)
+    if ky_id:
+        hoidongs = hoidongs.filter(ky_id=ky_id)
+
+    # Sắp xếp theo ngày mới nhất
+    hoidongs = hoidongs.order_by('-ngay_bao_ve')
+
+    # Xác định kỳ hiện tại để highlight trong dropdown
+    current_ky = None
+    if ky_id:
+        current_ky = KyThucTap.objects.filter(id=ky_id).first()
+    elif ky_list.exists():
+        current_ky = ky_list.first()
+
+    context = {
         "hoidongs": hoidongs,
         "current_page": "hoi_dong",
-        "is_gvpt": is_gvpt
-    })
+        "is_gvpt": is_gvpt,
+        "ky_list": ky_list,          # Truyền danh sách kỳ vào template
+        "current_ky": current_ky,    # Kỳ đang được chọn
+        "tab": tab,                  # Để template biết tab nào đang active
+    }
+
+    return render(request, "GiangVien/hoi_dong_list.html", context)
 
 def tao_hoi_dong(request):
-
     if not get_is_gvpt(request):
         return redirect("GiangVien:hoi_dong_list")
-    ky = KyThucTap.objects.last()
-
-    sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
 
     if request.method == "POST":
-
         gv_ids = request.POST.getlist("giang_vien")
-        sv_ids = request.POST.get("sinh_vien_ids").split(",")
+        sv_ids_str = request.POST.get("sinh_vien_ids", "")
+        sv_ids = [x.strip() for x in sv_ids_str.split(",") if x.strip()]
 
-        hd = HoiDong.objects.create(
-            ten_hoi_dong=request.POST.get("ten"),
-            ngay_bao_ve=request.POST.get("ngay"),
-            dia_diem=request.POST.get("dia_diem"),
-            thoi_gian=request.POST.get("thoi_gian"),
-            ky=KyThucTap.objects.last()
-        )
-
-        # GV
-        for gv_id in gv_ids:
-            HoiDong_GiangVien.objects.create(
-                hoi_dong=hd,
-                giang_vien_id=gv_id
+        try:
+            hd = HoiDong.objects.create(
+                ten_hoi_dong=request.POST.get("ten"),
+                ngay_bao_ve=request.POST.get("ngay"),
+                thoi_gian_bat_dau=request.POST.get("thoi_gian_bat_dau"),
+                thoi_gian_ket_thuc=request.POST.get("thoi_gian_ket_thuc"),
+                dia_diem=request.POST.get("dia_diem"),
+                ky=KyThucTap.objects.last()
             )
+        except Exception as e:
+            # Có thể thêm messages.error nếu bạn dùng messages framework
+            return redirect("GiangVien:tao_hoi_dong")
 
-        # SV
-        # SV
+        # Thêm giảng viên
+        for gv_id in gv_ids:
+            HoiDong_GiangVien.objects.create(hoi_dong=hd, giang_vien_id=gv_id)
+
+        # Thêm sinh viên (với kiểm tra GVHD)
         for sv_id in sv_ids:
-            if not sv_id:
-                continue
-
             sv = SinhVien.objects.get(ma_sv=sv_id)
-
-            # 🔥 CHẶN: SV đã có hội đồng trong cùng kỳ
-            da_co = HoiDong_SinhVien.objects.filter(
-                sinh_vien=sv,
-                hoi_dong__ky=hd.ky
-            ).exists()
-
-            if da_co:
-                continue  # ❌ bỏ luôn
-
             gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
 
-            # ❌ CHẶN GVHD
-            if gvhd and gvhd.giang_vien.ma_gv in gv_ids:
+            if gvhd and HoiDong_GiangVien.objects.filter(
+                hoi_dong=hd, giang_vien=gvhd.giang_vien
+            ).exists():
                 continue
 
-            HoiDong_SinhVien.objects.create(
-                hoi_dong=hd,
-                sinh_vien=sv
-            )
+            HoiDong_SinhVien.objects.create(hoi_dong=hd, sinh_vien=sv)
 
         return redirect("GiangVien:hoi_dong_detail", id=hd.id)
 
+    # GET
     return render(request, "GiangVien/tao_hoi_dong.html", {
         "giangviens": GiangVien.objects.all(),
-        "sinhviens": sinhviens,  # 👈 THÊM DÒNG NÀY
         "is_gvpt": True,
         "current_page": "hoi_dong"
     })
+from django.http import JsonResponse
+from django.db.models import Q
+
 def load_sinh_vien(request):
     ky = KyThucTap.objects.last()
+    if not ky:
+        return JsonResponse([], safe=False)
 
+    # Lấy danh sách ma_gv đã chọn từ query param
+    gvs_param = request.GET.get('gvs', '')
+    selected_gv_ids = [x.strip() for x in gvs_param.split(',') if x.strip()]
+
+    # Lấy danh sách sinh viên chưa có trong bất kỳ hội đồng nào của kỳ này
     sv_da_co = HoiDong_SinhVien.objects.filter(
         hoi_dong__ky=ky
-    ).values_list("sinh_vien_id", flat=True)
+    ).values_list("sinh_vien__ma_sv", flat=True)
 
-    sinhviens = SinhVien.objects.filter(
-        ky_hien_tai=ky
-    ).exclude(
-        ma_sv__in=sv_da_co
-    )
+    queryset = SinhVien.objects.filter(ky_hien_tai=ky).exclude(ma_sv__in=sv_da_co)
+
+    # Nếu có giảng viên được chọn → loại bỏ sinh viên có GVHD thuộc danh sách đó
+    if selected_gv_ids:
+        queryset = queryset.exclude(
+            phanconggvhd__giang_vien__ma_gv__in=selected_gv_ids
+        )
 
     data = []
-
-    for sv in sinhviens:
+    for sv in queryset:
         gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
-
         data.append({
             "id": sv.ma_sv,
             "ten": sv.ho_ten,
@@ -1127,6 +1157,8 @@ def them_sinh_vien(request, id):
     })
 
 
+from django.utils import timezone
+
 def hoi_dong_detail(request, id):
     hoidong = get_object_or_404(HoiDong, id=id)
     is_gvpt = get_is_gvpt(request)
@@ -1137,53 +1169,71 @@ def hoi_dong_detail(request, id):
         if not HoiDong_GiangVien.objects.filter(hoi_dong=hoidong, giang_vien=gv).exists():
             return redirect("GiangVien:hoi_dong_list")
 
+    # Kiểm tra thời gian chấm điểm
+    now = timezone.now()
+    is_in_time = False
+    if hoidong.thoi_gian_bat_dau and hoidong.thoi_gian_ket_thuc:
+        is_in_time = (hoidong.thoi_gian_bat_dau <= now <= hoidong.thoi_gian_ket_thuc) and \
+                     (hoidong.ngay_bao_ve == now.date())
+
     giangviens = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
 
-    # Lấy danh sách sinh viên + điểm
     sv_list = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
 
     data_sv = []
     for item in sv_list:
         sv = item.sinh_vien
 
-        # SỬA TẠI ĐÂY: Truy vấn bằng ma_sv cụ thể để tránh lỗi mapping đối tượng
+        # Lấy điểm báo cáo (diem_bao_cao)
         bd = BangDiem.objects.filter(
-            sinh_vien_id=sv.ma_sv,
-            ky_id=hoidong.ky_id
+            sinh_vien=sv,
+            ky=hoidong.ky
         ).first()
 
-        diem_value = None
-        if bd:
-            # Đảm bảo lấy đúng trường diem_bao_cao (điểm hội đồng)
-            diem_value = bd.diem_bao_cao
+        diem_value = bd.diem_bao_cao if bd else None
 
         data_sv.append({
             "sv": sv,
-            "diem": diem_value,
+            "diem": diem_value,     # <-- Đảm bảo là số hoặc None
         })
 
-    return render(request, "GiangVien/hoi_dong_detail.html", {
+    context = {
         "hoidong": hoidong,
         "giangviens": giangviens,
-        "sinhviens": data_sv,  # Key này phải khớp với {% for item in sinhviens %}
+        "sinhviens": data_sv,
         "is_gvpt": is_gvpt,
-        "current_page": "hoi_dong"
-    })
+        "current_page": "hoi_dong",
+        "is_in_time": is_in_time,
+        "now": now,
+    }
+
+    return render(request, "GiangVien/hoi_dong_detail.html", context)
 
 @require_POST
 def cham_diem_hoi_dong(request, id, ma_sv):
-    sv = get_object_or_404(SinhVien, ma_sv=ma_sv)
     hoidong = get_object_or_404(HoiDong, id=id)
-    diem_str = request.POST.get("diem")
+    sv = get_object_or_404(SinhVien, ma_sv=ma_sv)
 
+    now = timezone.now()
+
+    # Kiểm tra nghiêm ngặt thời gian
+    if not (hoidong.thoi_gian_bat_dau and hoidong.thoi_gian_ket_thuc):
+        messages.error(request, "Hội đồng chưa thiết lập thời gian bảo vệ.")
+        return redirect("GiangVien:hoi_dong_detail", id=id)
+
+    if not (hoidong.thoi_gian_bat_dau <= now <= hoidong.thoi_gian_ket_thuc) or \
+       hoidong.ngay_bao_ve != now.date():
+        messages.error(request, "Chỉ được chấm điểm trong thời gian bảo vệ của hội đồng.")
+        return redirect("GiangVien:hoi_dong_detail", id=id)
+
+    diem_str = request.POST.get("diem")
     if diem_str:
-        # Sử dụng update_or_create để đảm bảo không tạo bản ghi rác
-        bd, created = BangDiem.objects.update_or_create(
+        bd, _ = BangDiem.objects.update_or_create(
             sinh_vien=sv,
             ky=hoidong.ky,
             defaults={'diem_bao_cao': float(diem_str)}
         )
-        # Gọi hàm tính tổng kết nếu có
-        bd.calculate_total()
+        if hasattr(bd, 'calculate_total'):
+            bd.calculate_total()
 
     return redirect("GiangVien:hoi_dong_detail", id=id)

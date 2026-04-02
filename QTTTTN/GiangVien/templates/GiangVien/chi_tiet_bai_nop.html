@@ -30,15 +30,15 @@
                     <div class="flex-1">
                         <p class="font-medium text-gray-800">{{ bai.ten_file }}</p>
                         <p class="text-xs text-gray-500 mt-1">
-                            Nộp lúc: {{ bai.thoi_gian_nop|date:"H:i ngày d/m/Y" }}
+                            Nộp lúc: {{ bai.thoi_gian_nop|date:"H:i d/m/Y" }}
                         </p>
                     </div>
 
                     <!-- Nút tải xuống -->
                     <a href="{{ bai.file_path.url }}"
                        target="_blank"
-                       class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition">
-                        ⬇️ Tải xuống file
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-xl font-medium flex items-center gap-2 transition">
+                         Tải xuống file
                     </a>
                 </div>
             {% else %}
@@ -67,7 +67,7 @@
                 <button type="submit"
                         class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium transition">
                     💾 Lưu nhận xét
-                </button>
+                </button> 
             </div>
         </form>
 
