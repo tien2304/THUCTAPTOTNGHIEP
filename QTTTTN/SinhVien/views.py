@@ -286,14 +286,13 @@ def submit_form(request, public_id):
         sinh_vien = SinhVien.objects.get(ma_sv=nguoi_dung.username)
 
         with transaction.atomic():
-            # Tạo phiếu trả lời chính
+            # 1. Tạo phiếu trả lời chính
             phieu = PhieuTraLoi.objects.create(mau_khao_sat=mau_ks, sinh_vien=sinh_vien)
 
-            # Quét các câu hỏi để lấy dữ liệu từ POST
+            # 2. Quét các câu hỏi để lấy dữ liệu từ POST
             for q in mau_ks.cau_hoi.all():
                 field_name = f"question_{q.id}"
-                
-                ans_str = None # Biến này giữ nguyên text sinh viên nộp để dùng cho việc cập nhật Model
+                ans_str = None
 
                 if q.loai_cau_hoi == "LIKERT":
                     for t in q.tieuchi.all():
@@ -314,37 +313,30 @@ def submit_form(request, public_id):
                 # ==========================================
                 # HOOK: CẬP NHẬT THÔNG TIN TỰ ĐỘNG
                 # ==========================================
-                # Tận dụng system_tag từ câu hỏi và ans_str (câu trả lời) để cập nhật thẳng vào CSDL.
                 if ans_str and q.system_tag:
-                    
-                    # Ví dụ 1: Nếu tag là 'don_vi' -> Chèn tên thực tập vào SinhVien
-                    if q.system_tag == "don_vi":
-                        pass
-                        # Mở comment dòng dưới nếu SinhVien đã có trường cong_ty
-                        # sinh_vien.cong_ty = ans_str
-                        
-                    # Ví dụ 2: Nếu tag là 'sdt' -> Cập nhật số điện thoại
-                    elif q.system_tag == "sdt":
-                        pass
-                        # sinh_vien.so_dien_thoai = ans_str
-                        
-                    # Ví dụ 3: Nếu tag là GVHD -> Tạo/Sửa dòng trong PhanCongGVHD
-                    elif q.system_tag == "chon_gvhd":
-                        pass
-                        """
-                        gv = GiangVien.objects.filter(ho_ten=ans_str).first()
-                        if gv:
-                            PhanCongGVHD.objects.update_or_create(
+
+                    # Cập nhật điểm doanh nghiệp vào BangDiem
+                    if q.system_tag == "diem_doanh_nghiep":
+                        try:
+                            # Ép kiểu về float (thay dấu phẩy bằng dấu chấm nếu cần)
+                            score = float(ans_str.replace(',', '.'))
+
+                            # Tìm hoặc tạo bản ghi điểm cho SV này trong kỳ này
+                            bang_diem, created = BangDiem.objects.update_or_create(
                                 sinh_vien=sinh_vien,
                                 ky=mau_ks.ky,
-                                defaults={'giang_vien': gv}
+                                defaults={'diem_doanh_nghiep': score}
                             )
-                        """
+                            # Tự động tính lại tổng kết nếu đã đủ các đầu điểm khác
+                            bang_diem.calculate_total()
+                        except ValueError:
+                            pass  # Bỏ qua nếu SV nhập không phải là số
 
-            # Lệnh save tổng này chỉ nên mở khi SinhVien thực sự có cập nhật
-            # sinh_vien.save()
+                    # Cập nhật nơi thực tập vào hồ sơ SinhVien
+                    elif q.system_tag == "don_vi_tt":
+                        sinh_vien.noi_thuc_tap = ans_str
+                        sinh_vien.save()
 
-            # Gắn tin nhắn thành công để kích hoạt Popup ở Template
             messages.success(request, "success")
             return redirect('SinhVien:dien_form', public_id=public_id)
 
