@@ -183,3 +183,28 @@ def chi_tiet_gvhd_view(request, ma_gv):
     }
     return render(request, 'TruongBoMon/chi_tiet_gvhd.html', context)
 
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+
+@login_required
+def update_password(request):
+    if request.method == "POST":
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not request.user.check_password(current_password):
+            messages.error(request, "Mật khẩu hiện tại không đúng.", extra_tags='pwd_error')
+            return redirect('TruongBoMon:truongboomon_home')
+        
+        if new_password != confirm_password:
+            messages.error(request, "Xác nhận mật khẩu không khớp.", extra_tags='pwd_error')
+            return redirect('TruongBoMon:truongboomon_home')
+        
+        request.user.set_password(new_password)
+        request.user.save()
+        update_session_auth_hash(request, request.user)
+        messages.success(request, "Thay đổi mật khẩu thành công!", extra_tags='pwd_success')
+        
+    return redirect('TruongBoMon:truongboomon_home')

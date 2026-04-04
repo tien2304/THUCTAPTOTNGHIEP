@@ -430,3 +430,26 @@ def nop_bai_action(request):
         )
         messages.success(request, "Nộp bài thành công!")
     return redirect('SinhVien:nhiem_vu_page')
+
+@login_required
+def update_password(request):
+    if request.method == "POST":
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not request.user.check_password(current_password):
+            messages.error(request, "Mật khẩu hiện tại không đúng.", extra_tags='pwd_error')
+            return redirect('SinhVien:sinhvien_home')
+        
+        if new_password != confirm_password:
+            messages.error(request, "Xác nhận mật khẩu không khớp.", extra_tags='pwd_error')
+            return redirect('SinhVien:sinhvien_home')
+        
+        request.user.set_password(new_password)
+        request.user.save()
+        from django.contrib.auth import update_session_auth_hash
+        update_session_auth_hash(request, request.user)
+        messages.success(request, "Thay đổi mật khẩu thành công!", extra_tags='pwd_success')
+        
+    return redirect('SinhVien:sinhvien_home')
