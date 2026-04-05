@@ -1,0 +1,100 @@
+{% extends "TruongBoMon/home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Duyệt Hội đồng Bảo vệ</h1>
+            <p class="text-sm text-gray-500 mt-1">Xem và phê duyệt danh sách các hội đồng chấm đồ án trong kỳ.</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Sub Header với Filter Kỳ thực tập -->
+        <div class="flex flex-col sm:flex-row justify-between items-center border-b border-gray-50 px-8 py-6 gap-4">
+            <h2 class="text-lg font-bold text-gray-800">Danh sách Hội đồng</h2>
+
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Học kỳ:</span>
+                    <form method="GET" class="inline-block">
+                        <select name="ky_id" onchange="this.form.submit()"
+                                class="border border-gray-200 rounded-xl px-4 py-2 text-sm font-medium focus:ring-4 focus:ring-blue-50 focus:border-blue-400 bg-gray-50 outline-none transition-all cursor-pointer">
+                            {% for ky in all_ky %}
+                            <option value="{{ ky.id }}" {% if selected_ky_id == ky.id %}selected{% endif %}>
+                                {{ ky.ten_ky }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50/50 border-b border-gray-50">
+                        <th class="text-left py-5 px-8 font-bold text-gray-400 uppercase tracking-widest text-[10px]">TÊN HỘI ĐỒNG</th>
+                        <th class="text-left py-5 px-6 font-bold text-gray-400 uppercase tracking-widest text-[10px]">THỜI GIAN & ĐỊA ĐIỂM</th>
+                        <th class="text-left py-5 px-6 font-bold text-gray-400 uppercase tracking-widest text-[10px]">THÀNH PHẦN</th>
+                        <th class="text-center py-5 px-8 font-bold text-gray-400 uppercase tracking-widest text-[10px]">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for hd in ds_hoidong %}
+                    <tr class="group hover:bg-blue-50/30 transition-all duration-300">
+                        <td class="py-6 px-8">
+                            <div class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ hd.ten }}</div>
+                            <div class="text-[10px] bg-blue-50 text-blue-500 font-extrabold px-1.5 py-0.5 rounded uppercase mt-1.5 inline-block">
+                                {{ selected_ky.ten_ky }}
+                            </div>
+                        </td>
+                        <td class="py-6 px-6">
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-center gap-2 text-gray-700 font-bold">
+                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    {{ hd.thoi_gian }} | {{ hd.ngay_bao_ve|date:"d/m/Y" }}
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-400 text-xs">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    {{ hd.dia_diem }}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-6 px-6">
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-center gap-2 text-gray-600 font-medium">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                                    Giảng viên: <span class="font-bold text-gray-900">{{ hd.gv_count }}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-600 font-medium">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    Sinh viên: <span class="font-bold text-gray-900">{{ hd.sv_count }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-6 px-8 text-center">
+                            <a href="{% url 'TruongBoMon:chi_tiet_hoidong' hd.id %}"
+                               class="inline-flex items-center justify-center bg-white border border-gray-100 px-5 py-2.5 rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-blue-100">
+                                Chi tiết
+                                <svg class="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-24 text-gray-400">
+                            Học kỳ này chưa có hội đồng nào được thiết lập.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

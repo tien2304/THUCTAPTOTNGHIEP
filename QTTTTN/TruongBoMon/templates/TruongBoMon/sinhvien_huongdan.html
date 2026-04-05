@@ -1,0 +1,162 @@
+{% extends "TruongBoMon/home.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="p-6 bg-gray-50 min-h-screen">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="max-w-7xl mx-auto">
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Sinh viên của tôi</h1>
+    </div>
+
+<!-- CARD -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+
+    <!-- SEARCH + FILTER -->
+    <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50">
+        <h3 class="font-semibold text-gray-700">Danh sách Sinh viên Hướng dẫn</h3>
+
+        <div class="flex gap-3">
+            <form method="GET" class="flex gap-3">
+
+    <!-- giữ ky khi search -->
+    <input type="hidden" name="ky" value="{{ current_ky.id|default:'' }}">
+
+    <input type="text" name="q"
+           value="{{ query }}"
+           placeholder="🔍 Tìm theo mã SV, tên, lớp..."
+           class="border border-gray-300 px-4 py-2 rounded-xl text-sm w-72 focus:outline-none focus:border-blue-500">
+
+    <button type="submit"
+            class="bg-blue-500 text-white px-4 py-2 rounded-xl text-sm">
+        Tìm
+    </button>
+
+</form>
+
+            <!-- ✅ FILTER KỲ -->
+            <select onchange="filterKy(this)"
+        class="border border-gray-300 px-4 py-2 rounded-xl text-sm">
+
+    <option value="">Tất cả học kỳ</option>
+
+    {% for ky in ky_list %}
+        <option value="{{ ky.id }}"
+            {% if current_ky and ky.id == current_ky.id %}selected{% endif %}>
+            {{ ky.ten_ky }}
+        </option>
+    {% endfor %}
+</select>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <table class="w-full text-sm" id="studentTable">
+        <thead class="bg-gray-50 text-gray-500 border-b">
+            <tr>
+                <th class="text-left p-4 font-medium w-56">Tên sinh viên</th>
+                <th class="text-left p-4 font-medium">Tên đề tài</th>
+                <th class="text-left p-4 font-medium">Nơi thực tập</th>
+                <th class="text-left p-4 font-medium w-40">Thao tác</th>
+            </tr>
+        </thead>
+
+        <tbody class="divide-y">
+
+        {% for item in danh_sach %}
+        <!-- ✅ ĐẶT data-ky ĐÚNG CHỖ -->
+        <tr class="hover:bg-gray-50 transition-all"
+            data-ky="{{ item.sinh_vien.ky_hien_tai.id }}">
+
+            <td class="p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                        {{ item.sinh_vien.ho_ten|slice:":2" }}
+                    </div>
+                    <div>
+                        <div class="font-medium">{{ item.sinh_vien.ho_ten }}</div>
+                        <div class="text-xs text-gray-400">{{ item.sinh_vien.lop }}</div>
+                    </div>
+                </div>
+            </td>
+
+            <!-- ĐỀ TÀI -->
+            <td class="p-4">
+                <input type="text"
+                       name="ten_de_tai"
+                       value="{{ item.sinh_vien.ten_de_tai|default:'' }}"
+                       placeholder="Nhập tên đề tài..."
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </td>
+
+            <!-- NƠI THỰC TẬP -->
+            <td class="p-4">
+                <input type="text"
+                       name="noi_tt"
+                       value="{{ item.noi_thuc_tap|default:'' }}"
+                       placeholder="Nhập nơi thực tập..."
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </td>
+
+            <!-- ACTION -->
+            <td class="p-4">
+                <div class="flex items-center gap-3">
+                    <form method="POST" action="{% url 'TruongBoMon:update_sinh_vien_info' item.sinh_vien.ma_sv %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="ten_de_tai" class="hidden_de_tai">
+                        <input type="hidden" name="noi_tt" class="hidden_noi_tt">
+
+                        <button type="button"
+                                onclick="saveRow(this)"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-sm">
+                            Lưu
+                        </button>
+                    </form>
+
+                    <a href="{% url 'TruongBoMon:chi_tiet_sv' item.sinh_vien.ma_sv %}"
+                       class="text-blue-600 hover:text-blue-700 text-sm">
+                        Xem bài nộp →
+                    </a>
+                </div>
+            </td>
+
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>
+
+</div>
+
+<script>
+// FILTER THEO KỲ
+
+function filterKy(select) {
+    const kyId = select.value;
+
+    if (kyId) {
+        window.location.href = `?ky=${kyId}`;
+    } else {
+        window.location.href = window.location.pathname;
+    }
+}
+// SAVE
+function saveRow(btn) {
+    const row = btn.closest('tr');
+    const form = btn.closest('form');
+
+    const tenDeTai = row.querySelector('input[name="ten_de_tai"]').value.trim();
+    const noiThucTap = row.querySelector('input[name="noi_tt"]').value.trim();
+
+    form.querySelector('.hidden_de_tai').value = tenDeTai;
+    form.querySelector('.hidden_noi_tt').value = noiThucTap;
+
+    form.submit();
+}
+</script>
+
+{% endblock %}
