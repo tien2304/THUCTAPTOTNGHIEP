@@ -11,27 +11,30 @@
         </div>
 
         {% if is_gvpt %}
-        <div class="flex items-center gap-4">
-            <!-- Tab -->
-            <div class="flex bg-white rounded-3xl p-1 shadow-sm border">
+        <div class="flex items-center gap-3">
+
+                <!-- Tab -->
+            <div class="flex bg-white rounded-xl p-1 shadow-sm border">
                 <a href="?tab=my"
-                   class="px-4 py-2 rounded-3xl font-medium transition-all
-                          {% if request.GET.tab == 'my' or not request.GET.tab %}bg-blue-600 text-white shadow{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                   class="px-3 py-1 text-sm rounded-xl font-medium transition-all
+                          {% if request.GET.tab == 'my' or not request.GET.tab %}bg-blue-600 text-white shadow-sm{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
                     Hội đồng của tôi
                 </a>
+
                 <a href="?tab=all"
-                   class="px-4 py-2 rounded-3xl font-medium transition-all
-                          {% if request.GET.tab == 'all' %}bg-blue-600 text-white shadow{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                   class="px-3 py-1 text-sm rounded-xl font-medium transition-all
+                          {% if request.GET.tab == 'all' %}bg-blue-600 text-white shadow-sm{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
                     Tất cả hội đồng
                 </a>
             </div>
 
-            <!-- Nút Tạo hội đồng - to và đẹp hơn -->
+            <!-- Nút -->
             <a href="{% url 'GiangVien:tao_hoi_dong' %}"
-               class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-2 rounded-3xl font-semibold flex items-center gap-2 shadow transition-all">
-                <span class="text-2xl leading-none">+</span>
+               class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-xl text-sm font-medium flex items-center gap-1 shadow-sm transition-all">
+                <span class="text-base leading-none">+</span>
                 Tạo hội đồng
             </a>
+
         </div>
         {% endif %}
     </div>
@@ -105,16 +108,6 @@
             </table>
         </div>
 
-<!--        &lt;!&ndash; Footer &ndash;&gt;-->
-<!--        <div class="px-8 py-6 border-t flex items-center justify-between text-sm text-gray-500">-->
-<!--            <div>Hiển thị {{ hoidongs|length }} hội đồng</div>-->
-<!--            &lt;!&ndash; Phân trang (có thể mở rộng sau) &ndash;&gt;-->
-<!--            <div class="flex gap-2">-->
-<!--                <button class="px-4 py-2 border rounded-2xl hover:bg-gray-50">← Trước</button>-->
-<!--                <button class="px-5 py-2 bg-blue-600 text-white rounded-2xl">1</button>-->
-<!--                <button class="px-4 py-2 border rounded-2xl hover:bg-gray-50">Sau →</button>-->
-<!--            </div>-->
-<!--        </div>-->
     </div>
 </div>
 

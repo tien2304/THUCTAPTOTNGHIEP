@@ -6,23 +6,20 @@ from Home.models import (GiangVien, PhanCongGVPT,SinhVien,
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 
+
 def home_view(request):
-    """Trang chủ dành cho Giảng Viên."""
-    # Lấy thông tin giảng viên từ user hiện tại
-    # Giả định username là ma_gv
+    """Khi giảng viên đăng nhập → tự động chuyển thẳng sang trang Sinh viên của tôi"""
+
+    # Vẫn giữ phần kiểm tra is_gvpt (để sidebar hoạt động)
     ma_gv = request.user.username
     giang_vien = GiangVien.objects.filter(ma_gv=ma_gv).first()
 
-    # Kiểm tra xem giảng viên này có phải là giảng viên phụ trách không
     is_gvpt = False
     if giang_vien:
         is_gvpt = PhanCongGVPT.objects.filter(giang_vien=giang_vien).exists()
 
-    context = {
-        'current_page': 'home',
-        'is_gvpt': is_gvpt,
-    }
-    return render(request, 'GiangVien/Home.html', context)
+    # 🔥 Redirect thẳng sang view sinhvien_huongdan (view này có đầy đủ dữ liệu)
+    return redirect('GiangVien:sinhvien_huongdan')
 
 def sinhvien_huongdan(request):
 
@@ -505,55 +502,7 @@ def submit_form(request,public_id):
                         sv.save()
 
         return render(request, "Forms/success.html")
-# def save_assign(request):
 #
-#     if request.method == "POST":
-#
-#         sv_ids = request.POST.getlist("sv")
-#         gv_name = request.POST.get("gv")
-#         ky_id = request.POST.get("ky_id")
-#
-#         if not gv_name:
-#             # Chọn "-- Chưa phân --" tức là xoá phân công
-#             for sv_id in sv_ids:
-#                 sv = SinhVien.objects.get(ma_sv=sv_id)
-#                 PhanCongGVHD.objects.filter(sinh_vien=sv).delete()
-#         else:
-#             gv = GiangVien.objects.get(ho_ten=gv_name)
-#
-#             if ky_id:
-#                 ky = KyThucTap.objects.get(id=ky_id)
-#             else:
-#                 ky = KyThucTap.objects.order_by("-id").first()
-#
-#             for sv_id in sv_ids:
-#                 sv = SinhVien.objects.get(ma_sv=sv_id)
-#
-#                 PhanCongGVHD.objects.update_or_create(
-#                     sinh_vien=sv,
-#                     defaults={
-#                         "giang_vien": gv,
-#                         "ky": ky,
-#                         "trang_thai": 2
-#                     }
-#                 )
-#
-#     return redirect("GiangVien:phan_cong")
-#
-# def confirm_assign(request):
-#
-#     if request.method == "POST":
-#
-#         sv_ids = request.POST.getlist("sv")
-#
-#         gvs = GiangVien.objects.all()
-#
-#         return render(request, "GiangVien/select_gv.html", {
-#             "sv_ids": sv_ids,
-#             "gvs": gvs
-#         })
-
-
 # ========================
 # LẤY FORM NGUYỆN VỌNG
 # ========================
@@ -837,146 +786,6 @@ def update_phan_cong(request):
             return JsonResponse({"status": "ok"})
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
-# def select_sinh_vien(request):
-#
-#     ky, form = get_form_nguyen_vong()
-#
-#     sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
-#
-#     data = []
-#
-#     for sv in sinhviens:
-#
-#         phieu = PhieuTraLoi.objects.filter(
-#             sinh_vien=sv,
-#             mau_khao_sat=form
-#         ).first()
-#
-#         nv = ""
-#
-#         if phieu:
-#             for a in phieu.answers.select_related("cau_hoi"):
-#                 if a.cau_hoi.system_tag == "GVHD_1":
-#                     nv = a.gia_tri
-#
-#         data.append({
-#             "id": sv.ma_sv,
-#             "ten": sv.ho_ten,
-#             "lop": sv.lop,
-#             "nv": nv
-#         })
-#
-#     return render(request, "GiangVien/select_sv.html", {
-#         "data": data
-#     })
-#
-# # BUILD PROFILE
-# # ========================
-# def build_profiles(form):
-#
-#     answers = ChiTietTraLoi.objects.select_related(
-#         "phieu_tra_loi__sinh_vien",
-#         "cau_hoi"
-#     ).filter(
-#         phieu_tra_loi__mau_khao_sat=form
-#     )
-#
-#     data = defaultdict(dict)
-#
-#     for ans in answers:
-#         sv = ans.phieu_tra_loi.sinh_vien
-#         tag = ans.cau_hoi.system_tag
-#
-#         if tag:
-#             data[sv][tag] = ans.gia_tri
-#
-#     return data
-#
-#
-# # ========================
-# # AUTO ASSIGN
-# # ========================
-# def auto_assign(form_id):
-#
-#     ky = KyThucTap.objects.order_by("-id").first()
-#     form = MauKhaoSat.objects.get(id=form_id)
-#
-#     sinhviens = SinhVien.objects.filter(ky_hien_tai=ky)
-#
-#     # ===== LOAD hiện tại =====
-#     gv_load = defaultdict(int)
-#
-#     for pc in PhanCongGVHD.objects.filter(ky=ky):
-#         key = pc.giang_vien.ho_ten.strip().lower()
-#         gv_load[key] += 1
-#
-#     # ===== LOAD NGUYỆN VỌNG =====
-#     sv_data = []
-#
-#     for sv in sinhviens:
-#
-#         phieu = PhieuTraLoi.objects.filter(
-#             sinh_vien=sv,
-#             mau_khao_sat=form
-#         ).first()
-#
-#         nv1 = ""
-#         nv2 = ""
-#         de_tai = ""
-#         group = ""
-#
-#         if phieu:
-#             for a in phieu.answers.all():
-#                 tag = (a.cau_hoi.system_tag or "").strip().upper()
-#                 val = (a.gia_tri or "").strip()
-#
-#                 if tag == "GVHD_1":
-#                     nv1 = val
-#                 elif tag == "GVHD_2":
-#                     nv2 = val
-#                 elif tag == "DE_TAI":
-#                     de_tai = val
-#                 elif tag == "GROUP":
-#                     group = val
-#
-#         sv_data.append({
-#             "sv": sv,
-#             "nv1": nv1,
-#             "nv2": nv2
-#         })
-#
-#     # ===== AUTO ASSIGN =====
-#     for item in sv_data:
-#
-#         sv = item["sv"]
-#         assigned = None
-#
-#         # 🔥 NV1
-#         if item["nv1"]:
-#             key = item["nv1"].lower()
-#             if gv_load[key] < 10:
-#                 assigned = item["nv1"]
-#                 gv_load[key] += 1
-#
-#         # 🔥 NV2
-#         if not assigned and item["nv2"]:
-#             key = item["nv2"].lower()
-#             if gv_load[key] < 10:
-#                 assigned = item["nv2"]
-#                 gv_load[key] += 1
-#
-#         # SAVE
-#         if assigned:
-#             gv = GiangVien.objects.get(ho_ten=assigned)
-#
-#             PhanCongGVHD.objects.update_or_create(
-#                 sinh_vien=sv,
-#                 defaults={
-#                     "giang_vien": gv,
-#                     "ky": ky,
-#                     "trang_thai": 1 # Đổi về 1: Chờ duyệt
-#                 }
-#             )
 
 import json
 from collections import defaultdict

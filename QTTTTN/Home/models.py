@@ -125,11 +125,13 @@ class PhanCongGVPT(models.Model):
     ngay_phan_cong = models.DateTimeField(auto_now_add=True)
     class Meta:
         unique_together = ('giang_vien', 'ky')
+
+
 class TyLeDiem(models.Model):
-    ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
-    diem_gvhd = models.FloatField(default=0.4)
-    diem_hoidong = models.FloatField(default=0.4)
-    diem_doanhnghiep = models.FloatField(default=0.2)
+        ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
+        diem_gvhd = models.FloatField()
+        diem_hoidong = models.FloatField()
+        diem_doanhnghiep = models.FloatField()
 class BangDiem(models.Model):
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
@@ -140,15 +142,25 @@ class BangDiem(models.Model):
 
     class Meta:
         unique_together = ('sinh_vien', 'ky')
+
     def calculate_total(self):
+        # 1. Tìm tỷ lệ của chính kỳ này
         tyle = TyLeDiem.objects.filter(ky=self.ky).first()
+
+        # 2. Nếu kỳ này chưa cấu hình, tìm tỷ lệ gần nhất TRƯỚC ĐÓ (kế thừa)
+        if not tyle:
+            tyle = TyLeDiem.objects.filter(
+                ky__ngay_bat_dau__lt=self.ky.ngay_bat_dau
+            ).order_by('-ky__ngay_bat_dau').first()
+
         if tyle and self.diem_qua_trinh and self.diem_doanh_nghiep and self.diem_bao_cao:
             self.diem_tong_ket = (
-                (self.diem_qua_trinh * tyle.diem_gvhd) +
-                (self.diem_doanh_nghiep * tyle.diem_doanhnghiep) +
-                (self.diem_bao_cao * tyle.diem_hoidong)
+                    (self.diem_qua_trinh * tyle.diem_gvhd / 100) +
+                    (self.diem_doanh_nghiep * tyle.diem_doanhnghiep / 100) +
+                    (self.diem_bao_cao * tyle.diem_hoidong / 100)
             )
             self.save()
+
 # --- NHÓM 5: CHUYÊN MÔN (NHIỆM VỤ, HỘI ĐỒNG, TÀI LIỆU) ---
 class NhiemVu(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
