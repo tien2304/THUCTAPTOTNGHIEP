@@ -1,0 +1,80 @@
+{% extends "TruongBoMon/home.html" %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3 text-xs font-bold uppercase tracking-wider text-gray-400">
+                    <li><a href="{% url 'TruongBoMon:duyet_hoidong' %}" class="hover:text-blue-600 transition-colors">Duyệt Hội đồng</a></li>
+                    <li><svg class="w-3 h-3 mx-1" fill="currentColor" viewBox="0 0 20 20"><path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"></path></svg></li>
+                    <li class="text-blue-600">Thành phần chi tiết</li>
+                </ol>
+            </nav>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">{{ hoidong.ten_hoi_dong }}</h1>
+            <p class="text-sm text-gray-500 mt-1">Học kỳ: <span class="font-bold text-gray-800">{{ hoidong.ky.ten_ky }}</span></p>
+        </div>
+    </div>
+
+    <!-- MAIN PANEL -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- LEFT: GIẢNG VIÊN -->
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 overflow-hidden">
+            <h3 class="text-sm font-extrabold text-indigo-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                Giảng viên trong hội đồng
+            </h3>
+            <div class="space-y-4">
+                {% for item in ds_giang_vien %}
+                <div class="flex items-center gap-4 p-4 rounded-2xl bg-gray-50/50 hover:bg-gray-50 transition-colors group">
+                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm">
+                        {{ item.giang_vien.ho_ten|slice:":1" }}
+                    </div>
+                    <div class="flex-grow">
+                        <div class="font-bold text-gray-900">{{ item.giang_vien.ho_ten }}</div>
+                        <div class="text-xs text-indigo-400 font-bold uppercase">{{ item.giang_vien.hoc_vi }}</div>
+                    </div>
+                    <div class="text-xs font-medium text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {{ item.giang_vien.ma_gv }}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm text-center py-10">Chưa có giảng viên.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- RIGHT: SINH VIÊN -->
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 overflow-hidden">
+            <h3 class="text-sm font-extrabold text-emerald-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Sinh viên bảo vệ
+            </h3>
+            <div class="space-y-4">
+                {% for item in ds_sinh_vien %}
+                <div class="flex flex-col gap-2 p-5 rounded-2xl bg-gray-50/50 hover:bg-gray-50 transition-colors group border border-transparent hover:border-emerald-100">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold shadow-sm">
+                            {{ item.sinh_vien.ho_ten|slice:":1" }}
+                        </div>
+                        <div class="flex-grow">
+                            <div class="font-bold text-gray-900">{{ item.sinh_vien.ho_ten }}</div>
+                            <div class="text-xs text-gray-500">{{ item.sinh_vien.ma_sv }} • {{ item.sinh_vien.lop }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500 italic bg-white p-3 rounded-xl border border-gray-50">
+                        {{ item.sinh_vien.ten_de_tai|default:"Chưa có tên đề tài" }}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm text-center py-10">Chưa có sinh viên.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

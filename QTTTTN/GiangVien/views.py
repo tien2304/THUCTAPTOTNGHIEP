@@ -1,10 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from Home.models import (GiangVien, PhanCongGVPT,SinhVien,
                          PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon, BaiNop, NhiemVu, BangDiem, KyThucTap,
                          KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia, HoiDong, HoiDong_SinhVien,HoiDong_GiangVien)
-from django.shortcuts import get_object_or_404
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 
 
 def home_view(request):
@@ -147,7 +147,7 @@ def chi_tiet_sinh_vien(request, ma_sv):
         "GiangVien/chi_tiet_sinh_vien.html",
         context
     )
-from django.views.decorators.http import require_POST
+
 
 @require_POST
 def save_diem(request, ma_sv):
@@ -191,7 +191,7 @@ def chi_tiet_bai_nop(request, id):
         context
     )
 
-from django.views.decorators.http import require_POST
+
 
 @require_POST
 def update_sinh_vien_info(request, ma_sv):
@@ -208,7 +208,7 @@ def update_sinh_vien_info(request, ma_sv):
     sv.save()
     return redirect("GiangVien:sinhvien_huongdan")
 import json
-from django.shortcuts import render,redirect
+
 def get_is_gvpt(request):
     ma_gv = request.user.username
     gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
@@ -1046,3 +1046,29 @@ def cham_diem_hoi_dong(request, id, ma_sv):
             bd.calculate_total()
 
     return redirect("GiangVien:hoi_dong_detail", id=id)
+
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+
+@login_required
+def update_password(request):
+    if request.method == "POST":
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not request.user.check_password(current_password):
+            messages.error(request, "Mật khẩu hiện tại không đúng.", extra_tags='pwd_error')
+            return redirect('GiangVien:giangvien_home')
+        
+        if new_password != confirm_password:
+            messages.error(request, "Xác nhận mật khẩu không khớp.", extra_tags='pwd_error')
+            return redirect('GiangVien:giangvien_home')
+        
+        request.user.set_password(new_password)
+        request.user.save()
+        update_session_auth_hash(request, request.user)
+        messages.success(request, "Thay đổi mật khẩu thành công!", extra_tags='pwd_success')
+        
+    return redirect('GiangVien:giangvien_home')

@@ -1,0 +1,275 @@
+{% extends "TruongBoMon/home.html" %}
+{% load static %}
+{% block title %}MIS – Quản lý Điểm Sinh viên{% endblock %}
+
+{% block extra_css %}
+<style>
+/* CSS đồng bộ với các trang khác của hệ thống */
+.page-container {
+    padding: 24px 32px;
+}
+
+.page-header {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.filter-bar {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.select-ky {
+    height: 38px;
+    padding: 0 32px 0 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center;
+    appearance: none;
+    font-size: 13.5px;
+    color: #1e293b;
+    cursor: pointer;
+    min-width: 300px;
+}
+
+.select-ky:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.table-card {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fafafa;
+}
+
+.card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead th {
+    background: #f8fafc;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.data-table tbody td {
+    padding: 14px 16px;
+    font-size: 13.5px;
+    color: #475569;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.data-table tbody tr:hover {
+    background: #fcfcfc;
+}
+
+.text-center { text-align: center !important; }
+.font-bold { font-weight: 600; }
+.text-blue { color: #2563eb; }
+.text-emerald { color: #10b981; }
+.text-gray { color: #94a3b8; }
+
+.pagination-bar {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f1f5f9;
+    background: #fafafa;
+}
+
+.pagination-info { font-size: 13px; color: #64748b; }
+
+.pagination-btns { display: flex; gap: 5px; }
+
+.pg-btn {
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #fff;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #f1f5f9;
+}
+
+.pg-btn:hover:not(.pg-active) {
+    background: #f8fafc;
+    color: #3b82f6;
+    transform: translateY(-1px);
+}
+
+.pg-active {
+    background: #3b82f6 !important;
+    color: #fff !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 8px 16px -4px rgba(59, 130, 246, 0.5);
+}
+
+.pg-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5;
+}
+
+.empty-row { padding: 40px !important; color: #94a3b8; font-style: italic; text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Quản lý Điểm Sinh viên</h1>
+    </div>
+
+    <div class="filter-bar">
+        <label class="filter-label">Học kỳ thực tập</label>
+        <form method="GET" id="filterForm">
+            <select name="ky_id" class="select-ky" onchange="this.form.submit()">
+                {% for ky in all_ky %}
+                <option value="{{ ky.id }}" {% if selected_ky_id == ky.id|stringformat:"s" %}selected{% endif %}>
+                    {{ ky.ten_ky }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <div class="card-header">
+            <h3 class="card-title">Bảng điểm tổng hợp</h3>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 120px;">Mã sinh viên</th>
+                    <th>Họ và tên</th>
+                    <th style="width: 100px;">Lớp</th>
+                    <th class="text-center">Điểm GVHD</th>
+                    <th class="text-center">Điểm Doanh nghiệp</th>
+                    <th class="text-center">Điểm Hội đồng</th>
+                    <th class="text-center" style="width: 120px;">Tổng kết</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bd in page_obj %}
+                <tr>
+                    <td class="font-bold" style="color: #64748b;">{{ bd.sinh_vien.ma_sv }}</td>
+                    <td class="font-bold" style="color: #1e293b;">{{ bd.sinh_vien.ho_ten }}</td>
+                    <td>{{ bd.sinh_vien.lop }}</td>
+                    <td class="text-center">
+                        {% if bd.diem_qua_trinh is not None %}
+                        {{ bd.diem_qua_trinh|floatformat:1 }}
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if bd.diem_doanh_nghiep is not None %}
+                        {{ bd.diem_doanh_nghiep|floatformat:1 }}
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if bd.diem_bao_cao is not None %}
+                        {{ bd.diem_bao_cao|floatformat:1 }}
+                        {% endif %}
+                    </td>
+                    <td class="text-center font-bold text-blue">
+                        {% if bd.diem_tong_ket is not None %}
+                        <span class="text-emerald" style="font-size: 16px;">{{ bd.diem_tong_ket|floatformat:2 }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-row">Chưa có dữ liệu điểm cho học kỳ này.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if page_obj.has_other_pages %}
+        <div class="pagination-bar" style="justify-content: space-between; padding: 20px 24px;">
+            <div class="pagination-info">
+                Hiển thị trang <strong>{{ page_obj.number }}</strong> trên tổng số {{ page_obj.paginator.num_pages }}
+            </div>
+            <div class="pagination-btns" style="gap: 8px; display: flex; align-items: center;">
+                {% if page_obj.has_previous %}
+                <a href="?ky_id={{ selected_ky_id }}&page={{ page_obj.previous_page_number }}" class="pg-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </a>
+                {% else %}
+                <button class="pg-btn" style="opacity: 0.3; cursor: not-allowed;" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                {% endif %}
+
+                <span class="pg-btn pg-active">{{ page_obj.number }}</span>
+
+                {% if page_obj.has_next %}
+                <a href="?ky_id={{ selected_ky_id }}&page={{ page_obj.next_page_number }}" class="pg-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+                {% else %}
+                <button class="pg-btn" style="opacity: 0.3; cursor: not-allowed;" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

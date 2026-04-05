@@ -1,0 +1,122 @@
+{% extends "TruongBoMon/home.html" %}
+{% load static %}
+{% block title %}MIS – Cấu hình Tỷ lệ Điểm{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-container { padding: 24px 32px; }
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 24px; font-weight: 700; color: #1e293b; }
+
+.config-card { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.config-title { font-size: 16px; font-weight: 700; color: #334155; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; }
+
+.form-group { margin-bottom: 20px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+.form-input { 
+    height: 38px; width: 100%; max-width: 400px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 6px; 
+    font-size: 14px; background: #f8fafc; transition: all 0.2s; 
+}
+.form-input:focus { outline: none; border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+.grid-inputs { 
+    display: grid; 
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr; 
+    gap: 16px; 
+    width: 100%; 
+    align-items: flex-end; 
+}
+
+.btn-save { 
+    background: #137FEC; color: white; padding: 10px 24px; border-radius: 6px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;
+}
+.btn-save:hover { background: #0f6fd4; transform: translateY(-1px); }
+
+/* Table history */
+.table-card { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
+.data-table tbody td { padding: 14px 16px; font-size: 13.5px; color: #334155; border-bottom: 1px solid #f8fafc; }
+.text-center { text-align: center !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Cấu hình Tỷ lệ Điểm</h1>
+    </div>
+
+    <!-- FORM THIẾT LẬP -->
+    <div class="config-card">
+        <form method="POST" action="">
+            {% csrf_token %}
+            
+            <div class="grid-inputs">
+                <div class="form-group">
+                    <label class="form-label" for="ky_id">Học kỳ</label>
+                    <select name="ky_id" id="ky_id" class="form-input" style="max-width: 100%;" required>
+                        <option value="">-- Chọn học kỳ thực tập --</option>
+                        {% for ky in all_ky %}
+                        <option value="{{ ky.id }}" {% if forloop.first %}selected{% endif %}>{{ ky.ten_ky }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">GV Hướng dẫn (%)</label>
+                    <input type="number" name="gvhd" value="40" class="form-input" min="0" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hội đồng (%)</label>
+                    <input type="number" name="hoidong" value="40" class="form-input" min="0" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Doanh nghiệp (%)</label>
+                    <input type="number" name="dn" value="20" class="form-input" min="0" max="100" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-save" style="width: 100%; height: 38px;">Lưu</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Khoảng cách cho đẹp -->
+    <div style="margin-bottom: 40px;"></div>
+
+    <!-- LỊCH SỬ -->
+    <div class="table-card">
+        <div class="card-header" style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Lịch sử thay đổi cấu hình</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Học kỳ</th>
+                    <th class="text-center">GVHD (%)</th>
+                    <th class="text-center">Hội đồng (%)</th>
+                    <th class="text-center">Doanh nghiệp (%)</th>
+                    <th class="text-center"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                <tr>
+                    <td class="font-bold">{{ item.ky.ten_ky }}</td>
+                    <td class="text-center">{{ item.diem_gvhd|floatformat:0 }}%</td>
+                    <td class="text-center">{{ item.diem_hoidong|floatformat:0 }}%</td>
+                    <td class="text-center">{{ item.diem_doanhnghiep|floatformat:0 }}%</td>
+                    <td class="text-center">
+                        <a href="?delete_id={{ item.id }}" onclick="return confirm('Bạn có chắc muốn xoá cấu hình này?')" style="color: #ef4444; font-size: 16px; text-decoration: none;">&times;</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-row" style="text-align: center; padding: 40px; color: #94a3b8;">Chưa có cấu hình lịch sử.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

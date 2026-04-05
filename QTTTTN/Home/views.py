@@ -17,7 +17,7 @@ def get_redirect_url(user):
     gv = GiangVien.objects.filter(ma_gv=user.username).first()
     if gv:
         if gv.chuc_vu == 'Giáo vụ':
-            return 'GiaoVu:giaovu_home'
+            return 'GiaoVu:giaovu_kythuctap'
         elif gv.chuc_vu == 'Trưởng bộ môn':
             return 'TruongBoMon:truongboomon_home'
         else: # Giảng viên

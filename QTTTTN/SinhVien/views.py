@@ -104,35 +104,39 @@ def home(request):
                 'sort_time': timezone.make_aware(timezone.datetime.combine(f.ngay_ket_thuc, timezone.datetime.max.time())) if f.ngay_ket_thuc else now
             })
 
-    # ----------------------------------------------------
-    # Lấy thông tin thực tập (Dựa trên form khảo sát)
-    # ----------------------------------------------------
-    thong_tin_thuc_tap = {
-        'ten_cong_ty': None,
-        'dia_chi': None
-    }
+        # ----------------------------------------------------
+        # Lấy thông tin thực tập (Ưu tiên Form -> Sau đó đến Profile)
+        # ----------------------------------------------------
+        thong_tin_thuc_tap = {
+            'ten_cong_ty': sinh_vien.noi_thuc_tap,  # Lấy mặc định từ Profile
+            'dia_chi': None,
+            'de_tai': sinh_vien.ten_de_tai  # Lấy mặc định từ Profile
+        }
 
-    if ky_hien_tai:
-        # Lấy câu trả lời mới nhất
-        answers = ChiTietTraLoi.objects.filter(
-            phieu_tra_loi__sinh_vien=sinh_vien,
-            phieu_tra_loi__mau_khao_sat__ky=ky_hien_tai
-        ).select_related('cau_hoi').order_by('-phieu_tra_loi__thoi_gian_nop')
+        if ky_hien_tai:
+            # Lấy tất cả câu trả lời liên quan đến các tag hệ thống
+            answers = ChiTietTraLoi.objects.filter(
+                phieu_tra_loi__sinh_vien=sinh_vien,
+                phieu_tra_loi__mau_khao_sat__ky=ky_hien_tai,
+                cau_hoi__system_tag__isnull=False
+            ).select_related('cau_hoi').order_by('-phieu_tra_loi__thoi_gian_nop')
 
-        for ans in answers:
-            tag = ans.cau_hoi.system_tag
-            if not tag: continue
+            for ans in answers:
+                tag = ans.cau_hoi.system_tag
 
-            # Khớp chính xác với các value trong thẻ <option> của trang tạo form
-            if tag == 'don_vi_tt' and not thong_tin_thuc_tap['ten_cong_ty']:
-                thong_tin_thuc_tap['ten_cong_ty'] = ans.gia_tri
+                # Chỉ ghi đè nếu giá trị trong Form KHÔNG trống
+                if tag == 'don_vi_tt' and ans.gia_tri and not thong_tin_thuc_tap['ten_cong_ty']:
+                    thong_tin_thuc_tap['ten_cong_ty'] = ans.gia_tri
 
-            elif tag == 'dia_diem_dv' and not thong_tin_thuc_tap['dia_chi']:
-                thong_tin_thuc_tap['dia_chi'] = ans.gia_tri
+                elif tag == 'dia_diem_dv' and ans.gia_tri and not thong_tin_thuc_tap['dia_chi']:
+                    thong_tin_thuc_tap['dia_chi'] = ans.gia_tri
 
-            # Nếu đã tìm thấy cả 2 thì dừng
-            if thong_tin_thuc_tap['ten_cong_ty'] and thong_tin_thuc_tap['dia_chi']:
-                break
+                elif tag in ['de_tai_tt', 'ten_de_tai'] and ans.gia_tri and not thong_tin_thuc_tap['de_tai']:
+                    thong_tin_thuc_tap['de_tai'] = ans.gia_tri
+
+        # Check phát cuối: Nếu vẫn chưa có gì thì hiện thông báo thay vì để trống
+        if not thong_tin_thuc_tap['ten_cong_ty']:
+            thong_tin_thuc_tap['ten_cong_ty'] = "Chưa cập nhật đơn vị"
 
     # Lấy thông tin hội đồng bảo vệ của sinh viên
     hoi_dong = None
@@ -218,46 +222,43 @@ def xem_diem(request):
         sinh_vien = SinhVien.objects.select_related('ky_hien_tai').get(ma_sv=nguoi_dung.username)
         ky_hien_tai = sinh_vien.ky_hien_tai
 
-        # Lấy điểm từ BangDiem
+        # 1. Lấy dữ liệu MẶC ĐỊNH từ hồ sơ SinhVien (Giảng viên edit ở đây)
+        thong_tin_thuc_tap = {
+            'ten_cong_ty': sinh_vien.noi_thuc_tap, #
+            'dia_chi': None, # Địa chỉ thường chỉ có trong form
+            'de_tai': sinh_vien.ten_de_tai  #
+        }
+
+        # 2. Kiểm tra nếu có Form khảo sát thì CẬP NHẬT ĐÈ LÊN (Nếu form có dữ liệu)
+        if ky_hien_tai:
+            answers = ChiTietTraLoi.objects.filter(
+                phieu_tra_loi__sinh_vien=sinh_vien,
+                phieu_tra_loi__mau_khao_sat__ky=ky_hien_tai
+            ).select_related('cau_hoi').order_by('-phieu_tra_loi__thoi_gian_nop')
+
+            for ans in answers:
+                tag = ans.cau_hoi.system_tag
+                if not tag: continue
+
+                # Nếu form có điền thì lấy giá trị từ form để hiển thị cái mới nhất
+                if tag == 'don_vi_tt' and ans.gia_tri:
+                    thong_tin_thuc_tap['ten_cong_ty'] = ans.gia_tri
+                elif tag == 'dia_diem_dv' and ans.gia_tri:
+                    thong_tin_thuc_tap['dia_chi'] = ans.gia_tri
+                elif tag in ['de_tai_tt', 'ten_de_tai'] and ans.gia_tri:
+                    thong_tin_thuc_tap['de_tai'] = ans.gia_tri
+
+        # Lấy điểm (giữ nguyên logic đã sửa trước đó)
         bang_diem = BangDiem.objects.filter(sinh_vien=sinh_vien, ky=ky_hien_tai).first()
-        diem_tk = bang_diem.diem_tong_ket if (bang_diem and bang_diem.diem_tong_ket is not None) else "Chưa có"
+        diem_tong_ket = bang_diem.diem_tong_ket if (bang_diem and bang_diem.diem_tong_ket is not None) else "Chưa có"
 
     except (NguoiDung.DoesNotExist, SinhVien.DoesNotExist):
         return render(request, 'SinhVien/xem_diem.html', {'error': 'Không tìm thấy hồ sơ'})
 
-    # --- LOGIC LẤY THÔNG TIN TỪ FORM KHẢO SÁT ---
-    thong_tin_thuc_tap = {
-        'ten_cong_ty': None,
-        'dia_chi': None,
-        'de_tai': None  # <--- Thêm mới cái này
-    }
-
-    if ky_hien_tai:
-        # Lấy tất cả câu trả lời của SV này trong kỳ này
-        answers = ChiTietTraLoi.objects.filter(
-            phieu_tra_loi__sinh_vien=sinh_vien,
-            phieu_tra_loi__mau_khao_sat__ky=ky_hien_tai
-        ).select_related('cau_hoi').order_by('-phieu_tra_loi__thoi_gian_nop')
-
-        for ans in answers:
-            tag = ans.cau_hoi.system_tag
-            if not tag: continue
-
-            if tag == 'don_vi_tt' and not thong_tin_thuc_tap['ten_cong_ty']:
-                thong_tin_thuc_tap['ten_cong_ty'] = ans.gia_tri
-            elif tag == 'dia_diem_dv' and not thong_tin_thuc_tap['dia_chi']:
-                thong_tin_thuc_tap['dia_chi'] = ans.gia_tri
-            elif tag == 'de_tai_tt' and not thong_tin_thuc_tap['de_tai']:  # <--- Quét tag de_tai_tt
-                thong_tin_thuc_tap['de_tai'] = ans.gia_tri
-
-            # Nếu tìm đủ rồi thì dừng vòng lặp cho nhẹ máy
-            if all(thong_tin_thuc_tap.values()):
-                break
-
     context = {
         'current_page': 'xem_diem',
         'sinh_vien': sinh_vien,
-        'diem_tk': diem_tk,
+        'diem_tong_ket': diem_tong_ket,
         'thong_tin_thuc_tap': thong_tin_thuc_tap
     }
     return render(request, 'SinhVien/xem_diem.html', context)
@@ -429,3 +430,26 @@ def nop_bai_action(request):
         )
         messages.success(request, "Nộp bài thành công!")
     return redirect('SinhVien:nhiem_vu_page')
+
+@login_required
+def update_password(request):
+    if request.method == "POST":
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not request.user.check_password(current_password):
+            messages.error(request, "Mật khẩu hiện tại không đúng.", extra_tags='pwd_error')
+            return redirect('SinhVien:sinhvien_home')
+        
+        if new_password != confirm_password:
+            messages.error(request, "Xác nhận mật khẩu không khớp.", extra_tags='pwd_error')
+            return redirect('SinhVien:sinhvien_home')
+        
+        request.user.set_password(new_password)
+        request.user.save()
+        from django.contrib.auth import update_session_auth_hash
+        update_session_auth_hash(request, request.user)
+        messages.success(request, "Thay đổi mật khẩu thành công!", extra_tags='pwd_success')
+        
+    return redirect('SinhVien:sinhvien_home')
