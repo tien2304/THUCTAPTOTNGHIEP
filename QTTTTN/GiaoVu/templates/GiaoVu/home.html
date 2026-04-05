@@ -122,7 +122,7 @@
                 <span class="nav-label">Hội đồng</span>
             </a>
         </nav>
-        <div class="sidebar-user">
+        <div class="sidebar-user" id="userMenuToggle" style="cursor: pointer; position: relative;">
             <div class="user-avatar">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -131,22 +131,70 @@
             </div>
             <div class="user-info">
                 <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
-                <span class="user-role">Giáo vụ</span>
+                <span class="user-role">Giáo Vụ</span>
             </div>
-            <a href="{% url 'logout' %}" class="logout-btn" title="Đăng xuất">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
+            <div class="user-dropdown-icon" style="margin-left: auto; color: var(--text-muted); transition: transform 0.3s ease;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron-down" style="width: 20px; height: 20px; transition: transform 0.3s;">
+                    <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
-            </a>
+            </div>
+
+            <!-- Dropdown Menu -->
+            <div class="user-dropdown-menu" id="userDropdownMenu" style="display: none; position: absolute; bottom: 100%; left: 0; right: 0; background: white; border-radius: 12px; padding: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 12px; z-index: 100; flex-direction: column; gap: 4px;">
+                <a href="#" class="dropdown-item" id="openPasswordModalBtn" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: #475569; text-decoration: none; border-radius: 8px; transition: background 0.2s; font-family: inherit; font-size: 13.5px; font-weight: 500;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                    </svg>
+                    Cập nhật mật khẩu
+                </a>
+                <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 4px 0;"></div>
+                <a href="{% url 'logout' %}" class="dropdown-item" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: #ef4444; text-decoration: none; border-radius: 8px; transition: background 0.2s; font-family: inherit; font-size: 13.5px; font-weight: 500;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Đăng xuất
+                </a>
+            </div>
         </div>
     </aside>
     <!-- ===== MAIN CONTENT ===== -->
     <main class="main-content">
         {% if messages %}
         <div class="message-container">
+            <!-- Toast notification cho mật khẩu -->
+            <div id="toast-container" style="position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+            
             {% for message in messages %}
+            {% if 'pwd_success' in message.tags or 'pwd_error' in message.tags %}
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const toastContainer = document.getElementById('toast-container');
+                        const isSuccess = "{{ message.tags }}".includes("pwd_success");
+                        const color = isSuccess ? '#10b981' : '#ef4444';
+                        const title = isSuccess ? 'Thành công' : 'Lỗi';
+                        const icon = isSuccess 
+                            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px;"><path d="M20 6L9 17l-5-5"></path></svg>`
+                            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+                            
+                        const toast = document.createElement('div');
+                        toast.style.cssText = `background: white; padding: 16px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-left: 4px solid ${color}; width: max-content; max-width: 350px;`;
+                        toast.innerHTML = `
+                            <div style="color: ${color};">${icon}</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 0.95rem; color: #1f2937;">${title}</div>
+                                <div style="font-size: 0.85rem; color: #6b7280; margin-top: 2px;">{{ message }}</div>
+                            </div>
+                        `;
+                        toastContainer.appendChild(toast);
+                        
+                        setTimeout(() => { toast.style.transform = 'translateX(0)'; }, 50);
+                        setTimeout(() => { toast.style.transform = 'translateX(120%)'; }, 4000);
+                        setTimeout(() => { toast.remove(); }, 4500);
+                    });
+                </script>
+            {% else %}
             <div class="alert alert-{{ message.tags }}">
                 <span class="alert-icon">
                     {% if message.tags == 'success' %}
@@ -164,12 +212,154 @@
                 <span class="alert-text">{{ message }}</span>
                 <button class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
             </div>
+            {% endif %}
             {% endfor %}
         </div>
         {% endif %}
 
         {% block content %}{% endblock %}
     </main>
-</body>
 
+    <!-- Modal cập nhật mật khẩu -->
+    <div id="passwordUpdateModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="modal-content-wrapper" style="background: white; border-radius: 16px; width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 16px; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: #1f2937;">Cập nhật mật khẩu</h3>
+                <button class="close-modal" id="closePasswordModalBtn" style="background: none; border: none; font-size: 1.5rem; color: #9ca3af; cursor: pointer;">&times;</button>
+            </div>
+            <form action="{% url 'GiaoVu:update_password' %}" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+                {% csrf_token %}
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">MẬT KHẨU HIỆN TẠI</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" name="current_password" required placeholder="********" style="width: 100%; padding: 10px 40px 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; outline: none; font-size: 0.95rem; transition: border-color 0.2s; box-sizing: border-box;">
+                        <button type="button" class="toggle-password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #9ca3af; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                            <svg viewBox="0 0 24 24" fill="none" class="eye-icon" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">MẬT KHẨU MỚI</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" name="new_password" required placeholder="********" style="width: 100%; padding: 10px 40px 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; outline: none; font-size: 0.95rem; transition: border-color 0.2s; box-sizing: border-box;">
+                        <button type="button" class="toggle-password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #9ca3af; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                            <svg viewBox="0 0 24 24" fill="none" class="eye-icon" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">XÁC NHẬN MẬT KHẨU MỚI</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" name="confirm_password" required placeholder="********" style="width: 100%; padding: 10px 40px 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; outline: none; font-size: 0.95rem; transition: border-color 0.2s; box-sizing: border-box;">
+                        <button type="button" class="toggle-password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #9ca3af; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                            <svg viewBox="0 0 24 24" fill="none" class="eye-icon" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-actions" style="display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <button type="button" class="btn-cancel" id="cancelPasswordModalBtn" style="padding: 10px 20px; border-radius: 8px; font-weight: 600; background: #fff; color: #4b5563; border: 1px solid #d1d5db; cursor: pointer; flex: 1;">Hủy</button>
+                    <button type="submit" class="btn-submit" style="padding: 10px 20px; border-radius: 8px; font-weight: 600; background: #2563eb; color: white; border: none; cursor: pointer; flex: 1; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuToggle = document.getElementById('userMenuToggle');
+            if (userMenuToggle) {
+                const userDropdownMenu = document.getElementById('userDropdownMenu');
+                
+                userMenuToggle.addEventListener('click', function(e) {
+                    if(e.target.closest('#userDropdownMenu')) return;
+                    const isVisible = userDropdownMenu.style.display === 'flex';
+                    userDropdownMenu.style.display = isVisible ? 'none' : 'flex';
+                    // Toggle icon
+                    const icon = userMenuToggle.querySelector('.chevron-down');
+                    if (icon) {
+                        icon.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+                    }
+                });
+
+                document.addEventListener('click', function(e) {
+                    if(!userMenuToggle.contains(e.target)) {
+                        userDropdownMenu.style.display = 'none';
+                        const icon = userMenuToggle.querySelector('.chevron-down');
+                        if (icon) icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+
+                // Hover effects for dropdown items
+                const dropdownItems = userDropdownMenu.querySelectorAll('.dropdown-item');
+                dropdownItems.forEach(item => {
+                    item.addEventListener('mouseenter', function() {
+                        this.style.backgroundColor = 'rgba(0,0,0,0.04)';
+                    });
+                    item.addEventListener('mouseleave', function() {
+                        this.style.backgroundColor = 'transparent';
+                    });
+                });
+            }
+
+            const openBtn = document.getElementById('openPasswordModalBtn');
+            const closeBtn = document.getElementById('closePasswordModalBtn');
+            const cancelBtn = document.getElementById('cancelPasswordModalBtn');
+            const modal = document.getElementById('passwordUpdateModal');
+
+            if (openBtn && modal) {
+                openBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById('userDropdownMenu').style.display = 'none';
+                    modal.style.display = 'flex';
+                });
+
+                closeBtn.addEventListener('click', function() {
+                    modal.style.display = 'none';
+                });
+
+                cancelBtn.addEventListener('click', function() {
+                    modal.style.display = 'none';
+                });
+
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+
+                // Focus ring effect for inputs
+                const inputs = modal.querySelectorAll('input');
+                inputs.forEach(input => {
+                    input.addEventListener('focus', function() {
+                        this.style.borderColor = '#2563eb';
+                        this.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
+                    });
+                    input.addEventListener('blur', function() {
+                        this.style.borderColor = '#e5e7eb';
+                        this.style.boxShadow = 'none';
+                    });
+                });
+                
+                // Password eye toggle
+                const toggleBtns = modal.querySelectorAll('.toggle-password');
+                toggleBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const input = this.previousElementSibling;
+                        const svg = this.querySelector('svg');
+                        
+                        if (input.type === 'password') {
+                            input.type = 'text';
+                            svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+                            this.style.color = '#4b5563';
+                        } else {
+                            input.type = 'password';
+                            svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+                            this.style.color = '#9ca3af';
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+</body>
 </html>

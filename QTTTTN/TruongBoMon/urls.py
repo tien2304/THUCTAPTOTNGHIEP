@@ -7,4 +7,5 @@ urlpatterns = [
     path('duyet-gvhd/', views.duyet_gvhd_view, name='duyet_gvhd'),
     path('duyet-gvhd/action/', views.action_duyet_gvhd, name='action_duyet_gvhd'),
     path('duyet-gvhd/<str:ma_gv>/', views.chi_tiet_gvhd_view, name='chi_tiet_gvhd'),
+    path('update-password/', views.update_password, name='update_password'),
 ]
