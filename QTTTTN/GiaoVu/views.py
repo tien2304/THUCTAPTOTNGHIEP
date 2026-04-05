@@ -3,13 +3,16 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Q
-from Home.models import KyThucTap, SinhVien, GiangVien, TaiLieu, NhiemVu, PhanCongGVHD
-from Home.utils import sync_user_account
+from django.contrib.auth.decorators import login_required
+from Home.models import KyThucTap, SinhVien, GiangVien, TaiLieu, NhiemVu, PhanCongGVHD, HoiDong, HoiDong_GiangVien, HoiDong_SinhVien
+from Home.utils import sync_user_account, groups_required
 from datetime import datetime
 
+@groups_required('Giao vụ')
+@login_required
 def home_view(request):
-    """Trang chủ dành cho Giáo Vụ."""
-    return render(request, 'GiaoVu/home.html', {'current_page': 'home'})
+    """View mặc định cho Giáo vụ – giờ đây sẽ chuyển hướng thẳng đến Kỳ thực tập."""
+    return redirect('GiaoVu:giaovu_kythuctap')
 
 # Quản lý kỳ thực tập
 def ky_thuc_tap(request):
@@ -25,7 +28,7 @@ def ky_thuc_tap(request):
             messages.success(request, f'Đã thêm kỳ thực tập "{ten_ky}" thành công!')
         else:
             messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
-        return redirect('kythuctap')
+        return redirect('GiaoVu:giaovu_kythuctap')
 
     tat_ca_ky = KyThucTap.objects.all().order_by('-id')
     # paginator = Paginator(all_ky, 10)
@@ -102,9 +105,9 @@ def ql_giang_vien_view(request):
                 ma_gv=ma_gv, ho_ten=ho_ten, hoc_vi=hoc_vi,
                 chuc_vu=chuc_vu, chuyen_mon=chuyen_mon, so_dien_thoai=sdt,
             )
-            # Map chuc_vu sang VaiTro
-            role_map = {'Giảng viên': 'GiangVien', 'Giáo vụ': 'GiaoVu', 'Trưởng bộ môn': 'TruongBoMon'}
-            role_name = role_map.get(chuc_vu, 'GiangVien')
+            # Map chuc_vu sang VaiTro (Dùng tiếng Việt có dấu cho đồng nhất với bộ lọc @groups_required)
+            role_map = {'Giảng viên': 'Giảng viên', 'Giáo vụ': 'Giáo vụ', 'Trưởng bộ môn': 'Trưởng bộ môn'}
+            role_name = role_map.get(chuc_vu, 'Giảng viên')
             sync_user_account(ma_gv, ho_ten, role_name)
             
             messages.success(request, f'Đã thêm giảng viên "{ho_ten}" và tạo tài khoản đăng nhập thành công!')
@@ -178,8 +181,8 @@ def import_giang_vien_view(request):
                     }
                 )
                 # Map chuc_vu sang VaiTro
-                role_map = {'Giảng viên': 'GiangVien', 'Giáo vụ': 'GiaoVu', 'Trưởng bộ môn': 'TruongBoMon'}
-                role_name = role_map.get(chuc_vu, 'GiangVien')
+                role_map = {'Giảng viên': 'Giảng viên', 'Giáo vụ': 'Giáo vụ', 'Trưởng bộ môn': 'Trưởng bộ môn'}
+                role_name = role_map.get(chuc_vu, 'Giảng viên')
                 sync_user_account(ma_gv, ho_ten, role_name)
                 
                 success_count += 1
@@ -542,6 +545,66 @@ def chi_tiet_gvhd_view(request, ma_gv):
         'ds_phan_cong': ds_phan_cong,
     }
     return render(request, 'GiaoVu/chi_tiet_gvhd.html', context)
+
+def hoidong_view(request):
+    """Trang Quản lý Hội đồng – Giáo Vụ."""
+    all_ky = KyThucTap.objects.all().order_by('-id')
+    ky_id = request.GET.get('ky_id')
+    
+    if ky_id:
+        selected_ky = KyThucTap.objects.filter(id=ky_id).first()
+    else:
+        selected_ky = all_ky.first()
+        
+    ds_hoidong = []
+    if selected_ky:
+        # Lấy danh sách hội đồng của kỳ này
+        hoidong_qs = HoiDong.objects.filter(ky=selected_ky).order_by('ngay_bao_ve', 'thoi_gian')
+        
+        for hd in hoidong_qs:
+            # Đếm số giảng viên và sinh viên trong hội đồng này
+            gv_list = HoiDong_GiangVien.objects.filter(hoi_dong=hd).select_related('giang_vien')
+            sv_list = HoiDong_SinhVien.objects.filter(hoi_dong=hd).select_related('sinh_vien')
+            
+            ds_hoidong.append({
+                'id': hd.id,
+                'ten': hd.ten_hoi_dong,
+                'thoi_gian': hd.thoi_gian,
+                'ngay_bao_ve': hd.ngay_bao_ve,
+                'dia_diem': hd.dia_diem,
+                'gv_count': gv_list.count(),
+                'sv_count': sv_list.count(),
+                'giang_vien': [g.giang_vien for g in gv_list],
+                'sinh_vien': [s.sinh_vien for s in sv_list]
+            })
+            
+    context = {
+        'current_page': 'hoidong',
+        'all_ky': all_ky,
+        'selected_ky': selected_ky,
+        'selected_ky_id': selected_ky.id if selected_ky else None,
+        'ds_hoidong': ds_hoidong,
+    }
+    return render(request, 'GiaoVu/hoi_dong.html', context)
+
+def chi_tiet_hoidong_view(request, hd_id):
+    """Trang chi tiết của một Hội đồng – Giáo Vụ."""
+    hoidong = HoiDong.objects.filter(id=hd_id).select_related('ky').first()
+    
+    if not hoidong:
+        messages.error(request, "Không tìm thấy hội đồng này.")
+        return redirect('GiaoVu:giaovu_hoidong')
+        
+    ds_giang_vien = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
+    ds_sinh_vien = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
+    
+    context = {
+        'current_page': 'hoidong',
+        'hoidong': hoidong,
+        'ds_giang_vien': ds_giang_vien,
+        'ds_sinh_vien': ds_sinh_vien,
+    }
+    return render(request, 'GiaoVu/chi_tiet_hoidong.html', context)
 
 
 from django.contrib.auth.decorators import login_required

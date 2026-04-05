@@ -1,5 +1,27 @@
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import user_passes_test
 from Home.models import NguoiDung, VaiTro
+
+def groups_required(*group_names):
+   """Kiểm tra người dùng có thuộc ít nhất một trong các nhóm (vai trò) chỉ định hay không."""
+   def in_groups(u):
+       if u.is_authenticated:
+           # Kiểm tra Superuser hoặc Vai trò trong bảng NguoiDung
+           if u.is_superuser:
+               return True
+           
+           # Thử lấy vai trò từ profile NguoiDung
+           try:
+               if hasattr(u, 'nguoidung') and u.nguoidung.role.ten_vai_tro in group_names:
+                   return True
+           except:
+               pass
+               
+           # Vẫn kiểm tra Groups mặc định để tương thích ngược
+           if u.groups.filter(name__in=group_names).exists():
+               return True
+       return False
+   return user_passes_test(in_groups, login_url='login')
 
 def sync_user_account(username, full_name, role_name, password="123456789"):
     """

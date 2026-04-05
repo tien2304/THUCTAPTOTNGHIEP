@@ -19,5 +19,4 @@ urlpatterns = [
     path('nhiem-vu/', views.nhiem_vu_view, name='giaovu_nhiemvu'),
     path('giang-vien-huong-dan/', views.giang_vien_hd_view, name='giaovu_giangvienhd'),
     path('giang-vien-huong-dan/<str:ma_gv>/', views.chi_tiet_gvhd_view, name='chi_tiet_gvhd'),
-    path('update-password/', views.update_password, name='update_password'),
 ]

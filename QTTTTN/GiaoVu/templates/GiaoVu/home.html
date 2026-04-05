@@ -23,17 +23,6 @@
             <span class="logo-text">MIS</span>
         </div>
         <nav class="sidebar-nav">
-            <a href="{% url 'GiaoVu:giaovu_home' %}" class="nav-item {% if current_page == 'home' %}active{% endif %}"
-                id="nav-home">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg>
-                </span>
-                <span class="nav-label">Trang chủ</span>
-            </a>
             <a href="{% url 'GiaoVu:giaovu_kythuctap' %}"
                 class="nav-item {% if current_page == 'kythuctap' %}active{% endif %}" id="nav-kythuctap">
                 <span class="nav-icon">
@@ -106,7 +95,7 @@
                 </span>
                 <span class="nav-label">Giảng viên hướng dẫn</span>
             </a>
-            <a href="#" class="nav-item {% if current_page == 'hoidong' %}active{% endif %}" id="nav-hoidong">
+            <a href="{% url 'GiaoVu:giaovu_hoidong' %}" class="nav-item {% if current_page == 'hoidong' %}active{% endif %}" id="nav-hoidong">
                 <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">

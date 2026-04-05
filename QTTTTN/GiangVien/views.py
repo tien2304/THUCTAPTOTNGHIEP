@@ -1,10 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from Home.models import (GiangVien, PhanCongGVPT,SinhVien,
                          PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon, BaiNop, NhiemVu, BangDiem, KyThucTap,
                          KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia, HoiDong, HoiDong_SinhVien,HoiDong_GiangVien)
-from django.shortcuts import get_object_or_404
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 
 def home_view(request):
     """Trang chủ dành cho Giảng Viên."""
@@ -150,7 +150,7 @@ def chi_tiet_sinh_vien(request, ma_sv):
         "GiangVien/chi_tiet_sinh_vien.html",
         context
     )
-from django.views.decorators.http import require_POST
+
 
 @require_POST
 def save_diem(request, ma_sv):
@@ -194,7 +194,7 @@ def chi_tiet_bai_nop(request, id):
         context
     )
 
-from django.views.decorators.http import require_POST
+
 
 @require_POST
 def update_sinh_vien_info(request, ma_sv):
@@ -211,7 +211,7 @@ def update_sinh_vien_info(request, ma_sv):
     sv.save()
     return redirect("GiangVien:sinhvien_huongdan")
 import json
-from django.shortcuts import render,redirect
+
 def get_is_gvpt(request):
     ma_gv = request.user.username
     gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
