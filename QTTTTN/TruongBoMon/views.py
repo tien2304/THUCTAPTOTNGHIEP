@@ -285,16 +285,23 @@ def diem_view(request):
 
 def cau_hinh_diem_view(request):
     """Trang cấu hình tỷ lệ điểm – Trưởng Bộ Môn."""
+    # PHẦN XÓA (GET)
+    delete_id = request.GET.get('delete_id')
+    if delete_id:
+        TyLeDiem.objects.filter(id=delete_id).delete()
+        messages.success(request, "Đã xoá cấu hình điểm thành công!")
+        return redirect('TruongBoMon:cau_hinh_diem')
+
     if request.method == "POST":
         ky_id = request.POST.get('ky_id')
-        gvhd_weight = float(request.POST.get('gvhd', 0)) / 100.0
-        hoidong_weight = float(request.POST.get('hoidong', 0)) / 100.0
-        dn_weight = float(request.POST.get('dn', 0)) / 100.0
+        gvhd_weight = float(request.POST.get('gvhd', 40))
+        hoidong_weight = float(request.POST.get('hoidong', 40))
+        dn_weight = float(request.POST.get('dn', 20))
 
-        # Kiểm tra tổng trọng số (thường là 1.0)
-        total = round(gvhd_weight + hoidong_weight + dn_weight, 2)
-        if total != 1.0:
-            messages.warning(request, f"Lưu ý: Tổng trọng số là {int(total*100)}%, có thể không phải là 100%.")
+        # Kiểm tra tổng trọng số (thường là 100)
+        total = gvhd_weight + hoidong_weight + dn_weight
+        if total != 100:
+            messages.warning(request, f"Lưu ý: Tổng tỷ lệ là {total}%, có thể không phải là 100%.")
 
         if ky_id:
             ky = KyThucTap.objects.filter(id=ky_id).first()

@@ -4,7 +4,10 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
-from Home.models import KyThucTap, SinhVien, GiangVien, TaiLieu, NhiemVu, PhanCongGVHD, HoiDong, HoiDong_GiangVien, HoiDong_SinhVien
+from Home.models import (
+    KyThucTap, SinhVien, GiangVien, TaiLieu, NhiemVu, PhanCongGVHD, 
+    HoiDong, HoiDong_GiangVien, HoiDong_SinhVien, BangDiem, TyLeDiem
+)
 from Home.utils import sync_user_account, groups_required
 from datetime import datetime
 
@@ -559,7 +562,7 @@ def hoidong_view(request):
     ds_hoidong = []
     if selected_ky:
         # Lấy danh sách hội đồng của kỳ này
-        hoidong_qs = HoiDong.objects.filter(ky=selected_ky).order_by('ngay_bao_ve', 'thoi_gian')
+        hoidong_qs = HoiDong.objects.filter(ky=selected_ky).order_by('ngay_bao_ve', 'thoi_gian_bat_dau')
         
         for hd in hoidong_qs:
             # Đếm số giảng viên và sinh viên trong hội đồng này
@@ -569,7 +572,8 @@ def hoidong_view(request):
             ds_hoidong.append({
                 'id': hd.id,
                 'ten': hd.ten_hoi_dong,
-                'thoi_gian': hd.thoi_gian,
+                'thoi_gian_bat_dau': hd.thoi_gian_bat_dau,
+                'thoi_gian_ket_thuc': hd.thoi_gian_ket_thuc,
                 'ngay_bao_ve': hd.ngay_bao_ve,
                 'dia_diem': hd.dia_diem,
                 'gv_count': gv_list.count(),
@@ -631,3 +635,66 @@ def update_password(request):
         messages.success(request, "Thay đổi mật khẩu thành công!", extra_tags='pwd_success')
         
     return redirect('GiaoVu:giaovu_home')
+
+def ql_diem_view(request):
+    """Trang Quản lý điểm của toàn bộ sinh viên – Giáo Vụ."""
+    selected_ky = request.GET.get('ky', '')
+    
+    # Nếu chưa chọn kỳ, tự động chọn kỳ mới nhất
+    if not selected_ky and 'ky' not in request.GET:
+        newest = KyThucTap.objects.order_by('-id').first()
+        if newest:
+            selected_ky = str(newest.id)
+
+    # Lấy danh sách điểm
+    diem_list = BangDiem.objects.select_related('sinh_vien', 'ky').all().order_by('sinh_vien__ma_sv')
+    
+    if selected_ky:
+        diem_list = diem_list.filter(ky__id=selected_ky)
+
+    # Lấy thêm thông tin doanh nghiệp từ khảo sát
+    from Home.models import ChiTietTraLoi
+    for d in diem_list:
+        # Tìm các câu trả lời liên quan đến doanh nghiệp của SV này trong kỳ này
+        answers = ChiTietTraLoi.objects.filter(
+            phieu_tra_loi__sinh_vien=d.sinh_vien,
+            phieu_tra_loi__mau_khao_sat__ky=d.ky
+        ).select_related('cau_hoi')
+        
+        d.enterprise_info = {
+            'ten': d.sinh_vien.noi_thuc_tap or "-",
+            'sdt': "-",
+            'dia_chi': "-",
+            'email': "-"
+        }
+        
+        for ans in answers:
+            tag = (ans.cau_hoi.system_tag or "").strip().lower()
+            if tag == "sdt_don_vi":
+                d.enterprise_info['sdt'] = ans.gia_tri
+            elif tag == "dia_diem_dv":
+                d.enterprise_info['dia_chi'] = ans.gia_tri
+            elif tag == "email_don_vi":
+                d.enterprise_info['email'] = ans.gia_tri
+            elif tag == "diem_doanh_nghiep" or tag == "diem_dn":
+                try:
+                    if d.diem_doanh_nghiep is None:
+                        d.diem_doanh_nghiep = float(ans.gia_tri)
+                except (ValueError, TypeError):
+                    pass
+
+
+
+    paginator = Paginator(diem_list, 15)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+    
+    context = {
+        'current_page': 'diem',
+        'danh_sach_ky': KyThucTap.objects.all().order_by('-id'),
+        'page_obj': page_obj,
+        'selected_ky': selected_ky,
+        'selected_ky_int': int(selected_ky) if selected_ky.isdigit() else None,
+    }
+    return render(request, 'GiaoVu/diem.html', context)
+
+
