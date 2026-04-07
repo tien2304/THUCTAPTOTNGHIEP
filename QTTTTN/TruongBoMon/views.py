@@ -1,4 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
@@ -58,51 +61,144 @@ def phan_cong_gvpt_view(request):
 def duyet_gvhd_view(request):
     """Trang duyệt phân công Giảng viên hướng dẫn cho Trưởng bộ môn."""
     ky_list = KyThucTap.objects.all().order_by('-id')
-    selected_ky_id = request.GET.get('ky_id')
-    
-    if selected_ky_id:
-        selected_ky_id = int(selected_ky_id)
-        selected_ky = ky_list.filter(id=selected_ky_id).first()
-    else:
-        selected_ky = ky_list.first()
-        selected_ky_id = selected_ky.id if selected_ky else None
+    # Luôn lấy học kỳ mới nhất (fix cứng)
+    selected_ky = ky_list.first()
+    selected_ky_id = selected_ky.id if selected_ky else None
         
-    ds_phan_cong = []
+    ds_sinh_vien = []
     if selected_ky:
-        # Lấy danh sách phân công GVHD, loại bỏ giáo vụ
-        phan_cong_qs = PhanCongGVHD.objects.filter(ky_id=selected_ky_id).select_related('sinh_vien', 'giang_vien').exclude(giang_vien__chuc_vu='Giáo vụ')
+        # Lấy toàn bộ sinh viên trong kỳ này
+        sinh_vien_qs = SinhVien.objects.filter(ky_hien_tai=selected_ky).order_by('ma_sv')
         
-        gv_dict = {}
-        for pc in phan_cong_qs:
-            gv = pc.giang_vien
-            sv = pc.sinh_vien
-            trang_thai = pc.trang_thai
-            if gv not in gv_dict:
-                gv_dict[gv] = []
-            gv_dict[gv].append({'sv': sv, 'trang_thai': trang_thai, 'pc_id': pc.id})
+        # Lấy toàn bộ phân công của kỳ này
+        phan_cong_qs = PhanCongGVHD.objects.filter(ky=selected_ky).select_related('giang_vien', 'sinh_vien')
+        phan_cong_dict = {pc.sinh_vien_id: pc for pc in phan_cong_qs}
+        
+        # Lấy khảo sát để lấy điểm tích lũy và lĩnh vực (hướng tiếp cận)
+        # Tối ưu: Lấy toàn bộ ChiTietTraLoi liên quan
+        answers_qs = ChiTietTraLoi.objects.filter(
+            phieu_tra_loi__mau_khao_sat__ky=selected_ky,
+            cau_hoi__system_tag__in=['diem_tich_luy', 'huong_tiep_can']
+        ).select_related('phieu_tra_loi', 'cau_hoi')
+        
+        survey_data = {} # {ma_sv: {diem_tich_luy: x, huong_tiep_can: y}}
+        for ans in answers_qs:
+            ma_sv = ans.phieu_tra_loi.sinh_vien_id
+            tag = ans.cau_hoi.system_tag
+            if ma_sv not in survey_data:
+                survey_data[ma_sv] = {}
+            survey_data[ma_sv][tag] = ans.gia_tri
+
+        for sv in sinh_vien_qs:
+            pc = phan_cong_dict.get(sv.ma_sv)
+            sv_survey = survey_data.get(sv.ma_sv, {})
             
-        for gv, sv_list in gv_dict.items():
-            # Kiểm tra trạng thái duyệt (nếu tất cả == 2 thì là đã duyệt)
-            is_approved = all(item['trang_thai'] == 2 for item in sv_list)
+            gvhd_obj = pc.giang_vien if pc else None
+            linh_vuc_val = sv_survey.get('huong_tiep_can')
             
-            ds_phan_cong.append({
-                'giang_vien': gv,
-                'so_luong': len(sv_list),
-                'ds_sv': sorted(sv_list, key=lambda x: x['sv'].ma_sv),
-                'is_approved': is_approved,
+            # Nếu chưa có lĩnh vực từ khảo sát, lấy theo chuyên môn của GVHD đã phân công
+            if (not linh_vuc_val or linh_vuc_val == '—') and gvhd_obj:
+                # Làm sạch dữ liệu chuyên môn (vd: 'Artificial Intelligence (AI)' -> 'AI')
+                raw_chuyen_mon = gvhd_obj.chuyen_mon.split(',')[0].strip()
+                if '(' in raw_chuyen_mon and ')' in raw_chuyen_mon:
+                    linh_vuc_val = raw_chuyen_mon.split('(')[-1].split(')')[0]
+                else:
+                    linh_vuc_val = raw_chuyen_mon
+            elif not linh_vuc_val:
+                linh_vuc_val = '—'
+                
+            ds_sinh_vien.append({
+                'ma_sv': sv.ma_sv,
+                'ho_ten': sv.ho_ten,
+                'lop': sv.lop,
+                'diem_tich_luy': sv_survey.get('diem_tich_luy', '—'),
+                'linh_vuc': linh_vuc_val,
+                'gvhd': gvhd_obj,
+                'trang_thai': pc.trang_thai if pc else 0,
+                'pc_id': pc.id if pc else None,
             })
-            
-    # Sắp xếp theo số lượng sv HD giảm dần
-    ds_phan_cong = sorted(ds_phan_cong, key=lambda x: x['so_luong'], reverse=True)
+
+    # Đếm số lượng đã duyệt/tổng cộng để hiển thị thống kê
+    tong_cong = len(ds_sinh_vien)
+    da_duyet = sum(1 for item in ds_sinh_vien if item['trang_thai'] == 2)
+    cho_duyet = sum(1 for item in ds_sinh_vien if item['trang_thai'] == 1)
+
+    # Lấy danh sách giảng viên CÓ PHÂN CÔNG trong kỳ này (để hiển thị trong dropdown lọc)
+    gv_ids_co_phan_cong = phan_cong_qs.values_list('giang_vien_id', flat=True).distinct()
+    ds_giang_vien_filter = GiangVien.objects.filter(ma_gv__in=gv_ids_co_phan_cong).order_by('ho_ten')
+    
+    # Thống kê số lượng phân công mỗi giảng viên (giữ nguyên cho stats panel)
+    assignment_stats = {}
+    for pc in phan_cong_qs:
+        gv_id = pc.giang_vien_id
+        assignment_stats[gv_id] = assignment_stats.get(gv_id, 0) + 1
+
+    ds_thong_ke_gv = []
+    # Dùng toàn bộ ds_giang_vien (hoặc chỉ những người có phân công) cho stats panel
+    for gv in GiangVien.objects.filter(ma_gv__in=gv_ids_co_phan_cong):
+        count = assignment_stats.get(gv.ma_gv, 0)
+        # Viết tắt học vị
+        hv = gv.hoc_vi
+        if hv == 'Thạc sĩ': hv = 'ThS.'
+        elif hv == 'Tiến sĩ': hv = 'TS.'
+        elif hv == 'Tiến sĩ Khoa học': hv = 'TSKH.'
+        elif hv == 'Phó Giáo sư': hv = 'PGS.TS.'
+        elif hv == 'Giáo sư': hv = 'GS.TS.'
+        
+        ds_thong_ke_gv.append({
+            'ho_ten': gv.ho_ten,
+            'hoc_vi_tat': hv,
+            'count': count
+        })
+    ds_thong_ke_gv.sort(key=lambda x: x['count'], reverse=True)
 
     context = {
         'current_page': 'duyet_gvhd',
         'ky_list': ky_list,
         'selected_ky': selected_ky,
         'selected_ky_id': selected_ky_id,
-        'ds_phan_cong': ds_phan_cong,
+        'selected_ky_ten': selected_ky.ten_ky if selected_ky else "Chưa có học kỳ",
+        'ds_sinh_vien': ds_sinh_vien,
+        'ds_giang_vien': ds_giang_vien_filter,
+        'ds_thong_ke_gv': ds_thong_ke_gv,
+        'stats': {
+            'tong_cong': tong_cong,
+            'da_duyet': da_duyet,
+            'cho_duyet': cho_duyet,
+        }
     }
     return render(request, 'TruongBoMon/duyet_gvhd.html', context)
+
+@csrf_exempt
+def update_gvhd_ajax(request):
+    """Cập nhật Giảng viên hướng dẫn cho sinh viên qua AJAX."""
+    if request.method == 'POST':
+        ma_sv = request.POST.get('ma_sv')
+        ma_gv = request.POST.get('ma_gv')
+        ky_id = request.POST.get('ky_id')
+        
+        try:
+            ky = KyThucTap.objects.get(id=ky_id)
+            sinh_vien = SinhVien.objects.get(ma_sv=ma_sv)
+            
+            # Xử lý trường hợp ma_gv rỗng (bỏ phân công)
+            if not ma_gv:
+                PhanCongGVHD.objects.filter(sinh_vien=sinh_vien, ky=ky).delete()
+            else:
+                giang_vien = GiangVien.objects.get(ma_gv=ma_gv)
+                # Cập nhật hoặc tạo mới phân công
+                phan_cong, created = PhanCongGVHD.objects.update_or_create(
+                    sinh_vien=sinh_vien,
+                    ky=ky,
+                    defaults={'giang_vien': giang_vien, 'trang_thai': 1} # Mặc định chờ duyệt khi sửa
+                )
+            
+            return JsonResponse({'status': 'success', 'message': 'Cập nhật phân công thành công!'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
 
 def action_duyet_gvhd(request):
     if request.method == 'POST':
@@ -282,6 +378,16 @@ def diem_view(request):
         'page_obj': page_obj,
     }
     return render(request, 'TruongBoMon/diem.html', context)
+
+def cong_bo_diem_action(request, ky_id):
+    """Trưởng bộ môn công bố điểm cho toàn bộ sinh viên trong kỳ học."""
+    ky = get_object_or_404(KyThucTap, id=ky_id)
+    ky.cong_bo_diem = not ky.cong_bo_diem
+    ky.save()
+    
+    status = "CÔNG BỐ" if ky.cong_bo_diem else "HỦY CÔNG BỐ"
+    messages.success(request, f"Học kỳ {ky.ten_ky} đã được {status} thành công!")
+    return redirect(f"{reverse('TruongBoMon:diem_view')}?ky_id={ky_id}")
 
 def cau_hinh_diem_view(request):
     """Trang cấu hình tỷ lệ điểm – Trưởng Bộ Môn."""

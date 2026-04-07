@@ -1,6 +1,6 @@
 {% extends "TruongBoMon/home.html" %}
 {% load static %}
-{% block title %}MIS – Quản lý Điểm Sinh viên{% endblock %}
+{% block title %}MIS – Quản lý Điểm Sinh Viên{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -172,7 +172,34 @@
 {% block content %}
 <div class="page-container">
     <div class="page-header">
-        <h1 class="page-title">Quản lý Điểm Sinh viên</h1>
+        <h1 class="page-title">Quản lý Điểm Sinh Viên</h1>
+        {% if selected_ky %}
+        <div style="display: flex; gap: 12px; align-items: center;">
+            {% if selected_ky.cong_bo_diem %}
+            <span style="font-size: 13px; font-weight: 600; color: #10b981; display: flex; align-items: center; gap: 6px; background: #ecfdf5; padding: 8px 16px; border-radius: 10px; border: 1px solid #d1fae5;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Trạng thái: Đã công bố
+            </span>
+            <a href="{% url 'TruongBoMon:truongboomon_cong_bo_diem' selected_ky.id %}" 
+               style="background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 700; text-decoration: none; transition: all 0.2s;"
+               onmouseover="this.style.background='#fee2e2'; this.style.transform='translateY(-1px)'" 
+               onmouseout="this.style.background='#fef2f2'; this.style.transform='none'">
+                Hủy công bố
+            </a>
+            {% else %}
+            <span style="font-size: 13px; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 8px 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Trạng thái: Chờ công bố
+            </span>
+            <a href="{% url 'TruongBoMon:truongboomon_cong_bo_diem' selected_ky.id %}" 
+               style="background: #2563eb; color: white; border: none; padding: 10px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s;"
+               onmouseover="this.style.transform='translateY(-1px)'; this.style.background='#1d4ed8'; this.style.boxShadow='0 6px 12px rgba(37,99,235,0.3)'" 
+               onmouseout="this.style.transform='none'; this.style.background='#2563eb'; this.style.boxShadow='0 4px 6px rgba(37,99,235,0.2)'">
+                Công bố điểm
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 
     <div class="filter-bar">
@@ -196,7 +223,7 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th style="width: 120px;">Mã sinh viên</th>
+                    <th style="width: 120px;">Mã Sinh Viên</th>
                     <th>Họ và tên</th>
                     <th style="width: 100px;">Lớp</th>
                     <th class="text-center">Điểm GVHD</th>

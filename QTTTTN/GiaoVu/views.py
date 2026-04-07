@@ -1,12 +1,14 @@
 import openpyxl
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 from Home.models import (
     KyThucTap, SinhVien, GiangVien, TaiLieu, NhiemVu, PhanCongGVHD, 
-    HoiDong, HoiDong_GiangVien, HoiDong_SinhVien, BangDiem, TyLeDiem
+    HoiDong, HoiDong_GiangVien, HoiDong_SinhVien, BangDiem, TyLeDiem,
+    ChiTietTraLoi, PhieuTraLoi
 )
 from Home.utils import sync_user_account, groups_required
 from datetime import datetime
@@ -479,34 +481,33 @@ def giang_vien_hd_view(request):
     else:
         selected_ky = all_ky.first()
         
-    ds_phan_cong = []
+    ds_sinh_vien = []
     if selected_ky:
-        phan_cong_qs = PhanCongGVHD.objects.filter(ky=selected_ky, trang_thai=2).select_related('sinh_vien', 'giang_vien')
+        # Lấy toàn bộ phân công ĐÃ DUYỆT của kỳ này
+        phan_cong_qs = PhanCongGVHD.objects.filter(ky=selected_ky, trang_thai=2).select_related('giang_vien', 'sinh_vien').order_by('sinh_vien__ma_sv')
         
-        gv_dict = {}
+        # Build map prefix học vị
+        PREFIX_MAP = {'Thạc sĩ': 'ThS.', 'Tiến sĩ': 'TS.', 'Phó Giáo sư': 'PGS.TS.', 'Giáo sư': 'GS.TS.'}
+        
         for pc in phan_cong_qs:
             gv = pc.giang_vien
-            sv = pc.sinh_vien
-            if gv not in gv_dict:
-                gv_dict[gv] = []
-            gv_dict[gv].append(sv)
+            pf = PREFIX_MAP.get(gv.hoc_vi, '')
+            ten_gv_full = f"{pf} {gv.ho_ten}".strip() if pf else gv.ho_ten
             
-        for gv, danh_sach_sv in gv_dict.items():
-            ds_phan_cong.append({
-                'giang_vien': gv,
-                'so_luong': len(danh_sach_sv),
-                'ds_sv': sorted(danh_sach_sv, key=lambda x: x.ma_sv)
+            ds_sinh_vien.append({
+                'ma_sv': pc.sinh_vien.ma_sv,
+                'ho_ten': pc.sinh_vien.ho_ten,
+                'lop': pc.sinh_vien.lop,
+                'ten_gvhd': ten_gv_full,
+                'trang_thai': pc.trang_thai
             })
-            
-    # Sắp xếp theo số lượng sv HD giảm dần
-    ds_phan_cong = sorted(ds_phan_cong, key=lambda x: x['so_luong'], reverse=True)
 
     context = {
         'current_page': 'giangvienhd',
         'all_ky': all_ky,
         'selected_ky': selected_ky,
         'selected_ky_id': selected_ky.id if selected_ky else None,
-        'ds_phan_cong': ds_phan_cong,
+        'ds_sinh_vien': ds_sinh_vien,
     }
     return render(request, 'GiaoVu/giang_vien_hd.html', context)
 
@@ -662,24 +663,29 @@ def ql_diem_view(request):
         ).select_related('cau_hoi')
         
         d.enterprise_info = {
-            'ten': d.sinh_vien.noi_thuc_tap or "-",
-            'sdt': "-",
-            'dia_chi': "-",
-            'email': "-"
+            'ten': (d.sinh_vien.noi_thuc_tap or "").strip(),
+            'sdt': "",
+            'dia_chi': "",
+            'email': ""
         }
         
         for ans in answers:
             tag = (ans.cau_hoi.system_tag or "").strip().lower()
-            if tag == "sdt_don_vi":
-                d.enterprise_info['sdt'] = ans.gia_tri
+            val = (ans.gia_tri or "").strip()
+            if not val: continue
+
+            if tag == "don_vi_tt" and not d.enterprise_info['ten']:
+                d.enterprise_info['ten'] = val
+            elif tag == "sdt_don_vi":
+                d.enterprise_info['sdt'] = val
             elif tag == "dia_diem_dv":
-                d.enterprise_info['dia_chi'] = ans.gia_tri
+                d.enterprise_info['dia_chi'] = val
             elif tag == "email_don_vi":
-                d.enterprise_info['email'] = ans.gia_tri
-            elif tag == "diem_doanh_nghiep" or tag == "diem_dn":
+                d.enterprise_info['email'] = val
+            elif tag in ["diem_doanh_nghiep", "diem_dn"]:
                 try:
                     if d.diem_doanh_nghiep is None:
-                        d.diem_doanh_nghiep = float(ans.gia_tri)
+                        d.diem_doanh_nghiep = float(val)
                 except (ValueError, TypeError):
                     pass
 
@@ -696,5 +702,32 @@ def ql_diem_view(request):
         'selected_ky_int': int(selected_ky) if selected_ky.isdigit() else None,
     }
     return render(request, 'GiaoVu/diem.html', context)
+
+
+def cap_nhat_diem_dn(request, ma_sv):
+    """Giáo vụ cập nhật điểm doanh nghiệp."""
+    if request.method == 'POST':
+        diem_dn = request.POST.get('diem_dn', '').strip()
+        ky_id = request.POST.get('ky_id')
+        
+        if diem_dn:
+            try:
+                # Xử lý dấu phẩy sang dấu chấm nếu người dùng nhập kiểu VN
+                diem_dn = diem_dn.replace(',', '.')
+                diem_dn_val = float(diem_dn)
+                
+                sv = SinhVien.objects.get(ma_sv=ma_sv)
+                ky = KyThucTap.objects.get(id=ky_id)
+                bd, _ = BangDiem.objects.get_or_create(sinh_vien=sv, ky=ky)
+                bd.diem_doanh_nghiep = diem_dn_val
+                bd.save()
+                if hasattr(bd, 'calculate_total'):
+                    bd.calculate_total()
+            except Exception as e:
+                messages.error(request, f"Lỗi cập nhật: {str(e)}")
+        else:
+             messages.error(request, "Vui lòng nhập điểm.")
+
+    return redirect(f"{reverse('GiaoVu:giaovu_diem')}?ky={ky_id}")
 
 

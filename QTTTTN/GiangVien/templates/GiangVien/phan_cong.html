@@ -51,7 +51,8 @@
 <table class="w-full text-sm">
 
 <tr class="border-b">
-<th class="text-left p-3">Thông tin SV</th>
+<th class="text-left p-3">Mã sinh viên</th>
+<th class="text-left p-3">Họ và tên</th>
 <th>Lớp</th>
 <th>Lĩnh vực</th>
 <th>Nguyện vọng</th>
@@ -61,10 +62,8 @@
 {% for s in data %}
 <tr class="student-row border-b hover:bg-gray-50" data-group="{{ s.group }}">
 
-<td class="p-3">
-<b>{{ s.ten }}</b><br>
-<span class="text-gray-400 text-xs">{{ s.id }}</span>
-</td>
+<td class="p-3 font-semibold text-gray-600 uppercase tracking-tighter">{{ s.id }}</td>
+<td class="p-3 font-bold text-gray-900">{{ s.ten }}</td>
 
 <td class="text-center align-top py-3">{{ s.lop }}</td>
 
