@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from Home.models import (GiangVien, PhanCongGVPT,SinhVien,
                          PhanCongGVHD, MauKhaoSat, CauHoi, LuaChon, BaiNop, NhiemVu, BangDiem, KyThucTap,
-                         KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia, HoiDong, HoiDong_SinhVien,HoiDong_GiangVien) # ChamDiemHoiDong removed as it doesn't exist in Home.models
+                         KyThucTap, ChiTietTraLoi, PhieuTraLoi, TieuChiDanhGia, HoiDong, HoiDong_SinhVien,HoiDong_GiangVien, ChamDiemHoiDong)
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 
@@ -764,6 +764,11 @@ def update_phan_cong(request):
             if not gv:
                 return JsonResponse({"status": "error", "message": f"Giảng viên {gv_name} không tồn tại trong hệ thống."})
             
+            # Kiểm tra xem phân công hiện tại đã được duyệt chưa (trang_thai=2)
+            # Nếu đã duyệt rồi (trang_thai=2) thì không cho phép ghi đè (sửa)
+            if PhanCongGVHD.objects.filter(sinh_vien=sv, trang_thai=2).exists():
+                return JsonResponse({"status": "error", "message": "Phân công này đã được Trưởng bộ môn DUYỆT nên không được sửa đổi!"})
+            
             if ky_id and str(ky_id).isdigit():
                 ky = KyThucTap.objects.get(id=ky_id)
             else:
@@ -837,6 +842,8 @@ def hoi_dong_list(request):
 
     return render(request, "GiangVien/hoi_dong_list.html", context)
 
+from datetime import datetime
+
 def tao_hoi_dong(request):
     if not get_is_gvpt(request):
         return redirect("GiangVien:hoi_dong_list")
@@ -846,38 +853,50 @@ def tao_hoi_dong(request):
         sv_ids_str = request.POST.get("sinh_vien_ids", "")
         sv_ids = [x.strip() for x in sv_ids_str.split(",") if x.strip()]
 
+        ngay = request.POST.get("ngay")          # yyyy-mm-dd
+        gio_bd = request.POST.get("thoi_gian_bat_dau") # HH:MM
+        gio_kt = request.POST.get("thoi_gian_ket_thuc")
+
         try:
+            # 🔥 GHÉP NGÀY + GIỜ
+            thoi_gian_bat_dau = datetime.strptime(f"{ngay} {gio_bd}", "%Y-%m-%d %H:%M")
+            thoi_gian_ket_thuc = datetime.strptime(f"{ngay} {gio_kt}", "%Y-%m-%d %H:%M")
+
             hd = HoiDong.objects.create(
                 ten_hoi_dong=request.POST.get("ten"),
-                ngay_bao_ve=request.POST.get("ngay"),
-                thoi_gian_bat_dau=request.POST.get("thoi_gian_bat_dau"),
-                thoi_gian_ket_thuc=request.POST.get("thoi_gian_ket_thuc"),
+                ngay_bao_ve=ngay,
+                thoi_gian_bat_dau=thoi_gian_bat_dau,   # ✅ ĐÚNG
+                thoi_gian_ket_thuc=thoi_gian_ket_thuc, # ✅ ĐÚNG
                 dia_diem=request.POST.get("dia_diem"),
                 ky=KyThucTap.objects.last()
             )
+
         except Exception as e:
-            # Có thể thêm messages.error nếu bạn dùng messages framework
+            print("Lỗi:", e)
             return redirect("GiangVien:tao_hoi_dong")
 
         # Thêm giảng viên
         for gv_id in gv_ids:
             HoiDong_GiangVien.objects.create(hoi_dong=hd, giang_vien_id=gv_id)
 
-        # Thêm sinh viên (với kiểm tra GVHD)
+        # Thêm sinh viên
         for sv_id in sv_ids:
             sv = SinhVien.objects.get(ma_sv=sv_id)
             gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
 
             if gvhd and HoiDong_GiangVien.objects.filter(
-                hoi_dong=hd, giang_vien=gvhd.giang_vien
+                hoi_dong=hd,
+                giang_vien=gvhd.giang_vien
             ).exists():
                 continue
 
-            HoiDong_SinhVien.objects.create(hoi_dong=hd, sinh_vien=sv)
+            HoiDong_SinhVien.objects.create(
+                hoi_dong=hd,
+                sinh_vien=sv
+            )
 
         return redirect("GiangVien:hoi_dong_detail", id=hd.id)
 
-    # GET
     return render(request, "GiangVien/tao_hoi_dong.html", {
         "giangviens": GiangVien.objects.all(),
         "is_gvpt": True,
@@ -985,25 +1004,20 @@ def hoi_dong_detail(request, id):
     sv_list = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
 
     data_sv = []
-
-    ma_gv = request.user.username
-    gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
-
     for item in sv_list:
         sv = item.sinh_vien
 
-        # diem_obj = ChamDiemHoiDong.objects.filter(
-        #     hoi_dong=hoidong,
-        #     sinh_vien=sv,
-        #     giang_vien=gv
-        # ).first()
+        # Lấy điểm báo cáo (diem_bao_cao)
+        bd = BangDiem.objects.filter(
+            sinh_vien=sv,
+            ky=hoidong.ky
+        ).first()
 
-        # diem_value = diem_obj.diem if diem_obj else None
-        diem_value = None
+        diem_value = bd.diem_bao_cao if bd else None
 
         data_sv.append({
             "sv": sv,
-            "diem": diem_value,
+            "diem": diem_value,     # <-- Đảm bảo là số hoặc None
         })
 
     context = {
@@ -1042,30 +1056,29 @@ def cham_diem_hoi_dong(request, id, ma_sv):
         diem = float(diem_str)
 
         # ✅ Lưu điểm từng giảng viên
-        # ChamDiemHoiDong.objects.update_or_create(
-        #     hoi_dong=hoidong,
-        #     sinh_vien=sv,
-        #     giang_vien=gv,
-        #     defaults={'diem': diem}
-        # )
+        ChamDiemHoiDong.objects.update_or_create(
+            hoi_dong=hoidong,
+            sinh_vien=sv,
+            giang_vien=gv,
+            defaults={'diem': diem}
+        )
 
         # ✅ TÍNH TRUNG BÌNH
-        # danh_sach_diem = ChamDiemHoiDong.objects.filter(
-        #     hoi_dong=hoidong,
-        #     sinh_vien=sv
-        # )
+        danh_sach_diem = ChamDiemHoiDong.objects.filter(
+            hoi_dong=hoidong,
+            sinh_vien=sv
+        )
 
-        # avg = sum(d.diem for d in danh_sach_diem) / danh_sach_diem.count()
+        avg = sum(d.diem for d in danh_sach_diem) / danh_sach_diem.count()
 
         # ✅ LƯU VÀO BangDiem
-        # bd, _ = BangDiem.objects.get_or_create(
-        #     sinh_vien=sv,
-        #     ky=hoidong.ky
-        # )
+        bd, _ = BangDiem.objects.get_or_create(
+            sinh_vien=sv,
+            ky=hoidong.ky
+        )
 
-        # bd.diem_bao_cao = round(avg, 2)
-        # bd.save()
-        pass
+        bd.diem_bao_cao = round(avg, 2)
+        bd.save()
 
     return redirect("GiangVien:hoi_dong_detail", id=id)
 
