@@ -562,8 +562,8 @@ def hoidong_view(request):
         
     ds_hoidong = []
     if selected_ky:
-        # Lấy danh sách hội đồng của kỳ này
-        hoidong_qs = HoiDong.objects.filter(ky=selected_ky).order_by('ngay_bao_ve', 'thoi_gian_bat_dau')
+        # Lấy danh sách hội đồng của kỳ này (Chỉ lấy những cái ĐÃ DUYỆT)
+        hoidong_qs = HoiDong.objects.filter(ky=selected_ky, trang_thai=2).order_by('ngay_bao_ve', 'thoi_gian_bat_dau')
         
         for hd in hoidong_qs:
             # Đếm số giảng viên và sinh viên trong hội đồng này
@@ -573,14 +573,14 @@ def hoidong_view(request):
             ds_hoidong.append({
                 'id': hd.id,
                 'ten': hd.ten_hoi_dong,
-                'thoi_gian_bat_dau': hd.thoi_gian_bat_dau,
-                'thoi_gian_ket_thuc': hd.thoi_gian_ket_thuc,
+                'thoi_gian': f"{hd.thoi_gian_bat_dau.strftime('%H:%M')} - {hd.thoi_gian_ket_thuc.strftime('%H:%M')}" if hd.thoi_gian_bat_dau and hd.thoi_gian_ket_thuc else "Chưa thiết lập",
                 'ngay_bao_ve': hd.ngay_bao_ve,
                 'dia_diem': hd.dia_diem,
                 'gv_count': gv_list.count(),
                 'sv_count': sv_list.count(),
                 'giang_vien': [g.giang_vien for g in gv_list],
-                'sinh_vien': [s.sinh_vien for s in sv_list]
+                'sinh_vien': [s.sinh_vien for s in sv_list],
+                'trang_thai': hd.trang_thai
             })
             
     context = {
@@ -601,7 +601,18 @@ def chi_tiet_hoidong_view(request, hd_id):
         return redirect('GiaoVu:giaovu_hoidong')
         
     ds_giang_vien = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
-    ds_sinh_vien = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
+    ds_sinh_vien_raw = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
+    
+    # Lấy thông tin GVHD cho từng sinh viên
+    ds_sinh_vien = []
+    for item in ds_sinh_vien_raw:
+        sv = item.sinh_vien
+        # Tìm GVHD trong kỳ này
+        pc = PhanCongGVHD.objects.filter(sinh_vien=sv, ky=hoidong.ky, trang_thai=2).select_related('giang_vien').first()
+        ds_sinh_vien.append({
+            'sinh_vien': sv,
+            'gvhd': pc.giang_vien if pc else None
+        })
     
     context = {
         'current_page': 'hoidong',

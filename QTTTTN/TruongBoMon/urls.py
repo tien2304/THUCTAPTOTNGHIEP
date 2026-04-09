@@ -23,7 +23,14 @@ urlpatterns = [
 
     # Các chức năng quản lý khác của Trưởng bộ môn
     path('duyet-hoidong/', views.duyet_hoidong_view, name='duyet_hoidong'),
+    path('duyet-hoidong/detail-ajax/<int:hd_id>/', views.hoidong_detail_ajax, name='hoidong_detail_ajax'),
     path('duyet-hoidong/<int:hd_id>/', views.chi_tiet_hoidong_view, name='chi_tiet_hoidong'),
+    path('duyet-hoidong/<int:hd_id>/add-gv/', views.add_gv_hoidong_ajax, name='add_gv_hoidong_ajax'),
+    path('duyet-hoidong/<int:hd_id>/remove-gv/', views.remove_gv_hoidong_ajax, name='remove_gv_hoidong_ajax'),
+    path('duyet-hoidong/<int:hd_id>/add-sv/', views.add_sv_hoidong_ajax, name='add_sv_hoidong_ajax'),
+    path('duyet-hoidong/<int:hd_id>/remove-sv/', views.remove_sv_hoidong_ajax, name='remove_sv_hoidong_ajax'),
+    path('duyet-hoidong/<int:hd_id>/approve/', views.approve_hoidong_ajax, name='approve_hoidong_ajax'),
+    path('duyet-hoidong/approve-all/', views.approve_all_hoidong_ajax, name='approve_all_hoidong_ajax'),
     path('diem/', views.diem_view, name='diem_view'),
     path('diem/cong-bo/<int:ky_id>/', views.cong_bo_diem_action, name='truongboomon_cong_bo_diem'),
     path('cau-hinh-diem/', views.cau_hinh_diem_view, name='cau_hinh_diem'),

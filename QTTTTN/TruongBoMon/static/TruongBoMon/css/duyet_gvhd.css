@@ -1,0 +1,227 @@
+.page-container {
+    padding: 1.5rem;
+    max-width: 1250px;
+    margin: 0 auto;
+}
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+}
+
+/* Filters & Actions */
+.table-controls {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 1rem 1rem 0 0;
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.filter-label {
+    font-weight: 500;
+    font-size: 0.8125rem;
+    color: #475569;
+}
+.filter-select {
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.625rem;
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-weight: 400;
+    font-size: 0.875rem;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+    min-width: 250px;
+}
+
+/* Table Styles */
+.table-container {
+    background: white;
+    border-radius: 0 0 1rem 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+.data-table th {
+    background: white;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: 0.01em;
+    border-bottom: 1.5px solid #f1f5f9;
+    white-space: nowrap;
+}
+.data-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+.data-table tr:hover td {
+    background-color: #f8fafc;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.tag-gpa {
+    color: #1e293b;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.placeholder-dash {
+    color: #1e293b;
+    font-weight: 700;
+}
+.tag-field {
+    color: #1e293b;
+    font-weight: 400;
+    font-size: 0.8125rem;
+}
+
+/* Lecturer Select */
+.gvhd-select {
+    padding: 0.3rem 1.75rem 0.3rem 0.625rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.5rem;
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-weight: 500;
+    font-size: 0.8125rem;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.4rem center;
+    background-size: 0.9em;
+    width: 180px;
+    transition: all 0.2s;
+}
+.gvhd-select:hover {
+    border-color: #3b82f6;
+    background-color: #dbeafe;
+}
+.gvhd-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.btn-approve-all {
+    background: #0f172a;
+    color: white;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+.btn-approve-all:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+.btn-approve-all:active {
+    transform: translateY(0);
+}
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+/* Stats Panel (New) */
+.lecturer-stats-panel {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+}
+.stats-panel-title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.stats-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.7rem;
+}
+.stats-item:last-child {
+    border-bottom: none;
+}
+.stats-item-name {
+    color: #475569;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+.stats-item-divider {
+    color: #64748b;
+    font-weight: 700;
+}
+.stats-item-count {
+    font-weight: 700;
+    color: #2563eb;
+    min-width: 1.5rem;
+    text-align: right;
+}

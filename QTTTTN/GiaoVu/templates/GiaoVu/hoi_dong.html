@@ -1,84 +1,71 @@
 {% extends "GiaoVu/home.html" %}
-{% load static %}
-{% block title %}MIS – Quản lý Hội đồng Bảo vệ{% endblock %}
-
 {% block content %}
-<div class="page-container" style="padding: 24px 32px;">
-    <div class="page-header" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end;">
+<script src="https://cdn.tailwindcss.com"></script>
+<div class="p-6 bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-            <h1 class="page-title" style="font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Danh Sách Hội Đồng Bảo Vệ</h1>
-            <p style="color: #64748b; font-size: 14.5px;">Quản lý và theo dõi các hội đồng bảo vệ thực tập.</p>
-        </div>
-        
-        <div class="filter-section" style="display: flex; gap: 16px; align-items: center;">
-            <div class="filter-group">
-                <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">HỌC KỲ</label>
-                <select onchange="location.href='?ky_id=' + this.value" style="padding: 10px 16px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; font-size: 14px; color: #1e293b; min-width: 250px; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    {% for ky in all_ky %}
-                    <option value="{{ ky.id }}" {% if ky.id == selected_ky_id %}selected{% endif %}>{{ ky.ten_ky }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+            <h1 class="text-2xl font-bold text-gray-900">Danh sách Hội đồng Bảo vệ</h1>
         </div>
     </div>
 
-    <div class="table-card" style="background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-            <thead>
-                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-                    <th style="padding: 16px 24px; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Tên Hội Đồng</th>
-                    <th style="padding: 16px 24px; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Ngày Bảo Vệ</th>
-                    <th style="padding: 16px 24px; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Thời Gian</th>
-                    <th style="padding: 16px 24px; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Địa Điểm</th>
-                    <th style="padding: 16px 24px; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">Thành Viên</th>
-                    <th style="padding: 16px 24px; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Thao Tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for hd in ds_hoidong %}
-                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 20px 24px;">
-                        <div style="font-weight: 600; color: #1e293b; font-size: 15px;">{{ hd.ten }}</div>
-                    </td>
-                    <td style="padding: 20px 24px; color: #475569; font-size: 14.5px;">
-                        {{ hd.ngay_bao_ve|date:"d/m/Y" }}
-                    </td>
-                    <td style="padding: 20px 24px; color: #475569; font-size: 14.5px;">
-                        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; font-weight: 500; font-size: 13px;">
-                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            {{ hd.thoi_gian_bat_dau|time:"H:i" }} - {{ hd.thoi_gian_ket_thuc|time:"H:i" }}
-                        </span>
-                    </td>
-                    <td style="padding: 20px 24px; color: #475569; font-size: 14.5px;">
-                        {{ hd.dia_diem }}
-                    </td>
-                    <td style="padding: 20px 24px; text-align: center;">
-                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                            <span style="font-size: 12px; font-weight: 600; color: #3b82f6; background: #eff6ff; padding: 2px 8px; border-radius: 4px;">{{ hd.gv_count }} Giảng viên</span>
-                            <span style="font-size: 12px; font-weight: 600; color: #10b981; background: #ecfdf5; padding: 2px 8px; border-radius: 4px;">{{ hd.sv_count }} Sinh viên</span>
-                        </div>
-                    </td>
-                    <td style="padding: 20px 24px; text-align: right;">
-                        <a href="{% url 'GiaoVu:chi_tiet_hoidong' hd.id %}" style="display: inline-flex; align-items: center; gap: 6px; color: #2563eb; font-weight: 600; text-decoration: none; font-size: 14px; transition: gap 0.2s;" onmouseover="this.style.gap='10px'" onmouseout="this.style.gap='6px'">
-                            Xem chi tiết
-                            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" style="padding: 80px; text-align: center;">
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
-                            <div style="width: 64px; height: 64px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
-                                <svg style="width: 32px; height: 32px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="flex justify-between items-center border-b px-8 py-4 bg-gray-50">
+            <h2 class="text-lg font-bold text-gray-800">Danh sách Hội đồng</h2>
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-gray-500 font-bold uppercase">Học kỳ:</span>
+                <form method="GET" class="inline-block">
+                    <select name="ky_id" onchange="this.form.submit()" class="border rounded-lg px-3 py-1.5 text-sm outline-none bg-white">
+                        {% for ky in all_ky %}
+                        <option value="{{ ky.id }}" {% if selected_ky_id == ky.id %}selected{% endif %}>
+                            {{ ky.ten_ky }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="bg-gray-100 text-left">
+                        <th class="py-4 px-8 border-b font-bold text-gray-600">TÊN HỘI ĐỒNG</th>
+                        <th class="py-4 px-6 border-b font-bold text-gray-600">THỜI GIAN & ĐỊA ĐIỂM</th>
+                        <th class="py-4 px-6 border-b font-bold text-gray-600">THÀNH PHẦN</th>
+                        <th class="py-4 px-8 border-b font-bold text-gray-600 text-center">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hd in ds_hoidong %}
+                    <tr class="hover:bg-gray-50 border-b">
+                        <td class="py-6 px-8">
+                            <span class="font-bold text-gray-900 uppercase">{{ hd.ten }}</span>
+                        </td>
+                        <td class="py-6 px-6">
+                            <div class="text-gray-700 font-medium">{{ hd.ngay_bao_ve|date:"d/m/Y" }} | {{ hd.thoi_gian }}</div>
+                            <div class="text-gray-400 text-xs mt-1">{{ hd.dia_diem }}</div>
+                        </td>
+                        <td class="py-6 px-6">
+                            <div class="text-gray-600">Giảng viên: <span class="font-bold text-indigo-600">{{ hd.gv_count }}</span></div>
+                            <div class="text-gray-600">Sinh viên: <span class="font-bold text-emerald-600">{{ hd.sv_count }}</span></div>
+                        </td>
+                        <td class="py-6 px-8 text-center">
+                            <div class="flex items-center justify-center">
+                                <a href="{% url 'GiaoVu:chi_tiet_hoidong' hd.id %}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">
+                                    Chi tiết
+                                </a>
                             </div>
-                            <span style="color: #94a3b8; font-size: 16px; font-weight: 500;">Chưa có hội đồng nào trong học kỳ này.</span>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-20 text-gray-400 italic">Học kỳ này chưa có hội đồng nào.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -143,7 +143,8 @@ def home(request):
     if ky_hien_tai:
         hd_sv = HoiDong_SinhVien.objects.filter(
             sinh_vien=sinh_vien,
-            hoi_dong__ky=ky_hien_tai
+            hoi_dong__ky=ky_hien_tai,
+            hoi_dong__trang_thai=2
         ).select_related('hoi_dong').first()
         if hd_sv:
             hoi_dong = hd_sv.hoi_dong
@@ -257,7 +258,7 @@ def xem_diem(request):
 
     # Kiểm tra trạng thái CÔNG BỐ ĐIỂM của kỳ hiện tại
     is_published = False
-    if ky_hien_tai and ky_hien_tai.cong_bo_diem:
+    if ky_hien_tai and ky_hien_tai.cong_bo_diem == 2:
         is_published = True
 
     context = {

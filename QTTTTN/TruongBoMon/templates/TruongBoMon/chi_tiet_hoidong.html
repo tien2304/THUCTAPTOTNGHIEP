@@ -1,80 +1,177 @@
 {% extends "TruongBoMon/home.html" %}
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
-
 <div class="p-6 bg-gray-50 min-h-screen">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="{% url 'TruongBoMon:duyet_hoidong' %}" class="inline-flex items-center gap-2 text-gray-700 hover:text-black font-bold text-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Quay lại
+        </a>
+    </div>
+
     <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-            <nav class="flex mb-4" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3 text-xs font-bold uppercase tracking-wider text-gray-400">
-                    <li><a href="{% url 'TruongBoMon:duyet_hoidong' %}" class="hover:text-blue-600 transition-colors">Duyệt Hội đồng</a></li>
-                    <li><svg class="w-3 h-3 mx-1" fill="currentColor" viewBox="0 0 20 20"><path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"></path></svg></li>
-                    <li class="text-blue-600">Thành phần chi tiết</li>
-                </ol>
-            </nav>
-            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">{{ hoidong.ten_hoi_dong }}</h1>
-            <p class="text-sm text-gray-500 mt-1">Học kỳ: <span class="font-bold text-gray-800">{{ hoidong.ky.ten_ky }}</span></p>
+    <div class="mb-8 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-4">
+            <div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-black text-gray-900 leading-tight uppercase tracking-tight">{{ hoidong.ten_hoi_dong }}</h1>
+                </div>
+                <div class="flex items-center gap-3 mt-1 text-sm text-gray-400 font-bold uppercase tracking-widest">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        {{ hoidong.ngay_bao_ve|date:"d/m/Y" }} | {{ hoidong.thoi_gian_bat_dau|time:"H:i" }} - {{ hoidong.thoi_gian_ket_thuc|time:"H:i" }}
+                    </span>
+                    <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        {{ hoidong.dia_diem }}
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- MAIN PANEL -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        <!-- LEFT: GIẢNG VIÊN -->
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 overflow-hidden">
-            <h3 class="text-sm font-extrabold text-indigo-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                Giảng viên trong hội đồng
-            </h3>
-            <div class="space-y-4">
-                {% for item in ds_giang_vien %}
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-gray-50/50 hover:bg-gray-50 transition-colors group">
-                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm">
-                        {{ item.giang_vien.ho_ten|slice:":1" }}
-                    </div>
-                    <div class="flex-grow">
-                        <div class="font-bold text-gray-900">{{ item.giang_vien.ho_ten }}</div>
-                        <div class="text-xs text-indigo-400 font-bold uppercase">{{ item.giang_vien.hoc_vi }}</div>
-                    </div>
-                    <div class="text-xs font-medium text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {{ item.giang_vien.ma_gv }}
-                    </div>
+    <div class="grid grid-cols-1 gap-8">
+        <!-- BẢNG GIẢNG VIÊN -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800 uppercase tracking-wide">Thành viên hội đồng</h3>
+                <div class="flex gap-2">
+                    <select id="select-gv" class="border rounded px-2 py-1 text-sm outline-none">
+                        <option value="">-- Chọn giảng viên --</option>
+                        {% for gv in available_gv %}
+                        <option value="{{ gv.ma_gv }}">{{ gv.ho_ten }} ({{ gv.ma_gv }})</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="addItem('gv')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Thêm</button>
                 </div>
-                {% empty %}
-                <p class="text-gray-400 text-sm text-center py-10">Chưa có giảng viên.</p>
-                {% endfor %}
             </div>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-100 text-left">
+                        <th class="p-2 border text-xs font-bold text-gray-600 w-12 text-center">STT</th>
+                        <th class="p-2 border text-xs font-bold text-gray-600">GIẢNG VIÊN</th>
+                        <th class="p-2 border text-xs font-bold text-gray-600 text-center">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in ds_giang_vien %}
+                    <tr class="hover:bg-gray-50 text-gray-700">
+                        <td class="p-2 border text-sm text-center">{{ forloop.counter }}</td>
+                        <td class="p-2 border text-sm font-medium uppercase text-gray-700">
+                            {% if item.giang_vien.hoc_vi == "Thạc sĩ" %}ThS.{% elif item.giang_vien.hoc_vi == "Tiến sĩ" %}TS.{% else %}{{ item.giang_vien.hoc_vi }}{% endif %} 
+                            {{ item.giang_vien.ho_ten }}
+                        </td>
+                        <td class="p-2 border text-center">
+                            <button onclick="removeItem('{{ item.giang_vien.ma_gv }}', 'gv')" class="text-red-500 hover:underline text-xs">Xóa khỏi hội đồng</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="p-8 text-center text-gray-400 italic text-sm">Chưa có giảng viên nào.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
 
-        <!-- RIGHT: SINH VIÊN -->
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 overflow-hidden">
-            <h3 class="text-sm font-extrabold text-emerald-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                Sinh viên bảo vệ
-            </h3>
-            <div class="space-y-4">
-                {% for item in ds_sinh_vien %}
-                <div class="flex flex-col gap-2 p-5 rounded-2xl bg-gray-50/50 hover:bg-gray-50 transition-colors group border border-transparent hover:border-emerald-100">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold shadow-sm">
-                            {{ item.sinh_vien.ho_ten|slice:":1" }}
-                        </div>
-                        <div class="flex-grow">
-                            <div class="font-bold text-gray-900">{{ item.sinh_vien.ho_ten }}</div>
-                            <div class="text-xs text-gray-500">{{ item.sinh_vien.ma_sv }} • {{ item.sinh_vien.lop }}</div>
-                        </div>
-                    </div>
-                    <div class="mt-2 text-xs text-gray-500 italic bg-white p-3 rounded-xl border border-gray-50">
-                        {{ item.sinh_vien.ten_de_tai|default:"Chưa có tên đề tài" }}
-                    </div>
+        <!-- BẢNG SINH VIÊN -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800">Danh sách Sinh viên bảo vệ</h3>
+                <div class="flex gap-2">
+                    <select id="select-sv" class="border rounded px-2 py-1 text-sm outline-none w-64">
+                        <option value="">-- Chọn sinh viên --</option>
+                        {% for sv in available_sv %}
+                        <option value="{{ sv.ma_sv }}">{{ sv.ho_ten }} ({{ sv.ma_sv }})</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="addItem('sv')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Thêm</button>
                 </div>
-                {% empty %}
-                <p class="text-gray-400 text-sm text-center py-10">Chưa có sinh viên.</p>
-                {% endfor %}
             </div>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-100 text-left">
+                        <th class="p-2 border text-xs font-bold text-gray-600">STT</th>
+                        <th class="p-2 border text-xs font-bold text-gray-600">MÃ SV</th>
+                        <th class="p-2 border text-xs font-bold text-gray-600">HỌ TÊN</th>
+                        <th class="p-2 border text-xs font-bold text-gray-600">LỚP</th>
+                        <th class="p-2 border text-xs font-bold text-gray-600">ĐỀ TÀI</th>
+                        <th class="p-2 border text-xs font-bold text-gray-600">GVHD</th>
+                        <th class="p-2 border text-xs font-bold text-gray-600 text-center">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in ds_sinh_vien %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-2 border text-sm text-center">{{ forloop.counter }}</td>
+                        <td class="p-2 border text-sm">{{ item.sinh_vien.ma_sv }}</td>
+                        <td class="p-2 border text-sm font-medium">{{ item.sinh_vien.ho_ten }}</td>
+                        <td class="p-2 border text-sm text-center">{{ item.sinh_vien.lop }}</td>
+                        <td class="p-2 border text-xs text-gray-700">
+                            {{ item.sinh_vien.ten_de_tai|default:"(Chưa có đề tài)" }}
+                        </td>
+                        <td class="p-2 border text-xs">
+                            {% if item.gvhd %}
+                            <div class="font-medium text-blue-600">
+                                {% if item.gvhd.hoc_vi == "Thạc sĩ" %}ThS.{% elif item.gvhd.hoc_vi == "Tiến sĩ" %}TS.{% else %}{{ item.gvhd.hoc_vi }}{% endif %} 
+                                {{ item.gvhd.ho_ten }}
+                            </div>
+                            {% else %}
+                            <div class="text-gray-400 italic">Chưa có GVHD</div>
+                            {% endif %}
+                        </td>
+                        <td class="p-2 border text-center">
+                            <button onclick="removeItem('{{ item.sinh_vien.ma_sv }}', 'sv')" class="text-red-500 hover:underline text-xs">Xóa khỏi hội đồng</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="p-8 text-center text-gray-400 italic text-sm">Chưa có sinh viên nào.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-
     </div>
 </div>
+
+<script>
+    function addItem(type) {
+        let itemId = document.getElementById(`select-${type}`).value;
+        if (!itemId) {
+            alert('Vui lòng chọn!');
+            return;
+        }
+
+        let url = type === 'gv' 
+            ? `{% url 'TruongBoMon:add_gv_hoidong_ajax' hoidong.id %}`
+            : `{% url 'TruongBoMon:add_sv_hoidong_ajax' hoidong.id %}`;
+        
+        let fd = new FormData();
+        if(type === 'gv') fd.append('ma_gv', itemId);
+        else fd.append('ma_sv', itemId);
+
+        fetch(url, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') location.reload();
+            });
+    }
+
+    function removeItem(itemId, type) {
+        if(!confirm('Bạn có chắc chắn muốn xóa?')) return;
+
+        let url = type === 'gv' 
+            ? `{% url 'TruongBoMon:remove_gv_hoidong_ajax' hoidong.id %}`
+            : `{% url 'TruongBoMon:remove_sv_hoidong_ajax' hoidong.id %}`;
+        
+        let fd = new FormData();
+        if(type === 'gv') fd.append('ma_gv', itemId);
+        else fd.append('ma_sv', itemId);
+
+        fetch(url, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') location.reload();
+            });
+    }
+</script>
 {% endblock %}

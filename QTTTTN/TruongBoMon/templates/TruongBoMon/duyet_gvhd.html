@@ -4,240 +4,7 @@
 {% block title %}Duyệt Giảng Viên Hướng Dẫn{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'TruongBoMon/css/phan_cong_gvpt.css' %}">
-<style>
-    .page-container {
-        padding: 1.5rem;
-        max-width: 1250px;
-        margin: 0 auto;
-    }
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-    }
-    .page-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #0f172a;
-        letter-spacing: -0.025em;
-    }
-    
-
-    /* Filters & Actions */
-    .table-controls {
-        background: white;
-        padding: 1rem 1.5rem;
-        border-radius: 1rem 1rem 0 0;
-        border: 1px solid #e2e8f0;
-        border-bottom: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-    }
-    .filter-group {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    .filter-label {
-        font-weight: 500;
-        font-size: 0.8125rem;
-        color: #475569;
-    }
-    .filter-select {
-        padding: 0.5rem 2rem 0.5rem 1rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.625rem;
-        background-color: #f8fafc;
-        color: #0f172a;
-        font-weight: 400;
-        font-size: 0.875rem;
-        outline: none;
-        appearance: none;
-        cursor: pointer;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 0.75rem center;
-        background-size: 1em;
-        min-width: 250px;
-    }
-
-    /* Table Styles */
-    .table-container {
-        background: white;
-        border-radius: 0 0 1rem 1rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8125rem;
-    }
-    .data-table th {
-        background: white;
-        padding: 1rem;
-        text-align: left;
-        font-weight: 700;
-        color: #1e293b;
-        letter-spacing: 0.01em;
-        border-bottom: 1.5px solid #f1f5f9;
-        white-space: nowrap;
-    }
-    .data-table td {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #f1f5f9;
-        color: #1e293b;
-        vertical-align: middle;
-    }
-    .data-table tr:last-child td {
-        border-bottom: none;
-    }
-    .data-table tr:hover td {
-        background-color: #f8fafc;
-    }
-
-    .status-badge {
-        padding: 0.375rem 0.75rem;
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-    }
-
-    .tag-gpa {
-        color: #1e293b;
-        font-weight: 700;
-        display: inline-block;
-    }
-    .tag-gpa:empty::after, .tag-gpa:contains('—')::after {
-        color: #1e293b;
-    }
-    
-    .placeholder-dash {
-        color: #1e293b;
-        font-weight: 700;
-    }
-    .tag-field {
-        color: #1e293b;
-        font-weight: 400;
-        font-size: 0.8125rem;
-    }
-    
-    /* Lecturer Select */
-    .gvhd-select {
-        padding: 0.3rem 1.75rem 0.3rem 0.625rem;
-        border: 1px solid #bfdbfe;
-        border-radius: 0.5rem;
-        background-color: #eff6ff;
-        color: #2563eb;
-        font-weight: 500;
-        font-size: 0.8125rem;
-        outline: none;
-        appearance: none;
-        cursor: pointer;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 0.4rem center;
-        background-size: 0.9em;
-        width: 180px;
-        transition: all 0.2s;
-    }
-    .gvhd-select:hover {
-        border-color: #3b82f6;
-        background-color: #dbeafe;
-    }
-    .gvhd-select:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .btn-approve-all {
-        background: #0f172a;
-        color: white;
-        padding: 0.625rem 1.25rem;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        border: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.2s;
-    }
-    .btn-approve-all:hover {
-        background: #1e293b;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-    }
-    .btn-approve-all:active {
-        transform: translateY(0);
-    }
-
-    .main-grid {
-        display: grid;
-        grid-template-columns: 1fr 240px;
-        gap: 1.25rem;
-        align-items: start;
-    }
-
-    /* Stats Panel (New) */
-    .lecturer-stats-panel {
-        background: white;
-        border-radius: 1rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        padding: 1.5rem;
-    }
-    .stats-panel-title {
-        font-size: 0.9375rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 1rem;
-        line-height: 1.4;
-    }
-    .stats-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    .stats-item {
-        padding: 0.625rem 0;
-        border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.75rem;
-    }
-    .stats-item:last-child {
-        border-bottom: none;
-    }
-    .stats-item-name {
-        color: #475569;
-        flex-grow: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-weight: 500;
-    }
-    .stats-item-divider {
-        color: #64748b;
-        font-weight: 700;
-    }
-    .stats-item-count {
-        font-weight: 700;
-        color: #2563eb;
-        min-width: 1.5rem;
-        text-align: right;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'TruongBoMon/css/duyet_gvhd.css' %}?v=1.0">
 {% endblock %}
 
 {% block content %}
@@ -245,7 +12,6 @@
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h1 class="page-title" style="margin-bottom: 0;">Duyệt Phân công Giảng viên Hướng dẫn</h1>
         
-        {% if stats.cho_duyet > 0 %}
         <form method="POST" action="{% url 'TruongBoMon:action_duyet_gvhd' %}" onsubmit="return confirm('Bạn có chắc chắn muốn PHÊ DUYỆT TẤT CẢ phân công trong học kỳ này không?');">
             {% csrf_token %}
             <input type="hidden" name="ky_id" value="{{ selected_ky_id }}">
@@ -255,7 +21,6 @@
                 Phê duyệt tất cả
             </button>
         </form>
-        {% endif %}
     </div>
 
 
@@ -294,6 +59,7 @@
                     <th style="text-align: center;">Điểm tích luỹ</th>
                     <th>Lĩnh vực</th>
                     <th>Giảng viên hướng dẫn</th>
+                    <th style="width: 120px; text-align: center;">Trạng thái</th>
                 </tr>
             </thead>
             <tbody>
@@ -318,6 +84,28 @@
                                     </option>
                                 {% endfor %}
                             </select>
+                        </td>
+                        <td style="text-align: center;">
+                            {% if item.trang_thai == 2 %}
+                                <span class="status-badge" style="background: #ecfdf5; color: #10b981;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    Đã duyệt
+                                </span>
+                            {% elif item.trang_thai == 1 %}
+                                <span class="status-badge" style="background: #fff7ed; color: #f97316;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    Chờ duyệt
+                                </span>
+                            {% elif item.trang_thai == 3 %}
+                                <span class="status-badge" style="background: #fef2f2; color: #ef4444;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="15" x2="15" y2="9"></line></svg>
+                                    Bị từ chối
+                                </span>
+                            {% else %}
+                                <span class="status-badge" style="background: #f1f5f9; color: #64748b;">
+                                    Chưa phân công
+                                </span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

@@ -295,6 +295,10 @@ def duyet_hoidong_view(request):
     else:
         selected_ky = all_ky.first()
         
+    # Lấy danh sách GV và SV toàn cầu cho việc chọn thêm sau này (để modal load nhanh)
+    available_gv = GiangVien.objects.all().order_by('ho_ten')
+    available_sv = SinhVien.objects.filter(ky_hien_tai=selected_ky).order_by('ma_sv') if selected_ky else []
+
     ds_hoidong = []
     if selected_ky:
         hoidong_qs = HoiDong.objects.filter(ky=selected_ky).order_by('ngay_bao_ve', 'thoi_gian_bat_dau')
@@ -312,7 +316,8 @@ def duyet_hoidong_view(request):
                 'gv_count': gv_list.count(),
                 'sv_count': sv_list.count(),
                 'giang_vien': [g.giang_vien for g in gv_list],
-                'sinh_vien': [s.sinh_vien for s in sv_list]
+                'sinh_vien': [s.sinh_vien for s in sv_list],
+                'trang_thai': hd.trang_thai
             })
             
     context = {
@@ -321,8 +326,31 @@ def duyet_hoidong_view(request):
         'selected_ky': selected_ky,
         'selected_ky_id': selected_ky.id if selected_ky else None,
         'ds_hoidong': ds_hoidong,
+        'available_gv': available_gv,
+        'available_sv': available_sv,
     }
     return render(request, 'TruongBoMon/duyet_hoidong.html', context)
+
+def hoidong_detail_ajax(request, hd_id):
+    """Lấy chi tiết hội đồng (partial HTML) để hiển thị trong panel bên phải."""
+    hoidong = get_object_or_404(HoiDong, id=hd_id)
+    ds_giang_vien = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
+    ds_sinh_vien = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
+    
+    current_gv_ids = ds_giang_vien.values_list('giang_vien_id', flat=True)
+    available_gv = GiangVien.objects.exclude(ma_gv__in=current_gv_ids).order_by('ho_ten')
+    
+    current_sv_ids = HoiDong_SinhVien.objects.filter(hoi_dong__ky=hoidong.ky).values_list('sinh_vien_id', flat=True)
+    available_sv = SinhVien.objects.filter(ky_hien_tai=hoidong.ky).exclude(ma_sv__in=current_sv_ids).order_by('ma_sv')
+
+    context = {
+        'hoidong': hoidong,
+        'ds_giang_vien': ds_giang_vien,
+        'ds_sinh_vien': ds_sinh_vien,
+        'available_gv': available_gv,
+        'available_sv': available_sv,
+    }
+    return render(request, 'TruongBoMon/hoidong_detail_partial.html', context)
 
 def chi_tiet_hoidong_view(request, hd_id):
     """Trang chi tiết Hội đồng – Trưởng Bộ Môn."""
@@ -333,15 +361,115 @@ def chi_tiet_hoidong_view(request, hd_id):
         return redirect('TruongBoMon:duyet_hoidong')
         
     ds_giang_vien = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
-    ds_sinh_vien = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
+    ds_sinh_vien_raw = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
+    
+    # Lấy thông tin GVHD cho từng sinh viên
+    ds_sinh_vien = []
+    gvhd_ids_in_council = []
+    for item in ds_sinh_vien_raw:
+        sv = item.sinh_vien
+        # Tìm GVHD trong kỳ này
+        pc = PhanCongGVHD.objects.filter(sinh_vien=sv, ky=hoidong.ky, trang_thai=2).select_related('giang_vien').first()
+        ds_sinh_vien.append({
+            'sinh_vien': sv,
+            'gvhd': pc.giang_vien if pc else None
+        })
+        if pc and pc.giang_vien:
+            gvhd_ids_in_council.append(pc.giang_vien.ma_gv)
+    
+    # 1. Xử lý danh sách giảng viên để chọn thêm
+    current_gv_ids = list(ds_giang_vien.values_list('giang_vien_id', flat=True))
+    # Loại bỏ giảng viên là GVHD của sinh viên trong hội đồng này
+    exclude_gv_ids = set(current_gv_ids + gvhd_ids_in_council)
+    available_gv = GiangVien.objects.exclude(ma_gv__in=exclude_gv_ids).order_by('ho_ten')
+    
+    # 2. Xử lý danh sách sinh viên để chọn thêm
+    current_sv_ids = HoiDong_SinhVien.objects.filter(hoi_dong__ky=hoidong.ky).values_list('sinh_vien_id', flat=True)
+    
+    # Tìm các sinh viên có GVHD nằm trong hội đồng này
+    sv_ids_with_gvhd_in_council = PhanCongGVHD.objects.filter(
+        ky=hoidong.ky,
+        trang_thai=2,
+        giang_vien_id__in=current_gv_ids
+    ).values_list('sinh_vien_id', flat=True)
+    
+    # Danh sách sinh viên bị loại trừ: đã có hội đồng HOẶC có GVHD trong hội đồng này
+    exclude_sv_ids = set(list(current_sv_ids) + list(sv_ids_with_gvhd_in_council))
+    available_sv = SinhVien.objects.filter(ky_hien_tai=hoidong.ky).exclude(ma_sv__in=exclude_sv_ids).order_by('ma_sv')
     
     context = {
         'current_page': 'duyet_hoi_dong',
         'hoidong': hoidong,
         'ds_giang_vien': ds_giang_vien,
         'ds_sinh_vien': ds_sinh_vien,
+        'available_gv': available_gv,
+        'available_sv': available_sv,
     }
     return render(request, 'TruongBoMon/chi_tiet_hoidong.html', context)
+
+@require_POST
+@csrf_exempt
+def add_gv_hoidong_ajax(request, hd_id):
+    ma_gv = request.POST.get('ma_gv')
+    hoidong = get_object_or_404(HoiDong, id=hd_id)
+    gv = get_object_or_404(GiangVien, ma_gv=ma_gv)
+    
+    HoiDong_GiangVien.objects.get_or_create(hoi_dong=hoidong, giang_vien=gv)
+    return JsonResponse({'status': 'success'})
+
+@require_POST
+@csrf_exempt
+def remove_gv_hoidong_ajax(request, hd_id):
+    ma_gv = request.POST.get('ma_gv')
+    HoiDong_GiangVien.objects.filter(hoi_dong_id=hd_id, giang_vien_id=ma_gv).delete()
+    return JsonResponse({'status': 'success'})
+
+@require_POST
+@csrf_exempt
+def add_sv_hoidong_ajax(request, hd_id):
+    ma_sv = request.POST.get('ma_sv')
+    hoidong = get_object_or_404(HoiDong, id=hd_id)
+    sv = get_object_or_404(SinhVien, ma_sv=ma_sv)
+    
+    HoiDong_SinhVien.objects.get_or_create(hoi_dong=hoidong, sinh_vien=sv)
+    return JsonResponse({'status': 'success'})
+
+@require_POST
+@csrf_exempt
+def remove_sv_hoidong_ajax(request, hd_id):
+    ma_sv = request.POST.get('ma_sv')
+    HoiDong_SinhVien.objects.filter(hoi_dong_id=hd_id, sinh_vien_id=ma_sv).delete()
+    return JsonResponse({'status': 'success'})
+
+@require_POST
+@csrf_exempt
+def approve_hoidong_ajax(request, hd_id):
+    try:
+        hoidong = HoiDong.objects.get(id=hd_id)
+        hoidong.trang_thai = 2  # Đã chuyển sang trạng thái Đã phê duyệt
+        hoidong.save()
+        return JsonResponse({'status': 'success'})
+    except HoiDong.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Hội đồng không tồn tại.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+@require_POST
+@csrf_exempt
+def approve_all_hoidong_ajax(request):
+    try:
+        # Lấy kỳ mới nhất
+        selected_ky = KyThucTap.objects.all().order_by('-id').first()
+        if not selected_ky:
+            return JsonResponse({'status': 'error', 'message': 'Không tìm thấy học kỳ.'})
+            
+        # Phê duyệt tất cả hội đồng thuộc kỳ này mà đang ở trạng thái Chờ duyệt (1)
+        HoiDong.objects.filter(ky=selected_ky, trang_thai=1).update(trang_thai=2)
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 def diem_view(request):
@@ -382,10 +510,13 @@ def diem_view(request):
 def cong_bo_diem_action(request, ky_id):
     """Trưởng bộ môn công bố điểm cho toàn bộ sinh viên trong kỳ học."""
     ky = get_object_or_404(KyThucTap, id=ky_id)
-    ky.cong_bo_diem = not ky.cong_bo_diem
+    if ky.cong_bo_diem == 2:
+        ky.cong_bo_diem = 1
+    else:
+        ky.cong_bo_diem = 2
     ky.save()
     
-    status = "CÔNG BỐ" if ky.cong_bo_diem else "HỦY CÔNG BỐ"
+    status = "CÔNG BỐ" if ky.cong_bo_diem == 2 else "HỦY CÔNG BỐ"
     messages.success(request, f"Học kỳ {ky.ten_ky} đã được {status} thành công!")
     return redirect(f"{reverse('TruongBoMon:diem_view')}?ky_id={ky_id}")
 
@@ -572,11 +703,14 @@ def hoi_dong_list(request):
     ky_list = KyThucTap.objects.all().order_by('-id')
     if is_gvpt:
         if tab == 'all':
-            hoidongs = HoiDong.objects.select_related('ky').all()
+            # GVPT xem tất cả hội đồng ĐÃ DUYỆT
+            hoidongs = HoiDong.objects.filter(trang_thai=2).select_related('ky').all()
         else:
-            hoidongs = HoiDong.objects.filter(hoidong_giangvien__giang_vien=gv).select_related('ky').distinct()
+            # Xem hội đồng mình tham gia ĐÃ DUYỆT
+            hoidongs = HoiDong.objects.filter(hoidong_giangvien__giang_vien=gv, trang_thai=2).select_related('ky').distinct()
     else:
-        hoidongs = HoiDong.objects.filter(hoidong_giangvien__giang_vien=gv).select_related('ky').distinct()
+        # TBM/GV thường xem hội đồng mình tham gia ĐÃ DUYỆT
+        hoidongs = HoiDong.objects.filter(hoidong_giangvien__giang_vien=gv, trang_thai=2).select_related('ky').distinct()
     if ky_id:
         hoidongs = hoidongs.filter(ky_id=ky_id)
     hoidongs = hoidongs.order_by('-ngay_bao_ve')
