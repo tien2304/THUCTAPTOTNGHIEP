@@ -38,12 +38,12 @@
     <div class="grid grid-cols-2 gap-6 mt-6">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian bắt đầu <span class="text-red-500">*</span></label>
-            <input type="datetime-local" name="thoi_gian_bat_dau" required
+            <input type="time" name="thoi_gian_bat_dau" required
                    class="border border-gray-300 p-3 rounded-lg w-full focus:border-blue-500 outline-none">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian kết thúc <span class="text-red-500">*</span></label>
-            <input type="datetime-local" name="thoi_gian_ket_thuc" required
+            <input type="time" name="thoi_gian_ket_thuc" required
                    class="border border-gray-300 p-3 rounded-lg w-full focus:border-blue-500 outline-none">
         </div>
     </div>
@@ -121,14 +121,28 @@ $(document).ready(function() {
 
     // DataTable
     window.table = $('#sv-table').DataTable({
-        pageLength: 10,
-        searching: false,
-        ordering: true,
-        language: {
-            emptyTable: "Chưa có sinh viên nào được chọn",
-            info: "Hiển thị _START_ đến _END_ / _TOTAL_"
+    pageLength: 10,
+    searching: false,
+    ordering: true,
+    language: {
+        emptyTable: "Chưa có sinh viên nào được chọn",
+
+        // 🔥 DÒNG NÀY CHÍNH LÀ "Showing ..."
+        info: "Hiển thị _START_ - _END_ / _TOTAL_ sinh viên",
+
+        // 🔥 KHI KHÔNG CÓ DỮ LIỆU
+        infoEmpty: "Hiển thị 0 - 0 / 0 sinh viên",
+
+        // 🔥 "Show 10 entries"
+        lengthMenu: "Hiển thị _MENU_ sinh viên",
+
+        // 🔥 Previous / Next
+        paginate: {
+            previous: "←",
+            next: "→"
         }
-    });
+    }
+});
 
     // Load danh sách sinh viên ban đầu (khi chưa chọn GV nào)
     loadAvailableStudents();

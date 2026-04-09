@@ -42,15 +42,14 @@ class GiangVien(models.Model):
     hoc_vi = models.CharField(max_length=100, choices=HOC_VI_CHOICES, default='Thạc sĩ')
     chuyen_mon = models.CharField(max_length=500) # Lưu chuỗi các chuyên môn ghép lại
     so_dien_thoai = models.CharField(max_length=15, null=True, blank=True)
-
+    cong_bo_diem = models.BooleanField(default=False)
     def __str__(self):
         return self.ho_ten
 class KyThucTap(models.Model):
     ten_ky = models.CharField(max_length=255)
     ngay_bat_dau = models.DateField()
     ngay_ket_thuc = models.DateField()
-    gv_phu_trach = models.ForeignKey(GiangVien, on_delete=models.SET_NULL, null=True)
-
+    cong_bo_diem = models.IntegerField(default=1) # 1: Chưa công bố, 2: Đã công bố
     def __str__(self):
         return self.ten_ky
 class SinhVien(models.Model):
@@ -130,6 +129,8 @@ class TyLeDiem(models.Model):
     diem_gvhd = models.FloatField(default=0.4)
     diem_hoidong = models.FloatField(default=0.4)
     diem_doanhnghiep = models.FloatField(default=0.2)
+
+
 class BangDiem(models.Model):
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
@@ -142,42 +143,23 @@ class BangDiem(models.Model):
         unique_together = ('sinh_vien', 'ky')
 
     def calculate_total(self):
+        # 1. Tìm tỷ lệ của chính kỳ này
         tyle = TyLeDiem.objects.filter(ky=self.ky).first()
-        if tyle:
-            # Sử dụng 'or 0' để nếu điểm là None thì vẫn tính toán được, không bị lỗi logic
-            d_qt = self.diem_qua_trinh or 0
-            d_dn = self.diem_doanh_nghiep or 0
-            d_bc = self.diem_bao_cao or 0
 
+        # 2. Nếu kỳ này chưa cấu hình, tìm tỷ lệ gần nhất TRƯỚC ĐÓ (kế thừa)
+        if not tyle:
+            tyle = TyLeDiem.objects.filter(
+                ky__ngay_bat_dau__lt=self.ky.ngay_bat_dau
+            ).order_by('-ky__ngay_bat_dau').first()
+
+        if tyle and self.diem_qua_trinh is not None and self.diem_doanh_nghiep is not None and self.diem_bao_cao is not None:
             self.diem_tong_ket = (
-                    (d_qt * tyle.diem_gvhd) +
-                    (d_dn * tyle.diem_doanhnghiep) +
-                    (d_bc * tyle.diem_hoidong)
+                    (float(self.diem_qua_trinh) * tyle.diem_gvhd / 100) +
+                    (float(self.diem_doanh_nghiep) * tyle.diem_doanhnghiep / 100) +
+                    (float(self.diem_bao_cao) * tyle.diem_hoidong / 100)
             )
-            # Làm tròn 2 chữ số
-            self.diem_tong_ket = round(self.diem_tong_ket, 2)
-            # Chỉ save() nếu cần, hoặc để hàm save() mặc định gọi nó
-
-    def save(self, *args, **kwargs):
-        # 1. Tìm tỷ lệ điểm của kỳ này
-        tyle = TyLeDiem.objects.filter(ky=self.ky).first()
-
-        # 2. KIỂM TRA ĐIỀU KIỆN: Phải có tỷ lệ AND (cả 3 điểm đều không phải None)
-        if tyle and (self.diem_qua_trinh is not None) and \
-                (self.diem_doanh_nghiep is not None) and \
-                (self.diem_bao_cao is not None):
-
-            # Tính toán và gán vào diem_tong_ket
-            self.diem_tong_ket = round(
-                (self.diem_qua_trinh * tyle.diem_gvhd) +
-                (self.diem_doanh_nghiep * tyle.diem_doanhnghiep) +
-                (self.diem_bao_cao * tyle.diem_hoidong), 2
-            )
-        else:
-            # Nếu thiếu 1 trong 3 điểm, để tổng kết là None (NULL)
-            self.diem_tong_ket = None
-
-        super(BangDiem, self).save(*args, **kwargs)
+            # Lưu lại điểm tổng kết vừa tính
+            BangDiem.objects.filter(id=self.id).update(diem_tong_ket=self.diem_tong_ket)
 
 # --- NHÓM 5: CHUYÊN MÔN (NHIỆM VỤ, HỘI ĐỒNG, TÀI LIỆU) ---
 class NhiemVu(models.Model):
@@ -201,6 +183,15 @@ class HoiDong(models.Model):
     thoi_gian_ket_thuc = models.DateTimeField()
     dia_diem = models.CharField(max_length=255)
     ngay_bao_ve = models.DateField()
+    trang_thai = models.IntegerField(default=1)  # 1: Chờ duyệt, 2: Đã phê duyệt
+class ChamDiemHoiDong(models.Model):
+    hoi_dong = models.ForeignKey(HoiDong, on_delete=models.CASCADE)
+    sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
+    giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
+    diem = models.FloatField()
+
+    class Meta:
+            unique_together = ('hoi_dong', 'sinh_vien', 'giang_vien')
 class HoiDong_GiangVien(models.Model):
     hoi_dong = models.ForeignKey(HoiDong, on_delete=models.CASCADE)
     giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
