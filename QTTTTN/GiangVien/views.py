@@ -803,17 +803,19 @@ def hoi_dong_list(request):
     # Xác định queryset hội đồng
     if is_gvpt:
         if tab == 'all':
-            # GVPT xem tất cả hội đồng
+            # GVPT xem tất cả hội đồng (Bao gồm cả chờ duyệt để họ theo dõi)
             hoidongs = HoiDong.objects.select_related('ky').all()
         else:
-            # GVPT xem hội đồng của mình
+            # GVPT xem hội đồng của mình ĐÃ ĐƯỢC DUYỆT
             hoidongs = HoiDong.objects.filter(
-                hoidong_giangvien__giang_vien=gv
+                hoidong_giangvien__giang_vien=gv,
+                trang_thai=2
             ).select_related('ky').distinct()
     else:
-        # GV thường chỉ xem hội đồng mình tham gia
+        # GV thường chỉ xem hội đồng mình tham gia ĐÃ ĐƯỢC DUYỆT
         hoidongs = HoiDong.objects.filter(
-            hoidong_giangvien__giang_vien=gv
+            hoidong_giangvien__giang_vien=gv,
+            trang_thai=2
         ).select_related('ky').distinct()
 
     # Áp dụng lọc theo Kỳ thực tập (nếu có)

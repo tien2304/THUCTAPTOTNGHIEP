@@ -22,7 +22,7 @@ def home(request):
 
     giang_vien = None
     if ky_hien_tai:
-        phan_cong = PhanCongGVHD.objects.filter(sinh_vien=sinh_vien, ky=ky_hien_tai).first()
+        phan_cong = PhanCongGVHD.objects.filter(sinh_vien=sinh_vien, ky=ky_hien_tai, trang_thai=2).first()
         if phan_cong:
             giang_vien = phan_cong.giang_vien
 
@@ -143,7 +143,8 @@ def home(request):
     if ky_hien_tai:
         hd_sv = HoiDong_SinhVien.objects.filter(
             sinh_vien=sinh_vien,
-            hoi_dong__ky=ky_hien_tai
+            hoi_dong__ky=ky_hien_tai,
+            hoi_dong__trang_thai=2
         ).select_related('hoi_dong').first()
         if hd_sv:
             hoi_dong = hd_sv.hoi_dong
@@ -255,11 +256,17 @@ def xem_diem(request):
     except (NguoiDung.DoesNotExist, SinhVien.DoesNotExist):
         return render(request, 'SinhVien/xem_diem.html', {'error': 'Không tìm thấy hồ sơ'})
 
+    # Kiểm tra trạng thái CÔNG BỐ ĐIỂM của kỳ hiện tại
+    is_published = False
+    if ky_hien_tai and ky_hien_tai.cong_bo_diem == 2:
+        is_published = True
+
     context = {
         'current_page': 'xem_diem',
         'sinh_vien': sinh_vien,
-        'diem_tong_ket': diem_tong_ket,
-        'thong_tin_thuc_tap': thong_tin_thuc_tap
+        'diem_tong_ket': diem_tong_ket if is_published else "",
+        'thong_tin_thuc_tap': thong_tin_thuc_tap,
+        'is_published': is_published
     }
     return render(request, 'SinhVien/xem_diem.html', context)
 

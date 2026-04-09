@@ -95,9 +95,7 @@
                 <td class="py-4 text-center">
                     {% if is_in_time %}
 
-                    <form method="POST"
-                          action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
-                          onsubmit="handleSubmit(event, this)"
+                    <form method="POST" action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
                           class="flex justify-center items-center gap-2">
 
                         {% csrf_token %}
@@ -170,18 +168,20 @@ function handleSubmit(e, form) {
             'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
         }
     })
-    .then(res => {
+    .then(async res => {
+        const data = await res.json();
         if (res.ok) {
             input.value = value;
-
             // highlight nhẹ
             input.classList.add("border-green-500", "bg-green-50");
-
             setTimeout(() => {
                 input.classList.remove("bg-green-50");
             }, 800);
+        } else {
+            alert(data.message || "Lỗi khi lưu điểm");
         }
-    });
+    })
+    .catch(err => alert("Lỗi kết nối máy chủ"));
 }
 </script>
 

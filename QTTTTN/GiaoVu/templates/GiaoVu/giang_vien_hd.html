@@ -5,6 +5,105 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'GiaoVu/css/giang_vien_hd.css' %}">
+<style>
+    .page-container {
+        padding: 1.5rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    .page-header {
+        margin-bottom: 2rem;
+    }
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.025em;
+    }
+
+    /* Filters & Actions */
+    .filter-card {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 1rem 1rem 0 0;
+        border: 1px solid #e2e8f0;
+        border-bottom: none;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 1rem;
+    }
+    .filter-label {
+        font-weight: 600;
+        font-size: 0.8125rem;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .filter-select {
+        padding: 0.625rem 2.5rem 0.625rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.625rem;
+        background-color: #f8fafc;
+        color: #0f172a;
+        font-weight: 500;
+        font-size: 0.875rem;
+        outline: none;
+        appearance: none;
+        cursor: pointer;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1em;
+        min-width: 300px;
+        transition: all 0.2s;
+    }
+    .filter-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+
+    /* Table Styles */
+    .table-container {
+        background: white;
+        border-radius: 0 0 1rem 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+    .data-table th {
+        background: #f8fafc;
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: 0.025em;
+        border-bottom: 2px solid #f1f5f9;
+        white-space: nowrap;
+    }
+    .data-table td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        vertical-align: middle;
+    }
+    .data-table tr:hover td {
+        background-color: #fbfcfd;
+    }
+    .tag-gvhd {
+        color: #0f172a;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-block;
+        white-space: nowrap;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -25,25 +124,42 @@
         </form>
     </div>
 
-    <!-- Danh sách thẻ giảng viên -->
-    <div class="card-grid">
-        {% if ds_phan_cong %}
-            {% for item in ds_phan_cong %}
-            <div class="gv-card" onclick="window.location.href='{% url 'GiaoVu:chi_tiet_gvhd' item.giang_vien.ma_gv %}?ky_id={{ selected_ky_id|default:'' }}'">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div class="gv-name">{{ item.giang_vien.ho_ten }}</div>
-                    <span class="gv-count">{{ item.so_luong }} SV</span>
-                </div>
-                <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #e2e8f0; text-align: right;">
-                    <span style="font-size: 0.875rem; color: #3b82f6; font-weight: 600;">Xem chi tiết &rarr;</span>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: #94a3b8; background: white; border-radius: 0.75rem; border: 1px dashed #cbd5e1;">
-                Hiện tại chưa có dữ liệu phân công giảng viên hướng dẫn cho kỳ này.
-            </div>
-        {% endif %}
+    <!-- Bảng danh sách sinh viên -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 140px;">Mã sinh viên</th>
+                    <th>Họ và tên</th>
+                    <th>Lớp</th>
+                    <th>Giảng viên hướng dẫn</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if ds_sinh_vien %}
+                    {% for item in ds_sinh_vien %}
+                    <tr>
+                        <td style="font-weight: 700; color: #0f172a;">{{ item.ma_sv }}</td>
+                        <td style="font-weight: 600;">{{ item.ho_ten }}</td>
+                        <td style="color: #64748b; font-weight: 500;">{{ item.lop }}</td>
+                        <td>
+                            {% if item.ten_gvhd %}
+                                <span class="tag-gvhd">{{ item.ten_gvhd }}</span>
+                            {% else %}
+                                <span style="color: #94a3b8; font-style: italic;">Chưa phân công</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 4rem 1rem; color: #94a3b8;">
+                            Hiện tại chưa có dữ liệu phân công giảng viên hướng dẫn cho kỳ này.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

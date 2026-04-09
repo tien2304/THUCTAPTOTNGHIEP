@@ -1,0 +1,112 @@
+<!-- Header Hội đồng -->
+<div class="mb-6 p-6 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl text-white shadow-lg">
+    <div class="flex justify-between items-start">
+        <div>
+            <h2 class="text-2xl font-black">{{ hoidong.ten_hoi_dong }}</h2>
+            <div class="flex items-center gap-4 mt-2 text-blue-100 text-sm font-bold">
+                <span class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2" stroke-linecap="round"/></svg>
+                    {{ hoidong.ngay_bao_ve|date:"d/m/Y" }}
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-width="2"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/></svg>
+                    {{ hoidong.dia_diem }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 gap-6">
+    <!-- GIẢNG VIÊN -->
+    <div class="bg-gray-50/50 rounded-3xl border border-gray-100 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xs font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                Giảng viên trong hội đồng
+            </h3>
+            <button onclick="openModal('modal-gv')" class="text-[10px] font-bold text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                + Thêm GV
+            </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {% for item in ds_giang_vien %}
+            <div class="flex items-center gap-3 p-3 rounded-2xl bg-white border border-gray-50 hover:border-indigo-100 transition-all group">
+                <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-sm">
+                    {{ item.giang_vien.ho_ten|slice:":1" }}
+                </div>
+                <div class="flex-grow min-w-0">
+                    <div class="font-bold text-gray-900 truncate text-sm">{{ item.giang_vien.ho_ten }}</div>
+                    <div class="text-[10px] text-indigo-400 font-bold uppercase truncate">{{ item.giang_vien.hoc_vi }}</div>
+                </div>
+                <button onclick="removeItem('{{ hoidong.id }}', '{{ item.giang_vien.ma_gv }}', 'gv')" class="text-gray-200 hover:text-red-500 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </div>
+            {% empty %}
+            <div class="col-span-2 py-8 text-center text-gray-400 text-xs italic">Chưa có giảng viên.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- SINH VIÊN -->
+    <div class="bg-gray-50/50 rounded-3xl border border-gray-100 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xs font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Sinh viên bảo vệ
+            </h3>
+            <button onclick="openModal('modal-sv')" class="text-[10px] font-bold text-emerald-600 bg-white border border-emerald-100 px-3 py-1.5 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                + Thêm SV
+            </button>
+        </div>
+        <div class="grid grid-cols-1 gap-3">
+            {% for item in ds_sinh_vien %}
+            <div class="flex items-center gap-3 p-3 rounded-2xl bg-white border border-gray-50 hover:border-emerald-100 transition-all group">
+                <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-sm">
+                    {{ item.sinh_vien.ho_ten|slice:":1" }}
+                </div>
+                <div class="flex-grow min-w-0">
+                    <div class="font-bold text-gray-900 truncate text-sm">{{ item.sinh_vien.ho_ten }}</div>
+                    <div class="text-[10px] text-gray-400 font-bold truncate">{{ item.sinh_vien.ma_sv }} • {{ item.sinh_vien.lop }}</div>
+                    <div class="text-[10px] text-gray-500 italic mt-0.5 truncate">{{ item.sinh_vien.ten_de_tai|default:"Chưa có đề tài" }}</div>
+                </div>
+                <button onclick="removeItem('{{ hoidong.id }}', '{{ item.sinh_vien.ma_sv }}', 'sv')" class="text-gray-200 hover:text-red-500 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </div>
+            {% empty %}
+            <div class="py-8 text-center text-gray-400 text-xs italic">Chưa có sinh viên.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal content update helpers (using hidden divs to pass data to main page modals) -->
+<div id="new-available-gv" class="hidden">
+    {% for gv in available_gv %}
+    <button onclick="addItem('{{ hoidong.id }}', '{{ gv.ma_gv }}', 'gv')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left transition-colors">
+        <div class="w-8 h-8 bg-indigo-50 text-indigo-500 rounded-lg flex items-center justify-center font-bold text-xs">{{ gv.ho_ten|slice:":1" }}</div>
+        <div>
+            <div class="text-sm font-bold text-gray-900">{{ gv.ho_ten }}</div>
+            <div class="text-[10px] text-gray-400 uppercase font-bold">{{ gv.ma_gv }} • {{ gv.hoc_vi }}</div>
+        </div>
+    </button>
+    {% empty %}
+    <p class="text-center text-gray-400 text-sm py-4">Tất cả giảng viên đã có mặt.</p>
+    {% endfor %}
+</div>
+
+<div id="new-available-sv" class="hidden">
+    {% for sv in available_sv %}
+    <button onclick="addItem('{{ hoidong.id }}', '{{ sv.ma_sv }}', 'sv')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left transition-colors">
+        <div class="w-8 h-8 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center font-bold text-xs">{{ sv.ho_ten|slice:":1" }}</div>
+        <div>
+            <div class="text-sm font-bold text-gray-900">{{ sv.ho_ten }}</div>
+            <div class="text-[10px] text-gray-400 uppercase font-bold">{{ sv.ma_sv }} • {{ sv.lop }}</div>
+        </div>
+    </button>
+    {% empty %}
+    <p class="text-center text-gray-400 text-sm py-4">Hiện không còn sinh viên trống lịch.</p>
+    {% endfor %}
+</div>
