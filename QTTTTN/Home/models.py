@@ -42,16 +42,14 @@ class GiangVien(models.Model):
     hoc_vi = models.CharField(max_length=100, choices=HOC_VI_CHOICES, default='Thạc sĩ')
     chuyen_mon = models.CharField(max_length=500) # Lưu chuỗi các chuyên môn ghép lại
     so_dien_thoai = models.CharField(max_length=15, null=True, blank=True)
-
+    cong_bo_diem = models.BooleanField(default=False)
     def __str__(self):
         return self.ho_ten
 class KyThucTap(models.Model):
     ten_ky = models.CharField(max_length=255)
     ngay_bat_dau = models.DateField()
     ngay_ket_thuc = models.DateField()
-    gv_phu_trach = models.ForeignKey(GiangVien, on_delete=models.SET_NULL, null=True)
     cong_bo_diem = models.IntegerField(default=1) # 1: Chưa công bố, 2: Đã công bố
-
     def __str__(self):
         return self.ten_ky
 class SinhVien(models.Model):

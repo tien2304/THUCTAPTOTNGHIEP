@@ -207,7 +207,6 @@ def update_sinh_vien_info(request, ma_sv):
 
     sv.save()
     return redirect("GiangVien:sinhvien_huongdan")
-import json
 
 def get_is_gvpt(request):
     ma_gv = request.user.username

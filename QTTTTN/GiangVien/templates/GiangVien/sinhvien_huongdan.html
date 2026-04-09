@@ -20,36 +20,39 @@
         <h3 class="font-semibold text-gray-700">Danh sách Sinh viên Hướng dẫn</h3>
 
         <div class="flex gap-3">
+
+            <!-- ✅ SEARCH -->
             <form method="GET" class="flex gap-3">
 
-    <!-- giữ ky khi search -->
-    <input type="hidden" name="ky" value="{{ current_ky.id|default:'' }}">
+                <!-- giữ ky khi search -->
+                <input type="hidden" name="ky" value="{{ current_ky.id|default:'' }}">
 
-    <input type="text" name="q"
-           value="{{ query }}"
-           placeholder="🔍 Tìm theo mã SV, tên, lớp..."
-           class="border border-gray-300 px-4 py-2 rounded-xl text-sm w-72 focus:outline-none focus:border-blue-500">
+                <input type="text" name="q"
+                       value="{{ query|default:'' }}"
+                       placeholder="🔍 Tìm theo tên, lớp"
+                       class="border border-gray-300 px-4 py-2 rounded-xl text-sm w-52 focus:outline-none focus:border-blue-500">
 
-    <button type="submit"
-            class="bg-blue-500 text-white px-4 py-2 rounded-xl text-sm">
-        Tìm
-    </button>
+                <button type="submit"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-xl text-sm">
+                    Tìm
+                </button>
 
-</form>
+            </form>
 
             <!-- ✅ FILTER KỲ -->
             <select onchange="filterKy(this)"
-        class="border border-gray-300 px-4 py-2 rounded-xl text-sm">
+                    class="border border-gray-300 px-4 py-2 rounded-xl text-sm">
 
-    <option value="">Tất cả học kỳ</option>
+                <option value="">Tất cả học kỳ</option>
 
-    {% for ky in ky_list %}
-        <option value="{{ ky.id }}"
-            {% if current_ky and ky.id == current_ky.id %}selected{% endif %}>
-            {{ ky.ten_ky }}
-        </option>
-    {% endfor %}
-</select>
+                {% for ky in ky_list %}
+                    <option value="{{ ky.id }}"
+                        {% if current_ky and ky.id == current_ky.id %}selected{% endif %}>
+                        {{ ky.ten_ky }}
+                    </option>
+                {% endfor %}
+            </select>
+
         </div>
     </div>
 
@@ -67,7 +70,6 @@
         <tbody class="divide-y">
 
         {% for item in danh_sach %}
-        <!-- ✅ ĐẶT data-ky ĐÚNG CHỖ -->
         <tr class="hover:bg-gray-50 transition-all"
             data-ky="{{ item.sinh_vien.ky_hien_tai.id }}">
 
@@ -111,13 +113,13 @@
 
                         <button type="button"
                                 onclick="saveRow(this)"
-                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-sm">
+                                class="bg-blue-500 hover:bg-blue-500 text-white px-3 py-2 rounded-xl text-xs">
                             Lưu
                         </button>
                     </form>
 
                     <a href="{% url 'GiangVien:chi_tiet_sv' item.sinh_vien.ma_sv %}"
-                       class="text-blue-600 hover:text-blue-700 text-sm">
+                       class="text-blue-600 hover:text-blue-700 text-xs whitespace-nowrap">
                         Xem bài nộp →
                     </a>
                 </div>
@@ -133,26 +135,24 @@
 </div>
 
 <script>
-// FILTER THEO KỲ
-
-document.getElementById("kyFilter").addEventListener("change", function () {
-    const kyId = this.value;
-    const rows = document.querySelectorAll("#studentTable tbody tr");
-
-    rows.forEach(row => {
-        const ky = row.getAttribute("data-ky");
-        row.style.display = (!kyId || ky === kyId) ? "" : "none";
-    });
-});
+// ✅ FILTER KỲ + GIỮ SEARCH
 function filterKy(select) {
-    const kyId = select.value;
+    const kyId = select.value;          // "" nếu chọn Tất cả
+    const query = new URLSearchParams(window.location.search).get("q") || "";
 
-    if (kyId) {
-        window.location.href = `?ky=${kyId}`;
-    } else {
-        window.location.href = window.location.pathname;
+    let url = "{{ request.path }}?";
+
+    if (kyId) {                         // Chỉ thêm ky nếu có giá trị
+        url += "ky=" + kyId;
     }
+
+    if (query) {
+        url += (kyId ? "&" : "") + "q=" + encodeURIComponent(query);
+    }
+
+    window.location.href = url || "{{ request.path }}";
 }
+
 // SAVE
 function saveRow(btn) {
     const row = btn.closest('tr');
