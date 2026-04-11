@@ -139,14 +139,14 @@
                     });
                 </script>
             {% else %}
-            <div class="alert alert-{{ message.tags }}">
-                <span class="alert-icon">
+            <div class="alert alert-{{ message.tags }}" style="display: flex; align-items: center; padding: 12px 18px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; font-weight: 500; {% if message.tags == 'success' %} background-color: #ecfdf5; color: #065f46; border: 1px solid #10b98140; {% elif message.tags == 'error' or message.tags == 'danger' %} background-color: #fef2f2; color: #b91c1c; border: 1px solid #f8717140; {% endif %}">
+                <span class="alert-icon" style="margin-right: 12px; display: flex; align-items: center;">
                     {% if message.tags == 'success' %}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
                         <path d="M20 6L9 17l-5-5" />
                     </svg>
                     {% else %}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -154,7 +154,7 @@
                     {% endif %}
                 </span>
                 <span class="alert-text">{{ message }}</span>
-                <button class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
+                <button class="alert-close" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 20px; color: inherit; cursor: pointer; opacity: 0.5; margin-left: auto; padding: 0 5px;">&times;</button>
             </div>
             {% endif %}
             {% endfor %}

@@ -356,7 +356,7 @@ def edit_form(request, public_id):
                     break
                 
                 # Kiểm tra rows (Tiêu chí)
-                old_rows = list(old_q.tieuchidanhgia_set.all().order_by('id'))
+                old_rows = list(old_q.tieuchi.all().order_by('id'))
                 new_rows = q.get("rows", [])
                 if len(old_rows) != len([r for r in new_rows if r.get("text")]):
                     is_changed = True
@@ -385,7 +385,7 @@ def edit_form(request, public_id):
             
             messages.warning(request, "Đã cập nhật câu hỏi và reset danh sách bài nộp để sinh viên điền lại.")
         else:
-            messages.success(request, "Đã cập nhật thông tin form thành công (Câu hỏi không đổi, bảo lưu bài nộp).")
+            messages.success(request, "Đã cập nhật thông tin form thành công.")
 
         return redirect("GiangVien:edit_form", public_id=public_id)
 
