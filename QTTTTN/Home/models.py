@@ -208,3 +208,4 @@ class TaiLieu(models.Model):
     duong_dan_file = models.FileField(upload_to='documents/')
     ngay_cap_nhat = models.DateTimeField(auto_now=True)
     gv_dang = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
+# Chốt rồi đó nghe bây

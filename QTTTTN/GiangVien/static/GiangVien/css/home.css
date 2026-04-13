@@ -244,3 +244,85 @@ svg {
     min-height: 100vh;
     padding: 24px 32px;
 }
+
+/* =============================================
+   MESSAGES & ALERTS
+   ============================================= */
+.message-container {
+    max-width: 1000px;
+    margin: 0 auto 24px;
+}
+
+.alert {
+    display: flex;
+    align-items: center;
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    animation: slideDown 0.4s ease;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.alert-icon {
+    margin-right: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.alert-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.alert-text {
+    flex: 1;
+}
+
+.alert-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.5;
+    margin-left: 10px;
+    padding: 0 5px;
+}
+
+.alert-close:hover {
+    opacity: 1;
+}
+
+/* Alert Variants */
+.alert-success {
+    background-color: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #10b98140;
+}
+
+.alert-error, .alert-danger {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #f8717140;
+}
+
+.alert-warning {
+    background-color: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fbbf2440;
+}
+
+.alert-info {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #60a5fa40;
+}

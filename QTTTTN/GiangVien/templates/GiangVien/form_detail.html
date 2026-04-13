@@ -35,13 +35,13 @@
 
             {% if q.loai_cau_hoi == "LIKERT" %}
                 <div class="mt-3 space-y-2">
-                    {% for tc in q.tieuchidanhgia_set.all %}
+                    {% for tc in q.tieuchi.all %}
                         <div>{{ tc.noi_dung }} (1-5)</div>
                     {% endfor %}
                 </div>
             {% else %}
                 <ul class="mt-2 text-gray-600">
-                    {% for op in q.luachon_set.all %}
+                    {% for op in q.options.all %}
                         <li>• {{ op.noi_dung_option }}</li>
                     {% endfor %}
                 </ul>
