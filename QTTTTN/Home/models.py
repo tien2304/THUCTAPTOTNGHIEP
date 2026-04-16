@@ -42,7 +42,6 @@ class GiangVien(models.Model):
     hoc_vi = models.CharField(max_length=100, choices=HOC_VI_CHOICES, default='Thạc sĩ')
     chuyen_mon = models.CharField(max_length=500) # Lưu chuỗi các chuyên môn ghép lại
     so_dien_thoai = models.CharField(max_length=15, null=True, blank=True)
-    cong_bo_diem = models.BooleanField(default=False)
     def __str__(self):
         return self.ho_ten
 class KyThucTap(models.Model):
@@ -72,14 +71,11 @@ class MauKhaoSat(models.Model):
         editable=False,
         unique=True
     )
-
     ngay_bat_dau = models.DateField(null=True, blank=True)
     ngay_ket_thuc = models.DateField(null=True, blank=True)
-
     def __str__(self):
         return self.ten_form
 class CauHoi(models.Model):
-
     LOAI_CHOICES = [
         ('TEXT', 'Câu hỏi ngắn'),
         ('RADIO', 'Trắc nghiệm'),
@@ -94,12 +90,9 @@ class CauHoi(models.Model):
     system_tag = models.CharField(max_length=50, null=True, blank=True)  # sv_mssv, sv_hoten, nganh_hoc, diem_dn
     thu_tu = models.IntegerField(default=0)
 class TieuChiDanhGia(models.Model):
-
     cau_hoi = models.ForeignKey(CauHoi,related_name="tieuchi",on_delete=models.CASCADE)
     noi_dung = models.CharField(max_length=255)
-
 class LuaChon(models.Model):
-
     cau_hoi = models.ForeignKey(CauHoi,related_name="options",on_delete=models.CASCADE)
     noi_dung_option = models.CharField(max_length=255)
 class PhieuTraLoi(models.Model):
@@ -116,8 +109,7 @@ class PhanCongGVHD(models.Model):
     giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ngay_phan_cong = models.DateTimeField(auto_now_add=True)
-    trang_thai = models.IntegerField(default=1)  # 1: Chờ duyệt, 2: Đã phê duyệt, 3: Bị từ chối
-    ly_do_tu_choi = models.TextField(blank=True, null=True)
+    trang_thai = models.IntegerField(default=1)  # 1: Chờ duyệt, 2: Đã phê duyệt
 class PhanCongGVPT(models.Model):
     giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
@@ -129,8 +121,6 @@ class TyLeDiem(models.Model):
     diem_gvhd = models.FloatField(default=0.4)
     diem_hoidong = models.FloatField(default=0.4)
     diem_doanhnghiep = models.FloatField(default=0.2)
-
-
 class BangDiem(models.Model):
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
@@ -138,7 +128,6 @@ class BangDiem(models.Model):
     diem_doanh_nghiep = models.FloatField(null=True, blank=True)    # Lấy từ system_tag='diem_dn'
     diem_bao_cao = models.FloatField(null=True, blank=True)         # Hội đồng nhập
     diem_tong_ket = models.FloatField(null=True, blank=True)
-
     class Meta:
         unique_together = ('sinh_vien', 'ky')
 
@@ -175,13 +164,12 @@ class BaiNop(models.Model):
     thoi_gian_nop = models.DateTimeField(auto_now_add=True)
     trang_thai = models.CharField(max_length=50)
     nhan_xet = models.TextField(blank=True, null=True)
-
 class HoiDong(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ten_hoi_dong = models.CharField(max_length=255)
-    thoi_gian_bat_dau = models.DateTimeField()
-    thoi_gian_ket_thuc = models.DateTimeField()
-    dia_diem = models.CharField(max_length=255)
+    thoi_gian_bat_dau = models.TimeField(null=True, blank=True)
+    thoi_gian_ket_thuc = models.TimeField(null=True, blank=True)
+    dia_diem = models.CharField(max_length=255, null=True, blank=True)
     ngay_bao_ve = models.DateField()
     trang_thai = models.IntegerField(default=1)  # 1: Chờ duyệt, 2: Đã phê duyệt
 class ChamDiemHoiDong(models.Model):
@@ -189,7 +177,6 @@ class ChamDiemHoiDong(models.Model):
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
     giang_vien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     diem = models.FloatField()
-
     class Meta:
             unique_together = ('hoi_dong', 'sinh_vien', 'giang_vien')
 class HoiDong_GiangVien(models.Model):
@@ -198,7 +185,6 @@ class HoiDong_GiangVien(models.Model):
 class HoiDong_SinhVien(models.Model):
     hoi_dong = models.ForeignKey(HoiDong, on_delete=models.CASCADE)
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
-
     class Meta:
         unique_together = ('sinh_vien', 'hoi_dong')
 class TaiLieu(models.Model):
@@ -208,4 +194,3 @@ class TaiLieu(models.Model):
     duong_dan_file = models.FileField(upload_to='documents/')
     ngay_cap_nhat = models.DateTimeField(auto_now=True)
     gv_dang = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
-# Chốt rồi đó nghe bây

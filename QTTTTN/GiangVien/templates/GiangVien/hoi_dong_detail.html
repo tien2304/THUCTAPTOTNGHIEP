@@ -94,26 +94,27 @@
                 <!-- ĐIỂM -->
                 <td class="py-4 text-center">
                     {% if is_in_time %}
+                    <!-- Thay form cũ bằng cái này -->
+<form method="POST"
+      action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
+      class="diem-form flex justify-center items-center gap-2"
+      data-sv="{{ item.sv.ma_sv }}">
 
-                    <form method="POST" action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
-                          class="flex justify-center items-center gap-2">
+    {% csrf_token %}
 
-                        {% csrf_token %}
+    <input type="number"
+           step="0.1"
+           min="0"
+           max="10"
+           name="diem"
+           value="{{ item.diem|default_if_none:'' }}"
+           class="border border-gray-300 focus:border-blue-500 px-3 py-2 rounded-xl w-24 text-center font-medium">
 
-                        <input type="number"
-                               step="0.1"
-                               min="0"
-                               max="10"
-                               name="diem"
-                               value="{{ item.diem|default_if_none:'' }}"
-                               class="border border-gray-300 focus:border-blue-500 px-3 py-2 rounded-xl w-24 text-center font-medium">
-
-                        <button type="submit"
-                                class="px-3 py-2 text-sm rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
-                            Lưu
-                        </button>
-
-                    </form>
+    <button type="submit"
+            class="px-3 py-2 text-sm rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
+        Lưu
+    </button>
+</form>
 
                     {% else %}
                         {% if item.diem is not None %}
@@ -154,34 +155,62 @@ function showTab(type) {
     }
 }
 
-// SAVE ĐIỂM KHÔNG RELOAD + VẪN SỬA ĐƯỢC
-function handleSubmit(e, form) {
-    e.preventDefault();
+// ==================== AJAX CHẤM ĐIỂM (SỬA LẠI) ====================
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.diem-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
 
-    const input = form.querySelector('input[name="diem"]');
-    const value = input.value;
+            const url = this.action; // ✅ LẤY URL ĐÚNG TỪ FORM
+            const input = this.querySelector('input[name="diem"]');
+            const diemValue = input.value.trim();
+            const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    fetch(form.action, {
-        method: "POST",
-        body: new FormData(form),
-        headers: {
-            'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
-        }
-    })
-    .then(async res => {
-        const data = await res.json();
-        if (res.ok) {
-            input.value = value;
-            // highlight nhẹ
-            input.classList.add("border-green-500", "bg-green-50");
-            setTimeout(() => {
-                input.classList.remove("bg-green-50");
-            }, 800);
-        } else {
-            alert(data.message || "Lỗi khi lưu điểm");
-        }
-    })
-    .catch(err => alert("Lỗi kết nối máy chủ"));
+            if (!diemValue) {
+                alert("Vui lòng nhập điểm (0-10)");
+                input.focus();
+                return;
+            }
+
+            fetch(url, {   // ✅ KHÔNG HARDCODE URL
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `diem=${encodeURIComponent(diemValue)}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    input.classList.add('border-green-500');
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Lỗi server", 'error');
+            });
+        });
+    });
+});
+
+// Toast (giữ nguyên hoặc dùng lại của bạn)
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-5 right-5 px-6 py-3 rounded-xl shadow-lg text-white text-sm z-50 ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.transition = 'opacity 0.4s';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+    }, 2500);
 }
 </script>
 
