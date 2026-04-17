@@ -11,7 +11,7 @@
     <div class="flex gap-6 text-gray-500 mt-3 text-sm">
         <span>{{ hoidong.ngay_bao_ve }}</span>
         <span>{{ hoidong.thoi_gian_bat_dau|date:"H:i" }} - {{ hoidong.thoi_gian_ket_thuc|date:"H:i" }}</span>
-        <span>📍 {{ hoidong.dia_diem }}</span>
+        <span> {{ hoidong.dia_diem }}</span>
     </div>
 </div>
 
@@ -19,15 +19,16 @@
 <div class="bg-white rounded-xl shadow p-6">
 
     <div class="flex gap-6 border-b mb-6">
-        <button onclick="showTab('gv')" id="tab-gv"
-                class="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">
-            Thành viên Hội đồng
-        </button>
-        <button onclick="showTab('sv')" id="tab-sv"
-                class="pb-2 text-gray-500">
-            Danh sách Sinh viên
-        </button>
-    </div>
+    <button onclick="showTab('gv')" id="tab-gv"
+        class="pb-2 border-b-2 border-transparent text-gray-500 transition-all">
+        Thành viên Hội đồng
+    </button>
+
+    <button onclick="showTab('sv')" id="tab-sv"
+        class="pb-2 border-b-2 border-transparent text-gray-500 transition-all">
+        Danh sách Sinh viên
+    </button>
+</div>
 
     <!-- GIẢNG VIÊN -->
     <div id="tab-content-gv">
@@ -140,20 +141,38 @@
 <script>
 // TAB SWITCH
 function showTab(type) {
-    document.getElementById("tab-content-gv").classList.add("hidden");
-    document.getElementById("tab-content-sv").classList.add("hidden");
+    const tabGV = document.getElementById("tab-gv");
+    const tabSV = document.getElementById("tab-sv");
 
-    document.getElementById("tab-gv").classList.remove("border-blue-600", "text-blue-600");
-    document.getElementById("tab-sv").classList.remove("border-blue-600", "text-blue-600");
+    const contentGV = document.getElementById("tab-content-gv");
+    const contentSV = document.getElementById("tab-content-sv");
 
+    // Ẩn hết
+    contentGV.classList.add("hidden");
+    contentSV.classList.add("hidden");
+
+    // reset style cả 2 tab
+    [tabGV, tabSV].forEach(tab => {
+        tab.classList.remove("text-blue-600", "border-blue-600", "font-semibold");
+        tab.classList.add("text-gray-500", "border-transparent");
+    });
+
+    // bật tab được chọn
     if (type === "gv") {
-        document.getElementById("tab-content-gv").classList.remove("hidden");
-        document.getElementById("tab-gv").classList.add("border-blue-600", "text-blue-600");
+        contentGV.classList.remove("hidden");
+
+        tabGV.classList.remove("text-gray-500", "border-transparent");
+        tabGV.classList.add("text-blue-600", "border-blue-600", "font-semibold");
     } else {
-        document.getElementById("tab-content-sv").classList.remove("hidden");
-        document.getElementById("tab-sv").classList.add("border-blue-600", "text-blue-600");
+        contentSV.classList.remove("hidden");
+
+        tabSV.classList.remove("text-gray-500", "border-transparent");
+        tabSV.classList.add("text-blue-600", "border-blue-600", "font-semibold");
     }
 }
+document.addEventListener("DOMContentLoaded", function() {
+    showTab('gv'); // mặc định tab giảng viên
+});
 
 // ==================== AJAX CHẤM ĐIỂM (SỬA LẠI) ====================
 document.addEventListener('DOMContentLoaded', function() {
