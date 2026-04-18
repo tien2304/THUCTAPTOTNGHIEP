@@ -24,36 +24,37 @@
     border: 1px solid #e2e8f0;
     border-bottom: none;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-end;
+    gap: 1.25rem;
 }
 .filter-group {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.375rem;
 }
 .filter-label {
-    font-weight: 500;
-    font-size: 0.8125rem;
-    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.375rem;
 }
 .filter-select {
     padding: 0.5rem 2rem 0.5rem 1rem;
+    background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 0.625rem;
-    background-color: #f8fafc;
-    color: #0f172a;
-    font-weight: 400;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
+    color: #1e293b;
     outline: none;
-    appearance: none;
+    transition: all 0.2s;
     cursor: pointer;
+    appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 1em;
-    min-width: 250px;
 }
 
 /* Table Styles */
@@ -224,4 +225,61 @@
     color: #2563eb;
     min-width: 1.5rem;
     text-align: right;
+}
+/* Stats Horizontal Layout */
+.stats-horizontal-container {
+    background: white;
+    padding: 1.25rem 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.stats-panel-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #64748b;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.stats-list-horizontal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.stats-item-h {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0.4rem 1rem;
+    border-radius: 9999px;
+    gap: 0.75rem;
+    transition: all 0.2s;
+}
+
+.stats-item-h:hover {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+}
+
+.stats-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.stats-count {
+    background: #dbeafe;
+    color: #2563eb;
+    font-weight: 800;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    min-width: 1.5rem;
+    text-align: center;
 }

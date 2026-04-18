@@ -18,6 +18,7 @@ path('tao-form/<uuid:public_id>/', views.edit_form, name='edit_form'),
 
 path('phan-cong/', views.phan_cong_dashboard, name='phan_cong'),
 path('phan-cong/update/', views.update_phan_cong, name='update_phan_cong'),
+path('phan-cong/bulk-update/', views.bulk_update_phan_cong, name='bulk_update_phan_cong'),
 path('xoa-form/<uuid:public_id>/', views.xoa_form, name='xoa_form'),
 
 

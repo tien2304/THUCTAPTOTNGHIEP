@@ -178,7 +178,7 @@
             <input type="hidden" name="ky_id" value="{{ ky.id|default:'' }}">
             <input type="hidden" name="ma_gv" value="{{ giang_vien.ma_gv }}">
             <input type="hidden" name="action" value="reject">
-            <textarea name="ly_do_tu_choi" rows="4" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem; font-family: inherit; margin-bottom: 1.5rem;" placeholder="Nhập lý do chi tiết..." required></textarea>
+            <p style="margin-bottom: 1.5rem; color: #475569;">Bạn có chắc chắn muốn TỪ CHỐI toàn bộ phân công của giảng viên này không?</p>
             <div style="display: flex; justify-content: flex-end; gap: 1rem;">
                 <button type="button" onclick="document.getElementById('rejectModal').style.display='none'" style="background: white; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500;">Hủy</button>
                 <button type="submit" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Xác nhận từ chối</button>

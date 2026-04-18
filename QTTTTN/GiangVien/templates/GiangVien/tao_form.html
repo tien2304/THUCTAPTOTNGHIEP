@@ -7,80 +7,89 @@
 <div class="mt-4 mb-6 sticky top-0 bg-white z-10 pt-2">
     {% if is_edit %}
     <div class="flex border-b border-gray-200 w-full justify-center gap-2 pb-2">
-        <button id="tab-btn-cau-hoi" type="button" onclick="switchTab('cau-hoi')" class="px-6 py-2 font-semibold text-blue-600 border border-gray-900 rounded-sm transition-colors">Câu hỏi</button>
-        <button id="tab-btn-cau-tra-loi" type="button" onclick="switchTab('cau-tra-loi')" class="px-6 py-2 font-medium text-gray-500 rounded-sm hover:text-gray-700 transition-colors">Câu trả lời</button>
+        <button id="tab-btn-cau-hoi" type="button" onclick="switchTab('cau-hoi')"
+            class="px-6 py-2 font-semibold text-blue-600 border border-gray-900 rounded-sm transition-colors">Câu
+            hỏi</button>
+        <button id="tab-btn-cau-tra-loi" type="button" onclick="switchTab('cau-tra-loi')"
+            class="px-6 py-2 font-medium text-gray-500 rounded-sm hover:text-gray-700 transition-colors">Câu trả
+            lời</button>
     </div>
     {% endif %}
 </div>
 <div id="tab-content-cau-hoi">
-<div class="form-container">
-    <div class="flex-1">
-        <form method="POST" id="saveForm">
-            {% csrf_token %}
-            <input type="hidden" name="form_data" id="formData">
+    <div class="form-container">
+        <div class="flex-1">
+            <form method="POST" id="saveForm">
+                {% csrf_token %}
+                <input type="hidden" name="form_data" id="formData">
 
-            <div class="form-header-section">
-                <input type="text" id="form_name" value="{{ form.ten_form|default:'' }}"
-                    class="w-full text-3xl outline-none border-b-2 border-transparent focus:border-gray-200 pb-2 font-medium"
-                    placeholder="Tiêu đề biểu mẫu">
-            </div>
+                <div class="form-header-section">
+                    <input type="text" id="form_name" value="{{ form.ten_form|default:'' }}"
+                        class="w-full text-3xl outline-none border-b-2 border-transparent focus:border-gray-200 pb-2 font-medium"
+                        placeholder="Tiêu đề biểu mẫu">
+                </div>
 
-            <div class="config-card">
-                <div class="grid grid-cols-3 gap-6">
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">KỲ THỰC TẬP</label>
-                        <select id="ky_thuc_tap" class="w-full border rounded p-2 text-sm bg-white outline-none focus:border-blue-500">
-                            {% if danh_sach_ky %}
+                <div class="config-card">
+                    <div class="grid grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">KỲ THỰC TẬP</label>
+                            <select id="ky_thuc_tap"
+                                class="w-full border rounded p-2 text-sm bg-white outline-none focus:border-blue-500">
+                                {% if danh_sach_ky %}
                                 {% for ky in danh_sach_ky %}
-                                    <option value="{{ ky.id }}" {% if forloop.first %}selected{% endif %}>
-                                        {{ ky.ten_ky }} {% if forloop.first %} {% endif %}
-                                    </option>
+                                <option value="{{ ky.id }}" {% if forloop.first %}selected{% endif %}>
+                                    {{ ky.ten_ky }} {% if forloop.first %} {% endif %}
+                                </option>
                                 {% endfor %}
-                            {% else %}
+                                {% else %}
                                 <option value="">(Chưa có kỳ thực tập nào)</option>
-                            {% endif %}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">NGÀY BẮT ĐẦU</label>
-                        <input type="date" id="ngay_bat_dau" class="w-full border rounded p-2 text-sm bg-gray-50 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">NGÀY KẾT THÚC</label>
-                        <input type="date" id="ngay_ket_thuc" class="w-full border rounded p-2 text-sm bg-gray-50 outline-none">
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">NGÀY BẮT ĐẦU</label>
+                            <input type="date" id="ngay_bat_dau"
+                                class="w-full border rounded p-2 text-sm bg-gray-50 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">NGÀY KẾT
+                                THÚC</label>
+                            <input type="date" id="ngay_ket_thuc"
+                                class="w-full border rounded p-2 text-sm bg-gray-50 outline-none">
+                        </div>
                     </div>
                 </div>
+
+                <div id="questions-area" class="space-y-4 pb-32"></div>
+            </form>
+        </div>
+
+        <div class="toolbar-outer">
+            <div class="toolbar-inner">
+                <button type="button" onclick="addQuestion('TEXT')" class="toolbar-btn" title="Thêm câu hỏi">
+                    <span class="material-icons">add_circle_outline</span>
+                </button>
+                <button type="button" onclick="addQuestion('SECTION')" class="toolbar-btn" title="Tiêu đề mục">
+                    <span class="material-icons">title</span>
+                </button>
+                <button type="button" onclick="saveForm()" class="toolbar-btn text-green-600" title="Lưu">
+                    <span class="material-icons">save</span>
+                </button>
+                <div class="border-t border-gray-100 my-1"></div>
+                <button type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="toolbar-btn"
+                    title="Lên đầu trang">
+                    <span class="material-icons text-gray-400">arrow_upward</span>
+                </button>
             </div>
-
-            <div id="questions-area" class="space-y-4 pb-32"></div>
-        </form>
-    </div>
-
-    <div class="toolbar-outer">
-        <div class="toolbar-inner">
-            <button type="button" onclick="addQuestion('TEXT')" class="toolbar-btn" title="Thêm câu hỏi">
-                <span class="material-icons">add_circle_outline</span>
-            </button>
-            <button type="button" onclick="addQuestion('SECTION')" class="toolbar-btn" title="Tiêu đề mục">
-                <span class="material-icons">title</span>
-            </button>
-            <button type="button" onclick="saveForm()" class="toolbar-btn text-green-600" title="Lưu">
-                <span class="material-icons">save</span>
-            </button>
-            <div class="border-t border-gray-100 my-1"></div>
-            <button type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="toolbar-btn" title="Lên đầu trang">
-                <span class="material-icons text-gray-400">arrow_upward</span>
-            </button>
         </div>
     </div>
-</div>
 </div> <!-- ĐÓNG TAB-CONTENT-CAU-HOI Ở ĐÂY -->
 
 {% if is_edit %}
 <div id="tab-content-cau-tra-loi" class="hidden max-w-6xl mx-auto mt-0 pb-20">
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ responses_list|length }} Câu trả lời</h2>
-        
+
         {% if responses_list %}
         <div class="border border-gray-200 rounded-lg overflow-hidden">
             <div class="overflow-x-auto bg-white">
@@ -102,7 +111,7 @@
                             <td class="px-5 py-4 font-medium text-gray-900 whitespace-nowrap">{{ res.ho_ten }}</td>
                             <td class="px-5 py-4 text-gray-500 whitespace-nowrap">{{ res.thoi_gian }}</td>
                             {% for ans in res.answers %}
-                                <td class="px-5 py-4 text-gray-700 leading-relaxed">{{ ans }}</td>
+                            <td class="px-5 py-4 text-gray-700 leading-relaxed">{{ ans }}</td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
@@ -121,9 +130,9 @@
 {% endif %}
 
 <script>
-// TAB LOGIC
-function switchTab(tabId) {
-    const isEdit = {{ is_edit|lower|default:"false" }};
+    // TAB LOGIC
+    function switchTab(tabId) {
+        const isEdit = {{ is_edit|default:False|lower }};
     if (!isEdit) return;
 
     const btnCauHoi = document.getElementById('tab-btn-cau-hoi');
@@ -132,72 +141,72 @@ function switchTab(tabId) {
     if (tabId === 'cau-hoi') {
         document.getElementById('tab-content-cau-hoi').classList.remove('hidden');
         document.getElementById('tab-content-cau-tra-loi').classList.add('hidden');
-        
+
         btnCauHoi.className = 'px-6 py-2 font-semibold text-blue-600 border border-gray-900 rounded-sm transition-colors';
         btnCauTraLoi.className = 'px-6 py-2 font-medium text-gray-500 rounded-sm hover:text-gray-700 transition-colors';
-        
+
         const tb = document.querySelector('.toolbar-outer');
-        if(tb) tb.style.display = 'block';
+        if (tb) tb.style.display = 'block';
     } else {
         document.getElementById('tab-content-cau-hoi').classList.add('hidden');
         document.getElementById('tab-content-cau-tra-loi').classList.remove('hidden');
-        
+
         btnCauTraLoi.className = 'px-6 py-2 font-semibold text-blue-600 border border-gray-900 rounded-sm transition-colors';
         btnCauHoi.className = 'px-6 py-2 font-medium text-gray-500 rounded-sm hover:text-gray-700 transition-colors';
-        
+
         const tb = document.querySelector('.toolbar-outer');
-        if(tb) tb.style.display = 'none';
+        if (tb) tb.style.display = 'none';
     }
 }
 
-// 1. Nhận dữ liệu JSON từ Django truyền xuống
-// Nếu questions_json không có, nó sẽ mặc định là mảng rỗng []
-let questions = {{ questions_json|safe|default:"[]" }};
-let danh_sach_gv = {{ danh_sach_gv_json|safe|default:"[]" }};
+    // 1. Nhận dữ liệu JSON từ Django truyền xuống
+    // Nếu questions_json không có, nó sẽ mặc định là mảng rỗng []
+    let questions = {{ questions_json|default:"[]"|safe }};
+    let danh_sach_gv = {{ danh_sach_gv_json|default:"[]"|safe }};
 
-// 2. Hàm khởi chạy khi trang load xong
-window.onload = function() {
-    if (questions.length === 0) {
-        // Nếu là tạo form mới (mảng rỗng), thêm 1 câu hỏi TEXT mặc định
-        addQuestion('TEXT');
-    } else {
-        // Nếu đã có dữ liệu (chế độ chỉnh sửa), render lại toàn bộ giao diện
-        render();
+    // 2. Hàm khởi chạy khi trang load xong
+    window.onload = function () {
+        if (questions.length === 0) {
+            // Nếu là tạo form mới (mảng rỗng), thêm 1 câu hỏi TEXT mặc định
+            addQuestion('TEXT');
+        } else {
+            // Nếu đã có dữ liệu (chế độ chỉnh sửa), render lại toàn bộ giao diện
+            render();
 
-        // Đổ dữ liệu ngày tháng và kỳ thực tập vào các input
-        {% if form %}
+            // Đổ dữ liệu ngày tháng và kỳ thực tập vào các input
+            {% if form %}
             document.getElementById("ngay_bat_dau").value = "{{ form.ngay_bat_dau|date:'Y-m-d' }}";
             document.getElementById("ngay_ket_thuc").value = "{{ form.ngay_ket_thuc|date:'Y-m-d' }}";
             document.getElementById("ky_thuc_tap").value = "{{ form.ky.id }}";
-        {% endif %}
-    }
-};
-
-// 3. Hàm tìm câu hỏi linh hoạt (hỗ trợ cả id thật từ DB hoặc temp_id tạm thời)
-function findQ(id) {
-    return questions.find(item => (item.temp_id == id || item.id == id));
-}
-
-function addQuestion(type = 'TEXT') {
-    const newQ = {
-        temp_id: Date.now() + Math.random(),
-        title: "",
-        type: type,
-        system_tag: "",
-        rows: type === "LIKERT" ? [{text: "Tiêu chí 1"}] : [],
-        options: ["RADIO", "CHECKBOX", "SELECT"].includes(type) ? [{text: "Tùy chọn 1"}] : []
+            {% endif %}
+        }
     };
-    questions.push(newQ);
-    render();
-}
 
-function render() {
-    let html = "";
-    questions.forEach((q) => {
-        const isSection = q.type === "SECTION";
-        const currentId = q.id || q.temp_id; // Ưu tiên ID từ database nếu có
+    // 3. Hàm tìm câu hỏi linh hoạt (hỗ trợ cả id thật từ DB hoặc temp_id tạm thời)
+    function findQ(id) {
+        return questions.find(item => (item.temp_id == id || item.id == id));
+    }
 
-        html += `
+    function addQuestion(type = 'TEXT') {
+        const newQ = {
+            temp_id: Date.now() + Math.random(),
+            title: "",
+            type: type,
+            system_tag: "",
+            rows: type === "LIKERT" ? [{ text: "Tiêu chí 1" }] : [],
+            options: ["RADIO", "CHECKBOX", "SELECT"].includes(type) ? [{ text: "Tùy chọn 1" }] : []
+        };
+        questions.push(newQ);
+        render();
+    }
+
+    function render() {
+        let html = "";
+        questions.forEach((q) => {
+            const isSection = q.type === "SECTION";
+            const currentId = q.id || q.temp_id; // Ưu tiên ID từ database nếu có
+
+            html += `
         <div class="question-card">
             <div class="flex flex-col gap-4">
                 <div class="flex gap-4">
@@ -206,12 +215,12 @@ function render() {
                         placeholder="${isSection ? 'NHẬP TIÊU ĐỀ MỤC' : 'Câu hỏi'}">
 
                     <select onchange="updateVal(${currentId}, 'type', this.value)" class="border rounded p-2 text-sm bg-gray-50 outline-none">
-                        <option value="SECTION" ${q.type=="SECTION"?"selected":""}>Tiêu đề mục</option>
-                        <option value="TEXT" ${q.type=="TEXT"?"selected":""}>Trả lời ngắn</option>
-                        <option value="RADIO" ${q.type=="RADIO"?"selected":""}>Trắc nghiệm</option>
-                        <option value="CHECKBOX" ${q.type=="CHECKBOX"?"selected":""}>Hộp kiểm</option>
-                        <option value="SELECT" ${q.type=="SELECT"?"selected":""}>Menu thả xuống</option>
-                        <option value="LIKERT" ${q.type=="LIKERT"?"selected":""}>Lưới trắc nghiệm (Likert)</option>
+                        <option value="SECTION" ${q.type == "SECTION" ? "selected" : ""}>Tiêu đề mục</option>
+                        <option value="TEXT" ${q.type == "TEXT" ? "selected" : ""}>Trả lời ngắn</option>
+                        <option value="RADIO" ${q.type == "RADIO" ? "selected" : ""}>Trắc nghiệm</option>
+                        <option value="CHECKBOX" ${q.type == "CHECKBOX" ? "selected" : ""}>Hộp kiểm</option>
+                        <option value="SELECT" ${q.type == "SELECT" ? "selected" : ""}>Menu thả xuống</option>
+                        <option value="LIKERT" ${q.type == "LIKERT" ? "selected" : ""}>Lưới trắc nghiệm (Likert)</option>
                     </select>
                     <button type="button" onclick="removeQuestion(${currentId})" class="text-gray-300 hover:text-red-500"><span class="material-icons">delete_outline</span></button>
                 </div>
@@ -224,105 +233,110 @@ function render() {
                         <option value="">-- Không gắn Tag --</option>
 
                         <optgroup label="Tổng hợp Đơn vị thực tập">
-                            <option value="don_vi_tt" ${q.system_tag=="don_vi_tt"?"selected":""}>Tên đơn vị thực tập</option>
-                            <option value="email_don_vi" ${q.system_tag=="email_don_vi"?"selected":""}>Email liên hệ đơn vị</option>
-                            <option value="sdt_don_vi" ${q.system_tag=="sdt_don_vi"?"selected":""}>Số điện thoại đơn vị</option>
-                            <option value="dia_diem_dv" ${q.system_tag=="dia_diem_dv"?"selected":""}>Địa điểm đơn vị</option>
-                            <option value="nhan_xet_dv" ${q.system_tag=="nhan_xet_dv"?"selected":""}>Nhận xét về đơn vị</option>
-                            <option value="loi_nhan_dv" ${q.system_tag=="loi_nhan_dv"?"selected":""}>Lời nhắn cho khóa sau</option>
+                            <option value="don_vi_tt" ${q.system_tag == "don_vi_tt" ? "selected" : ""}>Tên đơn vị thực tập</option>
+                            <option value="email_don_vi" ${q.system_tag == "email_don_vi" ? "selected" : ""}>Email liên hệ đơn vị</option>
+                            <option value="sdt_don_vi" ${q.system_tag == "sdt_don_vi" ? "selected" : ""}>Số điện thoại đơn vị</option>
+                            <option value="dia_diem_dv" ${q.system_tag == "dia_diem_dv" ? "selected" : ""}>Địa điểm đơn vị</option>
+                            <option value="nhan_xet_dv" ${q.system_tag == "nhan_xet_dv" ? "selected" : ""}>Nhận xét về đơn vị</option>
+                            <option value="loi_nhan_dv" ${q.system_tag == "loi_nhan_dv" ? "selected" : ""}>Lời nhắn cho khóa sau</option>
                         </optgroup>
 
                         <optgroup label="Thông tin Sinh viên & Phân công">
-                            <option value="ma_sv" ${q.system_tag=="ma_sv"?"selected":""}>Mã số Sinh viên</option>
-                            <option value="ten_sv" ${q.system_tag=="ten_sv"?"selected":""}>Họ tên Sinh viên</option>
-                            <option value="lop_sh" ${q.system_tag=="lop_sh"?"selected":""}>Lớp sinh hoạt</option>
-                            <option value="ten_gvhd" ${q.system_tag=="ten_gvhd"?"selected":""}>Giảng viên hướng dẫn</option>
-                            <option value="huong_tiep_can" ${q.system_tag=="huong_tiep_can"?"selected":""}>Hướng tiếp cận</option>
-                            <option value="hinh_thuc_nhom" ${q.system_tag=="hinh_thuc_nhom"?"selected":""}>Hình thức làm nhóm</option>
-                            <option value="diem_doanh_nghiep" ${q.system_tag=="diem_doanh_nghiep"?"selected":""}>Điểm doanh nghiệp</option>
-                            <option value="diem_tich_luy" ${q.system_tag=="diem_tich_luy"?"selected":""}>Điểm tích lũy</option>
+                            <option value="ma_sv" ${q.system_tag == "ma_sv" ? "selected" : ""}>Mã số Sinh viên</option>
+                            <option value="ten_sv" ${q.system_tag == "ten_sv" ? "selected" : ""}>Họ tên Sinh viên</option>
+                            <option value="lop_sh" ${q.system_tag == "lop_sh" ? "selected" : ""}>Lớp sinh hoạt</option>
+                            <option value="ten_gvhd" ${q.system_tag == "ten_gvhd" ? "selected" : ""}>Giảng viên hướng dẫn</option>
+                            <option value="huong_tiep_can" ${q.system_tag == "huong_tiep_can" ? "selected" : ""}>Hướng tiếp cận</option>
+                            <option value="hinh_thuc_nhom" ${q.system_tag == "hinh_thuc_nhom" ? "selected" : ""}>Hình thức làm nhóm</option>
+                            <option value="diem_doanh_nghiep" ${q.system_tag == "diem_doanh_nghiep" ? "selected" : ""}>Điểm doanh nghiệp</option>
+                            <option value="diem_tich_luy" ${q.system_tag == "diem_tich_luy" ? "selected" : ""}>Điểm tích lũy</option>
+                            <option value="gvhd_ttnn" ${q.system_tag == "gvhd_ttnn" ? "selected" : ""}>GVHD cho kỳ thực tập nghề nghiệp</option>
                         </optgroup>
                     </select>
                 </div>
                 <div class="mt-2">${renderInner(q)}</div>` : ''}
             </div>
         </div>`;
-    });
-    document.getElementById("questions-area").innerHTML = html;
-}
+        });
+        document.getElementById("questions-area").innerHTML = html;
+    }
 
-function renderInner(q) {
-    const currentId = q.id || q.temp_id;
-    if (q.type === "TEXT") return `<div class="border-b border-dashed border-gray-300 text-gray-400 text-sm w-2/3 py-2 italic">Văn bản trả lời ngắn</div>`;
+    function renderInner(q) {
+        const currentId = q.id || q.temp_id;
+        if (q.type === "TEXT") return `<div class="border-b border-dashed border-gray-300 text-gray-400 text-sm w-2/3 py-2 italic">Văn bản trả lời ngắn</div>`;
 
-    if (q.type === "LIKERT") {
-        let rowsHtml = (q.rows || []).map((row, idx) => `
+        if (q.type === "LIKERT") {
+            let rowsHtml = (q.rows || []).map((row, idx) => `
             <tr>
                 <td class="text-left">
                     <input value="${row.text}" oninput="updateLikertRow(${currentId}, ${idx}, this.value)" class="likert-input-row" placeholder="Nhập tiêu chí...">
                 </td>
-                ${[1,2,3,4,5].map(() => `<td><span class="material-icons text-gray-200">radio_button_unchecked</span></td>`).join('')}
+                ${[1, 2, 3, 4, 5].map(() => `<td><span class="material-icons text-gray-200">radio_button_unchecked</span></td>`).join('')}
                 <td><button type="button" onclick="removeLikertRow(${currentId}, ${idx})" class="text-gray-300 hover:text-red-500"><span class="material-icons text-sm">close</span></button></td>
             </tr>
         `).join('');
 
-        return `
+            return `
             <table class="likert-table text-sm">
                 <thead><tr class="text-gray-400 font-bold"><th class="text-left">Tiêu chí</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th></th></tr></thead>
                 <tbody>${rowsHtml}</tbody>
             </table>
             <button type="button" onclick="addLikertRow(${currentId})" class="mt-3 text-blue-600 text-xs font-bold hover:underline">+ THÊM TIÊU CHÍ</button>
         `;
-    }
+        }
 
-    let opts = (q.options || []).map((op, i) => `
+        let opts = (q.options || []).map((op, i) => `
         <div class="flex items-center gap-2 mb-2">
             <span class="material-icons text-gray-300 text-xl">${q.type === 'CHECKBOX' ? 'check_box_outline_blank' : 'radio_button_unchecked'}</span>
             <input value="${op.text}" oninput="updateOption(${currentId}, ${i}, this.value)" class="flex-1 border-b border-transparent focus:border-gray-200 outline-none text-sm py-1" placeholder="Tùy chọn">
             <button type="button" onclick="removeOption(${currentId}, ${i})" class="text-gray-300 hover:text-red-500"><span class="material-icons text-sm">close</span></button>
         </div>
     `).join('');
-    return opts + `<button type="button" onclick="addOption(${currentId})" class="text-blue-600 text-xs font-bold hover:underline">+ THÊM TÙY CHỌN</button>`;
-}
+        return opts + `<button type="button" onclick="addOption(${currentId})" class="text-blue-600 text-xs font-bold hover:underline">+ THÊM TÙY CHỌN</button>`;
+    }
 
-function updateVal(id, key, val) {
-    let q = findQ(id);
-    if(q) {
-        q[key] = val;
-        
-        // AUTO ĐIỀN DANH SÁCH GIẢNG VIÊN VÀO TÙY CHỌN NẾU CHỌN TAG ten_gvhd
-        if (key === 'system_tag' && val === 'ten_gvhd' && danh_sach_gv.length > 0) {
-            q.type = 'SELECT';
-            q.options = danh_sach_gv.map(gv => ({text: gv.ho_ten}));
-            render();
-            return;
-        }
+    function updateVal(id, key, val) {
+        let q = findQ(id);
+        if (q) {
+            q[key] = val;
 
-        if(key === 'type') {
-            q.rows = val === "LIKERT" ? [{text: "Tiêu chí 1"}] : [];
-            q.options = ["RADIO", "CHECKBOX", "SELECT"].includes(val) ? [{text: "Tùy chọn 1"}] : [];
-            render();
+            // AUTO ĐIỀN DANH SÁCH GIẢNG VIÊN VÀO TÙY CHỌN NẾU CHỌN TAG ten_gvhd hoặc gvhd_ttnn
+            if (key === 'system_tag' && ['ten_gvhd', 'gvhd_ttnn'].includes(val) && danh_sach_gv.length > 0) {
+                q.type = 'SELECT';
+                if (val === 'gvhd_ttnn') {
+                    q.options = danh_sach_gv.map(gv => ({ text: gv.ho_ten_clean }));
+                } else {
+                    q.options = danh_sach_gv.map(gv => ({ text: gv.ho_ten }));
+                }
+                render();
+                return;
+            }
+
+            if (key === 'type') {
+                q.rows = val === "LIKERT" ? [{ text: "Tiêu chí 1" }] : [];
+                q.options = ["RADIO", "CHECKBOX", "SELECT"].includes(val) ? [{ text: "Tùy chọn 1" }] : [];
+                render();
+            }
         }
     }
-}
-function addLikertRow(id) { let q = findQ(id); if(q) { q.rows.push({text: ""}); render(); } }
-function updateLikertRow(qid, idx, val) { let q = findQ(qid); if(q) q.rows[idx].text = val; }
-function removeLikertRow(qid, idx) { let q = findQ(qid); if(q && q.rows.length > 1) { q.rows.splice(idx, 1); render(); } }
-function addOption(id) { let q = findQ(id); if(q) { q.options.push({text: ""}); render(); } }
-function updateOption(qid, idx, val) { let q = findQ(qid); if(q) q.options[idx].text = val; }
-function removeOption(qid, idx) { let q = findQ(qid); if(q && q.options.length > 1) { q.options.splice(idx, 1); render(); } }
-function removeQuestion(id) { questions = questions.filter(item => (item.id != id && item.temp_id != id)); render(); }
+    function addLikertRow(id) { let q = findQ(id); if (q) { q.rows.push({ text: "" }); render(); } }
+    function updateLikertRow(qid, idx, val) { let q = findQ(qid); if (q) q.rows[idx].text = val; }
+    function removeLikertRow(qid, idx) { let q = findQ(qid); if (q && q.rows.length > 1) { q.rows.splice(idx, 1); render(); } }
+    function addOption(id) { let q = findQ(id); if (q) { q.options.push({ text: "" }); render(); } }
+    function updateOption(qid, idx, val) { let q = findQ(qid); if (q) q.options[idx].text = val; }
+    function removeOption(qid, idx) { let q = findQ(qid); if (q && q.options.length > 1) { q.options.splice(idx, 1); render(); } }
+    function removeQuestion(id) { questions = questions.filter(item => (item.id != id && item.temp_id != id)); render(); }
 
-function saveForm() {
-    const finalData = {
-        ten_form: document.getElementById("form_name").value,
-        ky_thuc_tap: document.getElementById("ky_thuc_tap").value,
-        start_date: document.getElementById("ngay_bat_dau").value,
-        end_date: document.getElementById("ngay_ket_thuc").value,
-        questions: questions
-    };
-    document.getElementById("formData").value = JSON.stringify(finalData);
-    document.getElementById("saveForm").submit();
-}
+    function saveForm() {
+        const finalData = {
+            ten_form: document.getElementById("form_name").value,
+            ky_thuc_tap: document.getElementById("ky_thuc_tap").value,
+            start_date: document.getElementById("ngay_bat_dau").value,
+            end_date: document.getElementById("ngay_ket_thuc").value,
+            questions: questions
+        };
+        document.getElementById("formData").value = JSON.stringify(finalData);
+        document.getElementById("saveForm").submit();
+    }
 </script>
 {% endblock %}
