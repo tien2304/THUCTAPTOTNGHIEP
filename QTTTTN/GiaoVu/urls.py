@@ -21,6 +21,7 @@ urlpatterns = [
     path('giang-vien-huong-dan/<str:ma_gv>/', views.chi_tiet_gvhd_view, name='chi_tiet_gvhd'),
     path('hoi-dong/', views.hoidong_view, name='giaovu_hoidong'),
     path('hoi-dong/<int:hd_id>/', views.chi_tiet_hoidong_view, name='chi_tiet_hoidong'),
+    path('update-thoi-gian-hoi-dong/<int:hd_id>/', views.cap_nhat_thoi_gian_hoi_dong, name='update_thoi_gian_hoi_dong'),
     path('quan-ly-diem/', views.ql_diem_view, name='giaovu_diem'),
     path('quan-ly-diem/cap-nhat-diem-dn/<str:ma_sv>/', views.cap_nhat_diem_dn, name='giaovu_cap_nhat_diem_dn'),
     path('update-password/', views.update_password, name='update_password'),

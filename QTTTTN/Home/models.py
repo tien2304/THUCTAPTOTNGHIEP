@@ -167,9 +167,9 @@ class BaiNop(models.Model):
 class HoiDong(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
     ten_hoi_dong = models.CharField(max_length=255)
-    thoi_gian_bat_dau = models.DateTimeField()
-    thoi_gian_ket_thuc = models.DateTimeField()
-    dia_diem = models.CharField(max_length=255)
+    thoi_gian_bat_dau = models.TimeField(null=True, blank=True)
+    thoi_gian_ket_thuc = models.TimeField(null=True, blank=True)
+    dia_diem = models.CharField(max_length=255, null=True, blank=True)
     ngay_bao_ve = models.DateField()
     trang_thai = models.IntegerField(default=1)  # 1: Chờ duyệt, 2: Đã phê duyệt
 class ChamDiemHoiDong(models.Model):
@@ -194,4 +194,3 @@ class TaiLieu(models.Model):
     duong_dan_file = models.FileField(upload_to='documents/')
     ngay_cap_nhat = models.DateTimeField(auto_now=True)
     gv_dang = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
-# Chốt rồi đó nghe bây

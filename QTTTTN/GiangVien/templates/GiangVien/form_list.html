@@ -11,7 +11,7 @@
 
     <h2 class="text-lg font-semibold mb-4 text-gray-700">Bắt đầu biểu mẫu mới</h2>
     <div class="flex gap-4 mb-10">
-        <a href="{% url 'GiangVien:tao_form' %}" class="group">
+        <a href="{% url 'GiangVien:tao_form' %}" class="group {% if current_page == 'form_list' %}active{% endif %}">
             <div class="w-40 h-40 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center
                         group-hover:border-blue-500 group-hover:bg-blue-50 transition-all duration-200 cursor-pointer">
                 <span class="text-5xl text-gray-400 group-hover:text-blue-500">+</span>

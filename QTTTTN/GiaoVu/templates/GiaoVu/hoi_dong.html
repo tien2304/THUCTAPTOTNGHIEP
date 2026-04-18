@@ -1,6 +1,7 @@
 {% extends "GiaoVu/home.html" %}
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
+
 <div class="p-6 bg-gray-50 min-h-screen">
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -36,36 +37,146 @@
                         <th class="py-4 px-8 border-b font-bold text-gray-600 text-center">THAO TÁC</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for hd in ds_hoidong %}
                     <tr class="hover:bg-gray-50 border-b">
+                        <!-- TÊN -->
                         <td class="py-6 px-8">
                             <span class="font-bold text-gray-900 uppercase">{{ hd.ten }}</span>
                         </td>
+
+                        <!-- THỜI GIAN + ĐỊA ĐIỂM -->
+                        <!-- THỜI GIAN + ĐỊA ĐIỂM -->
+<td class="py-6 px-6">
+    <div class="flex items-center gap-2">
+        {{ hd.ngay_bao_ve|date:"d/m/Y" }} |
+
+        <select id="time-{{ hd.id }}"
+        class="border px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+        onchange="saveTime({{ hd.id }})"
+        {% if hd.trang_thai != 2 %}disabled{% endif %}>
+
+    <option value="">-- Chọn giờ --</option>
+
+    <option value="07:00-12:00"
+        {% if hd.thoi_gian_bat_dau|time:"H:i" == "07:00" and hd.thoi_gian_ket_thuc|time:"H:i" == "12:00" %}selected{% endif %}>
+        07:00 - 12:00
+    </option>
+
+    <option value="13:00-17:00"
+        {% if hd.thoi_gian_bat_dau|time:"H:i" == "13:00" and hd.thoi_gian_ket_thuc|time:"H:i" == "17:00" %}selected{% endif %}>
+        13:00 - 17:00
+    </option>
+
+    <!-- Thêm các khung giờ khác nếu cần -->
+</select>
+    </div>
+
+    <!-- ĐỊA ĐIỂM -->
+    <div class="mt-3">
+        <input type="text"
+               id="dd-{{ hd.id }}"
+               value="{{ hd.dia_diem|default:'' }}"
+               placeholder="Nhập địa điểm..."
+               class="border px-3 py-2 rounded-lg text-sm w-full focus:ring-2 focus:ring-indigo-500"
+               onchange="saveTime({{ hd.id }})"
+               onkeydown="handleEnter(event, {{ hd.id }})"
+               {% if hd.trang_thai != 2 %}disabled{% endif %}>
+    </div>
+</td>
+
+                        <!-- THÀNH PHẦN -->
                         <td class="py-6 px-6">
-                            <div class="text-gray-700 font-medium">{{ hd.ngay_bao_ve|date:"d/m/Y" }} | {{ hd.thoi_gian }}</div>
-                            <div class="text-gray-400 text-xs mt-1">{{ hd.dia_diem }}</div>
+                            <div>Giảng viên: <span class="font-bold text-indigo-600">{{ hd.gv_count }}</span></div>
+                            <div>Sinh viên: <span class="font-bold text-emerald-600">{{ hd.sv_count }}</span></div>
                         </td>
-                        <td class="py-6 px-6">
-                            <div class="text-gray-600">Giảng viên: <span class="font-bold text-indigo-600">{{ hd.gv_count }}</span></div>
-                            <div class="text-gray-600">Sinh viên: <span class="font-bold text-emerald-600">{{ hd.sv_count }}</span></div>
-                        </td>
+
+                        <!-- ACTION -->
                         <td class="py-6 px-8 text-center">
-                            <div class="flex items-center justify-center">
-                                <a href="{% url 'GiaoVu:chi_tiet_hoidong' hd.id %}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">
-                                    Chi tiết
-                                </a>
-                            </div>
+                            <a href="{% url 'GiaoVu:chi_tiet_hoidong' hd.id %}"
+                               class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200">
+                                Chi tiết
+                            </a>
                         </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center py-20 text-gray-400 italic">Học kỳ này chưa có hội đồng nào.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
+
             </table>
         </div>
     </div>
 </div>
+
+<!-- JS -->
+<script>
+function handleEnter(event, hdId) {
+    if (event.key === "Enter") {
+        event.preventDefault(); // 🔥 chống reload
+        saveTime(hdId);
+    }
+}
+
+function saveTime(hdId) {
+    let timeRange = document.getElementById("time-" + hdId).value.trim();
+    let dia_diem = document.getElementById("dd-" + hdId).value.trim();
+
+    fetch(`/giao-vu/update-thoi-gian-hoi-dong/${hdId}/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken()
+        },
+        body: JSON.stringify({
+            time_range: timeRange,   // gửi "13:00-17:00"
+            dia_diem: dia_diem
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            highlightRow(hdId);
+            showToast("✅ Đã lưu thời gian thành công!", "success");
+        } else {
+            alert(data.message || "Lưu không thành công");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Có lỗi kết nối với server");
+    });
+}
+
+// Toast đơn giản
+function showToast(message, type = "success") {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-5 right-5 px-6 py-3 rounded-xl shadow-lg text-white text-sm z-50 ${
+        type === "success" ? "bg-green-600" : "bg-red-600"
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.transition = "opacity 0.3s";
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+function highlightRow(hdId) {
+    let row = document.getElementById("time-" + hdId).closest("tr");
+    row.classList.add("bg-green-50");
+
+    setTimeout(() => {
+        row.classList.remove("bg-green-50");
+    }, 1500);
+}
+
+function getCSRFToken() {
+    return document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken'))
+        ?.split('=')[1];
+}
+</script>
+
 {% endblock %}

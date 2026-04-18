@@ -21,15 +21,13 @@
 
         <div class="flex gap-3">
 
-            <!-- ✅ SEARCH -->
             <form method="GET" class="flex gap-3">
 
-                <!-- giữ ky khi search -->
                 <input type="hidden" name="ky" value="{{ current_ky.id|default:'' }}">
 
                 <input type="text" name="q"
                        value="{{ query|default:'' }}"
-                       placeholder="🔍 Tìm theo tên, lớp"
+                       placeholder="Tìm theo tên, lớp"
                        class="border border-gray-300 px-4 py-2 rounded-xl text-sm w-52 focus:outline-none focus:border-blue-500">
 
                 <button type="submit"

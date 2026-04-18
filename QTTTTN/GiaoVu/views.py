@@ -621,7 +621,56 @@ def chi_tiet_hoidong_view(request, hd_id):
         'ds_sinh_vien': ds_sinh_vien,
     }
     return render(request, 'GiaoVu/chi_tiet_hoidong.html', context)
+from datetime import time
+from django.http import JsonResponse
+import json
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
 
+@login_required
+def cap_nhat_thoi_gian_hoi_dong(request, hd_id):
+    hoidong = get_object_or_404(HoiDong, id=hd_id)
+
+    if hoidong.trang_thai != 2:
+        return JsonResponse({"status": "error", "message": "Hội đồng chưa được duyệt."}, status=400)
+
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        time_range = data.get("time_range", "").strip()
+        dia_diem = data.get("dia_diem", "").strip()
+
+        bat_dau = None
+        ket_thuc = None
+
+        if time_range and time_range != "":
+            try:
+                if '-' in time_range:
+                    start_str, end_str = [x.strip() for x in time_range.split('-', 1)]
+                    h1, m1 = map(int, start_str.split(':'))
+                    h2, m2 = map(int, end_str.split(':'))
+                    bat_dau = time(hour=h1, minute=m1)
+                    ket_thuc = time(hour=h2, minute=m2)
+                else:
+                    h, m = map(int, time_range.split(':'))
+                    bat_dau = time(hour=h, minute=m)
+            except Exception:
+                bat_dau = ket_thuc = None
+
+        hoidong.thoi_gian_bat_dau = bat_dau
+        hoidong.thoi_gian_ket_thuc = ket_thuc
+        hoidong.dia_diem = dia_diem if dia_diem else None
+        hoidong.save()
+
+        return JsonResponse({
+            "status": "success",
+            "message": "Cập nhật thành công!"
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
