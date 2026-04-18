@@ -139,6 +139,7 @@ def chi_tiet_sinh_vien(request, ma_sv):
         "sv": sv,
         "milestones": milestones,
         "bang_diem": bang_diem,
+        'current_page': 'sinhvien',
         "is_gvpt": get_is_gvpt(request)
     }
 
@@ -182,6 +183,7 @@ def chi_tiet_bai_nop(request, id):
         "bai": bai,
         "sv": bai.sinh_vien,
         "nv": bai.nhiem_vu,
+        'current_page': 'sinhvien',
         "is_gvpt": get_is_gvpt(request)
     }
 
@@ -288,18 +290,8 @@ def tao_form(request):
         "danh_sach_ky": danh_sach_ky,
         "ky_moi_nhat": ky_moi_nhat,
         "is_gvpt": get_is_gvpt(request),
+        "current_page": "form_list",
         "danh_sach_gv_json": json.dumps(danh_sach_gv)
-    })
-
-def form_detail(request, public_id):
-
-    form = MauKhaoSat.objects.get(public_id=public_id)
-
-    questions = form.cau_hoi.all().prefetch_related("options")
-
-    return render(request, "GiangVien/form_detail.html", {
-        "form": form,
-        "questions": questions, "is_gvpt": get_is_gvpt(request)
     })
 from collections import Counter
 
@@ -454,6 +446,7 @@ def edit_form(request, public_id):
         "questions_json": json.dumps(questions_data),  # Truyền xuống để JS render()
         "ky_moi_nhat": form.ky,
         "danh_sach_ky": danh_sach_ky,
+        "current_page": "form_list",
         "gvhd_stats": dict(gvhd_counter),
         "is_edit": True,
         "is_gvpt": get_is_gvpt(request),
@@ -765,20 +758,11 @@ def phan_cong_dashboard(request):
         "is_gvpt": get_is_gvpt(request),
         "ky_list": ky_list,
         "current_ky": ky,
+        "current_page": "phan_cong",
         "unique_linh_vuc": sorted(list(unique_linh_vuc)),
         "all_gv": GiangVien.objects.exclude(chuc_vu='Giáo vụ').order_by('ho_ten')
     })
 
-# ========================
-# AUTO ASSIGN (UI)
-# ========================
-# RUN AUTO
-
-
-
-# ========================
-# UPDATE MANUAL
-# ========================
 def update_phan_cong(request):
 
     if request.method == "POST":
@@ -939,21 +923,13 @@ def tao_hoi_dong(request):
         sv_ids_str = request.POST.get("sinh_vien_ids", "")
         sv_ids = [x.strip() for x in sv_ids_str.split(",") if x.strip()]
 
-        ngay = request.POST.get("ngay")          # yyyy-mm-dd
-        gio_bd = request.POST.get("thoi_gian_bat_dau") # HH:MM
-        gio_kt = request.POST.get("thoi_gian_ket_thuc")
+        ngay = request.POST.get("ngay")
 
         try:
-            # 🔥 GHÉP NGÀY + GIỜ
-            thoi_gian_bat_dau = datetime.strptime(f"{ngay} {gio_bd}", "%Y-%m-%d %H:%M")
-            thoi_gian_ket_thuc = datetime.strptime(f"{ngay} {gio_kt}", "%Y-%m-%d %H:%M")
-
+            # ✅ KHÔNG XỬ LÝ THỜI GIAN NỮA
             hd = HoiDong.objects.create(
                 ten_hoi_dong=request.POST.get("ten"),
                 ngay_bao_ve=ngay,
-                thoi_gian_bat_dau=thoi_gian_bat_dau,   # ✅ ĐÚNG
-                thoi_gian_ket_thuc=thoi_gian_ket_thuc, # ✅ ĐÚNG
-                dia_diem=request.POST.get("dia_diem"),
                 ky=KyThucTap.objects.last()
             )
 
@@ -961,14 +937,24 @@ def tao_hoi_dong(request):
             print("Lỗi:", e)
             return redirect("GiangVien:tao_hoi_dong")
 
+        # ========================
         # Thêm giảng viên
+        # ========================
         for gv_id in gv_ids:
-            HoiDong_GiangVien.objects.create(hoi_dong=hd, giang_vien_id=gv_id)
+            HoiDong_GiangVien.objects.create(
+                hoi_dong=hd,
+                giang_vien_id=gv_id
+            )
 
+        # ========================
         # Thêm sinh viên
+        # ========================
         for sv_id in sv_ids:
             sv = SinhVien.objects.get(ma_sv=sv_id)
-            gvhd = PhanCongGVHD.objects.filter(sinh_vien=sv).first()
+
+            gvhd = PhanCongGVHD.objects.filter(
+                sinh_vien=sv
+            ).first()
 
             if gvhd and HoiDong_GiangVien.objects.filter(
                 hoi_dong=hd,
@@ -1079,11 +1065,21 @@ def hoi_dong_detail(request, id):
             return redirect("GiangVien:hoi_dong_list")
 
     # Kiểm tra thời gian chấm điểm
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())  # ← Dùng localtime để lấy giờ VN
+    today = now.date()
+    current_time = now.time()
+
     is_in_time = False
     if hoidong.thoi_gian_bat_dau and hoidong.thoi_gian_ket_thuc:
-        is_in_time = (hoidong.thoi_gian_bat_dau <= now <= hoidong.thoi_gian_ket_thuc) and \
-                     (hoidong.ngay_bao_ve == now.date())
+        bat_dau = hoidong.thoi_gian_bat_dau
+        ket_thuc = hoidong.thoi_gian_ket_thuc
+
+        # Kiểm tra ngày + giờ cùng lúc
+        if hoidong.ngay_bao_ve == today:
+            if ket_thuc >= bat_dau:
+                is_in_time = (bat_dau <= current_time <= ket_thuc)
+            else:
+                is_in_time = (current_time >= bat_dau or current_time <= ket_thuc)
 
     giangviens = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
 
