@@ -78,44 +78,76 @@ def duyet_gvhd_view(request):
         # Tối ưu: Lấy toàn bộ ChiTietTraLoi liên quan
         answers_qs = ChiTietTraLoi.objects.filter(
             phieu_tra_loi__mau_khao_sat__ky=selected_ky,
-            cau_hoi__system_tag__in=['diem_tich_luy', 'huong_tiep_can']
+            cau_hoi__system_tag__in=['diem_tich_luy', 'huong_tiep_can', 'gvhd_ttnn']
         ).select_related('phieu_tra_loi', 'cau_hoi')
         
-        survey_data = {} # {ma_sv: {diem_tich_luy: x, huong_tiep_can: y}}
+        survey_data = {} # {ma_sv: {tag: "val1, val2"}}
         for ans in answers_qs:
             ma_sv = ans.phieu_tra_loi.sinh_vien_id
             tag = ans.cau_hoi.system_tag
+            val = ans.gia_tri.strip() if ans.gia_tri else ""
+            if not val: continue
+
             if ma_sv not in survey_data:
                 survey_data[ma_sv] = {}
-            survey_data[ma_sv][tag] = ans.gia_tri
+            
+            # Lưu raw cho huong_tiep_can để xử lý linh_vuc sau
+            if tag in survey_data[ma_sv]:
+                survey_data[ma_sv][tag] += f"\n{val}"
+            else:
+                survey_data[ma_sv][tag] = val
 
         for sv in sinh_vien_qs:
             pc = phan_cong_dict.get(sv.ma_sv)
             sv_survey = survey_data.get(sv.ma_sv, {})
             
             gvhd_obj = pc.giang_vien if pc else None
-            linh_vuc_val = sv_survey.get('huong_tiep_can')
             
-            # Nếu chưa có lĩnh vực từ khảo sát, lấy theo chuyên môn của GVHD đã phân công
-            if (not linh_vuc_val or linh_vuc_val == '—') and gvhd_obj:
-                # Làm sạch dữ liệu chuyên môn (vd: 'Artificial Intelligence (AI)' -> 'AI')
-                raw_chuyen_mon = gvhd_obj.chuyen_mon.split(',')[0].strip()
-                if '(' in raw_chuyen_mon and ')' in raw_chuyen_mon:
-                    linh_vuc_val = raw_chuyen_mon.split('(')[-1].split(')')[0]
-                else:
-                    linh_vuc_val = raw_chuyen_mon
-            elif not linh_vuc_val:
-                linh_vuc_val = '—'
-                
+            # Xử lý Lĩnh vực y hệt bên GiangVien/views.py
+            raw_huong_tc = sv_survey.get('huong_tiep_can', '')
+            linh_vuc_display = ""
+            if raw_huong_tc:
+                import re
+                lines = raw_huong_tc.split('\n')
+                seen_lv = set()
+                for line in lines:
+                    line = line.strip()
+                    if not line: continue
+                    
+                    display_val = line
+                    if '(' in line and ')' in line:
+                        match = re.search(r'\((.*?)\)', line)
+                        if match: display_val = match.group(1)
+                    elif ',' in line:
+                        display_val = line.split(',')[-1].strip()
+                    
+                    if display_val not in seen_lv:
+                        seen_lv.add(display_val)
+                        if linh_vuc_display:
+                            linh_vuc_display += f"\n{display_val}"
+                        else:
+                            linh_vuc_display = display_val
+            
+            # Lấy thông tin nhóm
+            group_val = sv_survey.get('group', '')
+            if not group_val or group_val.strip().lower() == 'không':
+                group_val = sv_survey.get('hinh_thuc_nhom', '')
+            
+            if group_val and group_val.strip().lower() == 'không':
+                group_val = ''
+
             ds_sinh_vien.append({
                 'ma_sv': sv.ma_sv,
                 'ho_ten': sv.ho_ten,
                 'lop': sv.lop,
                 'diem_tich_luy': sv_survey.get('diem_tich_luy', '—'),
-                'linh_vuc': linh_vuc_val,
+                'linh_vuc': linh_vuc_display or '—',
+                'gvhd_ttnn': sv_survey.get('gvhd_ttnn', '—'),
                 'gvhd': gvhd_obj,
                 'trang_thai': pc.trang_thai if pc else 0,
                 'pc_id': pc.id if pc else None,
+                'group': group_val,
+                'hinh_thuc': 'Nhóm' if group_val else 'Cá nhân',
             })
 
     # Đếm số lượng đã duyệt/tổng cộng để hiển thị thống kê
@@ -152,6 +184,15 @@ def duyet_gvhd_view(request):
         })
     ds_thong_ke_gv.sort(key=lambda x: x['count'], reverse=True)
 
+    # Lấy danh sách Lĩnh vực duy nhất để lọc
+    unique_linh_vuc = set()
+    for item in ds_sinh_vien:
+        lv = item.get('linh_vuc', '')
+        if lv and lv != '—':
+            for line in lv.split('\n'):
+                if line.strip():
+                    unique_linh_vuc.add(line.strip())
+
     context = {
         'current_page': 'duyet_gvhd',
         'ky_list': ky_list,
@@ -161,6 +202,7 @@ def duyet_gvhd_view(request):
         'ds_sinh_vien': ds_sinh_vien,
         'ds_giang_vien': ds_giang_vien_filter,
         'ds_thong_ke_gv': ds_thong_ke_gv,
+        'unique_linh_vuc': sorted(list(unique_linh_vuc)),
         'stats': {
             'tong_cong': tong_cong,
             'da_duyet': da_duyet,
@@ -205,7 +247,6 @@ def action_duyet_gvhd(request):
         ky_id = request.POST.get('ky_id')
         ma_gv = request.POST.get('ma_gv')
         action = request.POST.get('action')
-        ly_do = request.POST.get('ly_do_tu_choi', '')
         
         if not ky_id:
             messages.error(request, 'Không tìm thấy kỳ.')
@@ -222,10 +263,10 @@ def action_duyet_gvhd(request):
             return redirect(f'/truong-bo-mon/duyet-gvhd/?ky_id={ky_id}')
             
         if action == 'approve':
-            ds_phan_cong.update(trang_thai=2, ly_do_tu_choi=None)
+            ds_phan_cong.update(trang_thai=2)
             messages.success(request, 'Đã phê duyệt phân công thành công!')
         elif action == 'reject':
-            ds_phan_cong.update(trang_thai=3, ly_do_tu_choi=ly_do)
+            ds_phan_cong.update(trang_thai=3)
             messages.success(request, 'Đã từ chối phân công!')
             
         if ma_gv:

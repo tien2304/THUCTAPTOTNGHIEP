@@ -3,7 +3,7 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 
-<div class="p-6 bg-gray-50 min-h-screen max-w-[1400px] mx-auto">
+<div class="p-6 bg-gray-50 min-h-screen max-w-[1550px] mx-auto">
 
 <!-- HEADER -->
 <div class="flex justify-between items-center mb-6">
@@ -30,133 +30,182 @@
     </select>
 </div>
 
-<div class="grid grid-cols-4 gap-6">
-
-<!-- LEFT -->
-<div class="col-span-3 bg-white rounded-xl p-5 shadow">
-
-<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-    <h3 class="font-semibold text-gray-700">Danh sách sinh viên</h3>
-
-    <div class="flex gap-2">
-        <select id="groupFilter" class="border px-3 py-1 rounded text-sm text-gray-600 outline-none w-40">
-            <option value="">Tất cả hình thức</option>
-            <option value="Cá nhân">Làm cá nhân</option>
-            <option value="Nhóm">Làm nhóm</option>
-        </select>
-        <input id="searchInput" placeholder="🔍 Mã SV, Họ tên..." class="border px-3 py-1 rounded text-sm w-52 outline-none">
+<!-- KHỐI THỐNG KÊ (NẰM NGANG) -->
+<div class="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-100 p-5 mb-6">
+    <label class="text-[12px] font-bold text-slate-500 tracking-wide mb-4 block uppercase">Thống kê số lượng phân công</label>
+    <div class="flex flex-wrap gap-3">
+        {% for gv in gv_stats %}
+        <div class="flex items-center bg-slate-50 border border-slate-100 px-3.5 py-1.5 rounded-full gap-3 transition-all hover:bg-blue-50 hover:border-blue-200 group cursor-default">
+            <span class="text-[13px] text-slate-600 font-semibold group-hover:text-blue-700 transition-colors">{{ gv.ten }}</span>
+            <span class="bg-blue-100 text-blue-700 font-extrabold text-[11px] px-2 py-0.5 rounded-full min-w-[24px] text-center">{{ gv.count }}</span>
+        </div>
+        {% endfor %}
     </div>
 </div>
 
-<table class="w-full text-sm">
-
-<tr class="border-b">
-<th class="text-left p-3">Mã sinh viên</th>
-<th class="text-left p-3">Họ và tên</th>
-<th>Lớp</th>
-<th>Lĩnh vực</th>
-<th>Nguyện vọng</th>
-<th class="text-center">Phân công GVHD</th>
-</tr>
-
-{% for s in data %}
-<tr class="student-row border-b hover:bg-gray-50" data-group="{{ s.group }}">
-
-<td class="p-3 font-semibold text-gray-600 uppercase tracking-tighter">{{ s.id }}</td>
-<td class="p-3 font-bold text-gray-900">{{ s.ten }}</td>
-
-<td class="text-center align-top py-3">{{ s.lop }}</td>
-
-<!-- 🔥 LĨNH VỰC -->
-<td class="text-xs text-gray-600 text-center py-3 align-top max-w-[200px] px-2 leading-relaxed">
-    {% if s.linh_vuc and s.linh_vuc != '--' %}
-        {{ s.linh_vuc|linebreaksbr }}
-    {% else %}
-        <span class="text-gray-400">--</span>
-    {% endif %}
-</td>
-
-<!-- 🔥 NGUYỆN VỌNG (Chứa cả hướng NC và Hình thức) -->
-<td class="align-top py-3 px-2 text-center">
-    <div class="flex flex-col items-center justify-center gap-1 max-w-[380px] mx-auto text-center">
-        {% if s.nv1 %}
-        <div class="text-sm text-gray-800 leading-relaxed">
-            {{ s.nv1|linebreaksbr }}
-        </div>
-        {% endif %}
-
-        {% if s.nv2 %}
-        <div class="text-sm text-gray-800 leading-relaxed mt-1">
-            <span class="font-semibold">NV2:</span> {{ s.nv2|linebreaksbr }}
-        </div>
-        {% endif %}
-
-        {% if s.group and s.group != 'Không' %}
-        <div class="text-xs text-gray-500 font-medium italic mt-0.5">
-            (Nhóm: {{ s.group }})
-        </div>
-        {% endif %}
+<!-- DANH SÁCH SINH VIÊN -->
+<div class="bg-white rounded-xl p-5 shadow">
+    <div class="mb-5 border-b border-gray-100 pb-4">
+        <h3 class="text-lg font-bold text-slate-700">Danh sách sinh viên</h3>
     </div>
-</td>
 
-<td class="text-center py-3">
-    <div class="flex flex-col items-center gap-1">
-        <select onchange="markChanged('{{ s.id }}', this.value, this)"
-            class="border rounded px-2 py-1.5 text-xs w-44 outline-none transition-colors cursor-pointer
-            {% if s.gvhd %}bg-blue-50 border-blue-200 text-blue-700 font-medium
-            {% else %}bg-white border-gray-300 text-gray-600{% endif %}">
+    <div class="flex flex-wrap items-end gap-4 mb-6">
+        <!-- Lọc hình thức -->
+        <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider ml-1">Hình thức</label>
+            <select id="groupFilter" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-blue-500 transition-all bg-white min-w-[110px]">
+                <option value="">Tất cả</option>
+                <option value="Cá nhân">Cá nhân</option>
+                <option value="Nhóm">Nhóm</option>
+            </select>
+        </div>
 
-            <option value="">-- Chưa phân --</option>
+        <!-- Lọc GPA -->
+        <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider ml-1">GPA</label>
+            <select id="gpaFilter" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-blue-500 transition-all bg-white min-w-[110px]">
+                <option value="all">Tất cả</option>
+                <option value="below2.5">< 2.5</option>
+                <option value="below3.2">< 3.2</option>
+                <option value="below3.6">< 3.6</option>
+                <option value="above3.6">>= 3.6</option>
+            </select>
+        </div>
 
-            {% if s.de_xuat_gvhd %}
-                {% for gv in s.de_xuat_gvhd %}
-                <option value="{{ gv.value }}" {% if s.gvhd == gv.value %}selected{% endif %}>
-                    {{ gv.display }}
-                </option>
+        <!-- Lọc Trạng thái -->
+        <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider ml-1">Trạng thái</label>
+            <select id="statusFilter" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-blue-500 transition-all bg-white min-w-[140px]">
+                <option value="all">Tất cả</option>
+                <option value="unassigned">Chưa phân công</option>
+                <option value="assigned">Đã phân công</option>
+                <option value="approved">Đã duyệt</option>
+            </select>
+        </div>
+
+        <!-- Lọc Lĩnh vực -->
+        <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider ml-1">Lĩnh vực</label>
+            <select id="linhVucFilter" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-blue-500 transition-all bg-white min-w-[160px]">
+                <option value="all">Tất cả lĩnh vực</option>
+                {% for lv in unique_linh_vuc %}
+                <option value="{{ lv }}">{{ lv }}</option>
                 {% endfor %}
-            {% else %}
-                <option value="" disabled class="text-gray-400 italic">Chưa có đề xuất</option>
-            {% endif %}
-        </select>
-        
-        <!-- Hiển thị Trạng thái duyệt -->
-        {% if s.gvhd %}
-            {% if s.trang_thai == 1 %}
-                <span class="text-[10px] bg-yellow-100 text-yellow-700 font-semibold px-2 py-0.5 rounded-full mt-1">Chờ duyệt</span>
-            {% elif s.trang_thai == 2 %}
-                <span class="text-[10px] bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full mt-1">Đã duyệt</span>
-            {% elif s.trang_thai == 3 %}
-                <span class="text-[10px] bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded-full mt-1 cursor-help" title="Lý do: {{ s.ly_do_tu_choi|default:'Không có lý do' }}">Bị từ chối ⚠️</span>
-                {% if s.ly_do_tu_choi %}
-                    <div class="text-[10px] text-red-600 italic max-w-[160px] text-center mt-0.5" style="line-height:1.2;">"{{ s.ly_do_tu_choi }}"</div>
-                {% endif %}
-            {% endif %}
-        {% endif %}
+            </select>
+        </div>
+
+        <!-- Lọc Giảng viên -->
+        <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider ml-1">Giảng viên hướng dẫn</label>
+            <select id="gvFilter" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-blue-500 transition-all bg-white min-w-[220px]">
+                <option value="all">Tất cả giảng viên</option>
+                {% for gv in all_gv %}
+                <option value="{{ gv.ho_ten }}">{{ gv.ho_ten }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
-</td>
 
-</tr>
-{% endfor %}
+    <table class="w-full text-sm">
+        <tr class="border-b">
+            <th class="text-left p-3">Mã sinh viên</th>
+            <th class="text-left p-3">Họ và tên</th>
+            <th>Lớp</th>
+            <th>GPA</th>
+            <th>Lĩnh vực</th>
+            <th>GVHD TTNN</th>
+            <th>Nguyện vọng</th>
+            <th class="text-center">Phân công GVHD</th>
+        </tr>
 
-</table>
+        {% for s in data %}
+        <tr class="student-row border-b hover:bg-gray-50 transition-colors" 
+            data-group="{{ s.group }}" 
+            data-linhvuc="{{ s.linh_vuc|lower }}"
+            data-gv="{{ s.gvhd }}"
+            data-diemtl="{{ s.diem_tl|default:0 }}"
+            data-status="{% if s.trang_thai == 2 %}approved{% elif s.gvhd %}assigned{% else %}unassigned{% endif %}">
+            <td class="p-3 font-semibold text-gray-600 uppercase tracking-tighter align-top">{{ s.id }}</td>
+            <td class="p-3 font-bold text-gray-900 align-top">{{ s.ten }}</td>
+            <td class="text-center py-3 align-top">{{ s.lop }}</td>
 
-</div>
+            <!-- 🔥 GPA -->
+            <td class="text-center py-3 text-sm font-bold text-blue-600 px-4 min-w-[70px] align-top">
+                {{ s.diem_tl }}
+            </td>
 
-<!-- RIGHT -->
-<div class="bg-white rounded-xl p-5 shadow h-fit">
+            <!-- 🔥 LĨNH VỰC -->
+            <td class="text-xs text-gray-600 text-center py-3 align-top max-w-[250px] px-2 leading-relaxed">
+                {% if s.linh_vuc and s.linh_vuc != '--' %}
+                    {{ s.linh_vuc|linebreaksbr }}
+                {% else %}
+                    <span class="text-gray-400">--</span>
+                {% endif %}
+            </td>
 
-<h3 class="font-semibold text-gray-700 mb-4">Thống kê số lượng phân công</h3>
+            <!-- 🔥 GVHD TTNN -->
+            <td class="text-center py-3 text-[13px] font-medium text-slate-600 leading-tight align-top">
+                {{ s.gvhd_ttnn }}
+            </td>
 
-{% for gv in gv_stats %}
-<div class="py-2.5 border-b border-gray-100 last:border-0 text-gray-800 text-sm">
-    <span class="font-medium">{{ gv.ten }}</span>
-    <span class="mx-1 text-gray-500">-</span>
-    <span class="font-bold text-blue-600">{{ gv.count }}</span>
-</div>
-{% endfor %}
+            <!-- 🔥 NGUYỆN VỌNG -->
+            <td class="align-top py-3 px-2 text-center">
+                <div class="flex flex-col items-center justify-center gap-1 max-w-[380px] mx-auto text-center">
+                    {% if s.nv1 %}
+                    <div class="text-[13px] text-gray-800 leading-tight">
+                        {{ s.nv1|linebreaksbr }}
+                    </div>
+                    {% endif %}
 
-</div>
+                    {% if s.nv2 %}
+                    <div class="text-[13px] text-gray-800 leading-tight mt-1">
+                        <span class="font-semibold text-xs text-slate-500">NV2:</span> {{ s.nv2|linebreaksbr }}
+                    </div>
+                    {% endif %}
 
+                    {% if s.group and s.group != 'Không' %}
+                    <div class="text-[11px] text-gray-400 italic mt-1 leading-tight">
+                        (Nhóm: {{ s.group }})
+                    </div>
+                    {% endif %}
+                </div>
+            </td>
+
+            <td class="p-3 align-top text-center">
+                <div class="flex flex-col items-center gap-1">
+                    <select onchange="markChanged('{{ s.id }}', this.value, this)"
+                        class="border rounded px-2 py-1.5 text-xs w-44 outline-none transition-colors cursor-pointer
+                        {% if s.gvhd %}bg-blue-50 border-blue-200 text-blue-700 font-medium
+                        {% else %}bg-white border-gray-300 text-gray-600{% endif %}">
+
+                        <option value="">-- Chưa phân --</option>
+
+                        {% if s.de_xuat_gvhd %}
+                            {% for gv in s.de_xuat_gvhd %}
+                            <option value="{{ gv.value }}" {% if s.gvhd == gv.value %}selected{% endif %}>
+                                {{ gv.display }}
+                            </option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="" disabled class="text-gray-400 italic">Chưa có đề xuất</option>
+                        {% endif %}
+                    </select>
+                    
+                    <!-- Hiển thị Trạng thái duyệt -->
+                    {% if s.gvhd %}
+                        {% if s.trang_thai == 1 %}
+                            <span class="text-[10px] bg-yellow-100 text-yellow-700 font-semibold px-2 py-0.5 rounded-full mt-1">Chờ duyệt</span>
+                        {% elif s.trang_thai == 2 %}
+                            <span class="text-[10px] bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full mt-1">Đã duyệt</span>
+                        {% elif s.trang_thai == 3 %}
+                            <span class="text-[10px] bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded-full mt-1">Bị từ chối ⚠️</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 </div>
 
 </div>
@@ -188,30 +237,21 @@ function saveAll() {
     btn.innerHTML = 'Đang lưu...';
     btn.disabled = true;
 
-    let promises = [];
-    for (let sv_id in pendingChanges) {
-        let gv = pendingChanges[sv_id];
-        let p = fetch("{% url 'GiangVien:update_phan_cong' %}", {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": "{{ csrf_token }}"
-            },
-            body: new URLSearchParams({
-                sv: sv_id,
-                gv: gv,
-                ky_id: '{{ current_ky.id|default:"" }}'
-            })
-        }).then(res => {
-            if (!res.ok) throw new Error("Mã lỗi: " + res.status);
-            return res.json();
-        }).then(data => {
-            if (data.status === "error") throw new Error(data.message);
-            return data;
-        });
-        promises.push(p);
-    }
-    
-    Promise.all(promises).then(() => {
+    fetch("{% url 'GiangVien:bulk_update_phan_cong' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            changes: pendingChanges,
+            ky_id: '{{ current_ky.id|default:"" }}'
+        })
+    }).then(res => {
+        if (!res.ok) throw new Error("Mã lỗi: " + res.status);
+        return res.json();
+    }).then(data => {
+        if (data.status === "error") throw new Error(data.message);
         location.reload();
     }).catch(err => {
         alert("Lưu thất bại! " + err.message);
@@ -224,27 +264,68 @@ function saveAll() {
 // ==============================
 // FILTER LOGIC
 // ==============================
-document.getElementById('searchInput').addEventListener('input', filterTable);
 document.getElementById('groupFilter').addEventListener('change', filterTable);
+document.getElementById('statusFilter').addEventListener('change', filterTable);
+document.getElementById('linhVucFilter').addEventListener('change', filterTable);
+document.getElementById('gvFilter').addEventListener('change', filterTable);
+document.getElementById('gpaFilter').addEventListener('change', filterTable);
 
 function filterTable() {
-    const searchText = document.getElementById('searchInput').value.toLowerCase();
     const groupFilter = document.getElementById('groupFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    const linhVucFilter = document.getElementById('linhVucFilter').value.toLowerCase();
+    const gvFilter = document.getElementById('gvFilter').value;
+    const gpaFilter = document.getElementById('gpaFilter').value;
+    
     const rows = document.querySelectorAll('.student-row');
 
     rows.forEach(row => {
-        const textContent = row.innerText.toLowerCase();
-        let groupMatch = true;
-        
         const rowGroup = row.getAttribute('data-group') || "Không";
-        
+        const rowStatus = row.getAttribute('data-status');
+        const rowLinhVuc = row.getAttribute('data-linhvuc') || "";
+        const rowGv = row.getAttribute('data-gv') || "";
+        const rowGpa = parseFloat(row.getAttribute('data-diemtl') || 0);
+
+        // 1. Group match
+        let groupMatch = true;
         if (groupFilter === "Cá nhân") {
             groupMatch = (rowGroup === "Không" || rowGroup.trim() === "");
         } else if (groupFilter === "Nhóm") {
             groupMatch = (rowGroup !== "Không" && rowGroup.trim() !== "");
         }
 
-        if (textContent.includes(searchText) && groupMatch) {
+        // 2. Status match
+        let statusMatch = true;
+        if (statusFilter !== "all") {
+            if (statusFilter === "assigned") {
+                statusMatch = (rowStatus === "assigned" || rowStatus === "approved");
+            } else {
+                statusMatch = (rowStatus === statusFilter);
+            }
+        }
+
+        // 3. Linh vuc match
+        let linhVucMatch = true;
+        if (linhVucFilter !== "all") {
+            linhVucMatch = rowLinhVuc.includes(linhVucFilter);
+        }
+
+        // 4. GV match
+        let gvMatch = true;
+        if (gvFilter !== "all") {
+            gvMatch = (rowGv === gvFilter);
+        }
+
+        // 5. GPA match
+        let gpaMatch = true;
+        if (gpaFilter !== "all") {
+            if (gpaFilter === "below2.5") gpaMatch = (rowGpa < 2.5);
+            else if (gpaFilter === "below3.2") gpaMatch = (rowGpa < 3.2);
+            else if (gpaFilter === "below3.6") gpaMatch = (rowGpa < 3.6);
+            else if (gpaFilter === "above3.6") gpaMatch = (rowGpa >= 3.6);
+        }
+
+        if (groupMatch && statusMatch && linhVucMatch && gvMatch && gpaMatch) {
             row.style.display = "";
         } else {
             row.style.display = "none";
