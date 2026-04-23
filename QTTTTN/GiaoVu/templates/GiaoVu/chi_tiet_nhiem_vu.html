@@ -1,0 +1,257 @@
+{% extends 'GiaoVu/home.html' %}
+{% load static %}
+
+{% block title %}Chi tiết nhiệm vụ - {{ nhiem_vu.ten_nhiem_vu }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-container {
+        padding: 1.5rem 2.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .mission-header-simple {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        background: #ffffff;
+        padding: 1.25rem 2rem;
+        border-radius: 0.75rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .header-left h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .back-btn-circle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #64748b;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .back-btn-circle:hover {
+        background: #e2e8f0;
+        color: #3b82f6;
+    }
+
+    .filter-dropdown-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .filter-dropdown-wrapper label {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    .filter-select-minimal {
+        padding: 0.5rem 2rem 0.5rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: #1e293b;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+    }
+
+    .filter-select-minimal:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Table Styles */
+    .table-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+
+    .student-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .student-table th {
+        background: #f8fafc;
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-size: 0.8125rem;
+        font-weight: 800;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .student-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        font-size: 0.9375rem;
+    }
+
+    .student-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .student-name {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .student-id {
+        font-size: 0.8125rem;
+        color: #64748b;
+    }
+
+    .status-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .status-submitted {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .status-pending {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .file-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .file-link:hover {
+        text-decoration: underline;
+    }
+
+    .no-file {
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="mission-header-simple">
+        <div class="header-left">
+            <a href="{% url 'GiaoVu:giaovu_nhiemvu' %}" class="back-btn-circle" title="Quay lại">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <h1>{{ nhiem_vu.ten_nhiem_vu }}</h1>
+        </div>
+        
+        <div class="header-right">
+            <div class="filter-dropdown-wrapper">
+                <label for="statusFilter">Trạng thái:</label>
+                <select id="statusFilter" class="filter-select-minimal" onchange="location.href='?status=' + this.value">
+                    <option value="all" {% if filter_status == 'all' %}selected{% endif %}>Tất cả sinh viên</option>
+                    <option value="submitted" {% if filter_status == 'submitted' %}selected{% endif %}>Đã nộp bài</option>
+                    <option value="pending" {% if filter_status == 'pending' %}selected{% endif %}>Chưa nộp bài</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <table class="student-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">MÃ SINH VIÊN</th>
+                    <th style="width: 25%;">HỌ TÊN</th>
+                    <th style="width: 10%;">LỚP</th>
+                    <th style="width: 15%;">TRẠNG THÁI</th>
+                    <th style="width: 25%;">FILE NỘP BÀI</th>
+                    <th style="width: 10%;">THỜI GIAN</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                <tr>
+                    <td style="font-weight: 600; color: #64748b;">{{ item.sinh_vien.ma_sv }}</td>
+                    <td>
+                        <span class="student-name">{{ item.sinh_vien.ho_ten }}</span>
+                    </td>
+                    <td>{{ item.sinh_vien.lop }}</td>
+                    <td>
+                        {% if item.da_nop %}
+                            <span class="status-tag status-submitted">Đã nộp bài</span>
+                        {% else %}
+                            <span class="status-tag status-pending">Chưa nộp bài</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.da_nop %}
+                            <a href="{{ item.bai_nop.file_path.url }}" class="file-link" target="_blank">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                {{ item.bai_nop.ten_file }}
+                            </a>
+                        {% else %}
+                            <span class="no-file">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.8125rem; color: #64748b;">
+                        {% if item.da_nop %}
+                            {{ item.bai_nop.thoi_gian_nop|date:"d/m/Y H:i" }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 3rem; color: #94a3b8;">
+                        Không tìm thấy sinh viên nào phù hợp với bộ lọc.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
