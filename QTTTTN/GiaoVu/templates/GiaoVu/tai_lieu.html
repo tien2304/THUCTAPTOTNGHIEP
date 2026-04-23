@@ -4,7 +4,7 @@
 {% block title %}Quản lý tài liệu{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'GiaoVu/css/tai_lieu.css' %}?v=1.1">
+<link rel="stylesheet" href="{% static 'GiaoVu/css/tai_lieu.css' %}?v=1.2">
 {% endblock %}
 
 {% block content %}
@@ -29,8 +29,9 @@
         <table class="doc-table">
             <thead>
                 <tr>
-                    <th style="width: 70%;">TÊN TÀI LIỆU</th>
-                    <th style="width: 30%;">NGÀY CẬP NHẬT</th>
+                    <th style="width: 50%;">TÊN TÀI LIỆU</th>
+                    <th style="width: 25%;">NGÀY CẬP NHẬT</th>
+                    <th style="width: 25%;">THAO TÁC</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,15 +62,24 @@
                         <a href="{{ doc.duong_dan_file.url }}" target="_blank" style="margin-left:8px; text-decoration: none; color: inherit; font-weight: 500;">
                             {{ doc.ten_tai_lieu }}
                         </a>
-                        </td>
-                        <td class="doc-info">{{ doc.ngay_cap_nhat|date:"d/m/Y" }}</td>
-                    </tr>
+                    </td>
+                    <td class="doc-info">{{ doc.ngay_cap_nhat|date:"d/m/Y" }}</td>
+                    <td>
+                        <button class="btn-edit" title="Chỉnh sửa" 
+                            onclick="openEditModal('{{ doc.id }}', '{{ doc.ten_tai_lieu }}', '{{ doc.mo_ta }}', '{{ doc.ky.id }}', '{{ doc.duong_dan_file.name|cut:'documents/' }}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
                 {% empty %}
-                    <tr>
-                        <td colspan="2" style="text-align: center; padding: 3rem 1rem; color: #94a3b8;">
-                            Hiện tại hệ thống chưa có tài liệu nào. Vui lòng thêm tài liệu mới.
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 3rem 1rem; color: #94a3b8;">
+                        Hiện tại hệ thống chưa có tài liệu nào. Vui lòng thêm tài liệu mới.
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -185,6 +195,87 @@
     </div>
 </div>
 
+<!-- Modal Chỉnh Sửa Tài Liệu -->
+<div id="editDocModal" class="modal-backdrop">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Chỉnh sửa tài liệu</h2>
+            <button class="modal-close" type="button" onclick="closeEditModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form method="POST" enctype="multipart/form-data" action="{% url 'GiaoVu:giaovu_edit_tailieu' %}">
+            {% csrf_token %}
+            <input type="hidden" name="id" id="editDocId">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Tiêu đề</label>
+                    <input type="text" name="tieu_de" id="editTieuDe" class="form-input" placeholder="Nhập tiêu đề tài liệu..." required autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <textarea name="mo_ta" id="editMoTa" class="form-input" rows="3" placeholder="Nhập mô tả chi tiết..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Chọn kỳ thực tập</label>
+                    <select name="ky_id" id="editKyId" class="form-input form-select" required>
+                        <option value="">Chọn kỳ thực tập...</option>
+                        {% for ky in all_ky %}
+                        <option value="{{ ky.id }}">{{ ky.ten_ky }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tệp đính kèm</label>
+                    <div id="currentFileContainer" style="display: none; margin-bottom: 0.75rem;">
+                        <div class="current-file-card">
+                            <div class="file-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            </div>
+                            <div class="file-details">
+                                <span id="currentFileName" class="file-name">filename.pdf</span>
+                                <span class="file-status">Tệp hiện tại</span>
+                            </div>
+                            <button type="button" class="btn-remove-file" onclick="removeCurrentFile()" title="Thay đổi tệp">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="file-drop-area" id="editUploadArea">
+                        <input type="file" name="file_dinh_kem" class="file-input" id="editFileUpload" accept=".pdf,.doc,.docx,.zip,.rar,application/zip,application/x-rar-compressed">
+                        <div class="file-drop-content">
+                            <svg class="upload-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <p class="file-drop-text">Kéo thả tệp mới hoặc chọn từ máy tính</p>
+                            <p class="file-name-display" id="editFileNameDisplay"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Hủy</button>
+                <button type="submit" class="btn-submit">Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function openModal() {
         document.getElementById('addDocModal').style.display = 'flex';
@@ -194,6 +285,36 @@
         document.getElementById('addDocModal').style.display = 'none';
         document.getElementById('fileNameDisplay').textContent = '';
         document.getElementById('fileUpload').value = '';
+    }
+
+    function openEditModal(id, tieuDe, moTa, kyId, fileName) {
+        document.getElementById('editDocId').value = id;
+        document.getElementById('editTieuDe').value = tieuDe;
+        document.getElementById('editMoTa').value = moTa;
+        document.getElementById('editKyId').value = kyId;
+        
+        if (fileName && fileName !== 'None') {
+            document.getElementById('currentFileName').textContent = fileName;
+            document.getElementById('currentFileContainer').style.display = 'block';
+            document.getElementById('editUploadArea').style.display = 'none';
+        } else {
+            document.getElementById('currentFileContainer').style.display = 'none';
+            document.getElementById('editUploadArea').style.display = 'block';
+        }
+        
+        document.getElementById('editDocModal').style.display = 'flex';
+    }
+
+    function removeCurrentFile() {
+        document.getElementById('currentFileContainer').style.display = 'none';
+        document.getElementById('editUploadArea').style.display = 'block';
+        document.getElementById('editFileUpload').click(); // Tự động mở chọn file luôn cho tiện
+    }
+
+    function closeEditModal() {
+        document.getElementById('editDocModal').style.display = 'none';
+        document.getElementById('editFileNameDisplay').textContent = '';
+        document.getElementById('editFileUpload').value = '';
     }
     
     // Cập nhật tên file khi người dùng chọn xong
@@ -209,11 +330,24 @@
         }
     });
 
-    // Bấm ra ngoài vùng Modal để đóng lại Popup nhanh gọn
-    document.getElementById('addDocModal').addEventListener('click', function(e) {
-        if(e.target === this) {
-            closeModal();
+    document.getElementById('editFileUpload').addEventListener('change', function(e) {
+        const fileDisplay = document.getElementById('editFileNameDisplay');
+        if (e.target.files.length > 0) {
+            fileDisplay.textContent = 'Đã chọn: ' + e.target.files[0].name;
+            fileDisplay.style.color = '#3b82f6';
+            fileDisplay.style.fontWeight = '600';
+            fileDisplay.style.marginTop = '0.5rem';
+        } else {
+            fileDisplay.textContent = '';
         }
+    });
+
+    // Bấm ra ngoài vùng Modal để đóng lại Popup
+    window.addEventListener('click', function(e) {
+        const addModal = document.getElementById('addDocModal');
+        const editModal = document.getElementById('editDocModal');
+        if(e.target === addModal) closeModal();
+        if(e.target === editModal) closeEditModal();
     });
 </script>
 {% endblock %}

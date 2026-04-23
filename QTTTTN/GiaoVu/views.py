@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from Home.models import (
-    KyThucTap, SinhVien, GiangVien, TaiLieu, NhiemVu, PhanCongGVHD, 
+    KyThucTap, SinhVien, GiangVien, TaiLieu, NhiemVu, BaiNop, PhanCongGVHD, 
     HoiDong, HoiDong_GiangVien, HoiDong_SinhVien, BangDiem, TyLeDiem,
     ChiTietTraLoi, PhieuTraLoi
 )
@@ -59,7 +59,12 @@ def ql_sinh_vien_view(request):
                 
             ky = KyThucTap.objects.filter(id=ky_id).first() if ky_id else None
             sv = SinhVien.objects.create(ma_sv=ma_sv, ho_ten=ho_ten, lop=lop, ky_hien_tai=ky)
-            sync_user_account(ma_sv, ho_ten, 'SinhVien')
+            
+            mat_khau = request.POST.get('mat_khau', '').strip()
+            if not mat_khau:
+                mat_khau = "123456789"
+                
+            sync_user_account(ma_sv, ho_ten, 'SinhVien', password=mat_khau)
             messages.success(request, f'Đã thêm sinh viên "{ho_ten}" và tạo tài khoản đăng nhập thành công!')
         else:
             messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
@@ -110,10 +115,15 @@ def ql_giang_vien_view(request):
                 ma_gv=ma_gv, ho_ten=ho_ten, hoc_vi=hoc_vi,
                 chuc_vu=chuc_vu, chuyen_mon=chuyen_mon, so_dien_thoai=sdt,
             )
-            # Map chuc_vu sang VaiTro (Dùng tiếng Việt có dấu cho đồng nhất với bộ lọc @groups_required)
+            # Map chuc_vu sang VaiTro
             role_map = {'Giảng viên': 'Giảng viên', 'Giáo vụ': 'Giáo vụ', 'Trưởng bộ môn': 'Trưởng bộ môn'}
             role_name = role_map.get(chuc_vu, 'Giảng viên')
-            sync_user_account(ma_gv, ho_ten, role_name)
+            
+            mat_khau = request.POST.get('mat_khau', '').strip()
+            if not mat_khau:
+                mat_khau = "123456789"
+                
+            sync_user_account(ma_gv, ho_ten, role_name, password=mat_khau)
             
             messages.success(request, f'Đã thêm giảng viên "{ho_ten}" và tạo tài khoản đăng nhập thành công!')
         else:
@@ -230,6 +240,17 @@ def edit_giang_vien_view(request):
                     gv.chuyen_mon = chuyen_mon
                     gv.so_dien_thoai = sdt
                     gv.save()
+                
+                # Cập nhật tài khoản (và mật khẩu nếu có)
+                role_map = {'Giảng viên': 'Giảng viên', 'Giáo vụ': 'Giáo vụ', 'Trưởng bộ môn': 'Trưởng bộ môn'}
+                role_name = role_map.get(chuc_vu, 'Giảng viên')
+                
+                mat_khau_moi = request.POST.get('mat_khau', '').strip()
+                if mat_khau_moi:
+                    sync_user_account(new_ma, ho_ten, role_name, password=mat_khau_moi)
+                else:
+                    sync_user_account(new_ma, ho_ten, role_name)
+
                 messages.success(request, f'Cập nhật giảng viên "{ho_ten}" thành công!')
             else:
                 messages.error(request, 'Không tìm thấy giảng viên.')
@@ -334,6 +355,14 @@ def edit_sinh_vien_view(request):
                     sinh_vien.ky_hien_tai = ky
                     sinh_vien.save()
                 
+                # Cập nhật tài khoản (và mật khẩu nếu có)
+                mat_khau_moi = request.POST.get('mat_khau', '').strip()
+                if mat_khau_moi:
+                    sync_user_account(new_ma, ho_ten, 'SinhVien', password=mat_khau_moi)
+                else:
+                    # Chỉ cập nhật họ tên nếu không đổi mật khẩu
+                    sync_user_account(new_ma, ho_ten, 'SinhVien')
+                
                 messages.success(request, f'Cập nhật sinh viên "{ho_ten}" thành công!')
             else:
                 messages.error(request, 'Không tìm thấy sinh viên để cập nhật.')
@@ -419,6 +448,34 @@ def ql_tai_lieu_view(request):
         'all_ky': all_ky,
     }
     return render(request, 'GiaoVu/tai_lieu.html', context)
+
+
+def edit_tai_lieu_view(request):
+    """View xử lý cập nhật tài liệu."""
+    if request.method == 'POST':
+        doc_id = request.POST.get('id')
+        tieu_de = request.POST.get('tieu_de', '').strip()
+        mo_ta = request.POST.get('mo_ta', '').strip()
+        ky_id = request.POST.get('ky_id')
+        file_dinh_kem = request.FILES.get('file_dinh_kem')
+
+        if doc_id and tieu_de and ky_id:
+            doc = TaiLieu.objects.filter(id=doc_id).first()
+            ky = KyThucTap.objects.filter(id=ky_id).first()
+            if doc and ky:
+                doc.ten_tai_lieu = tieu_de
+                doc.mo_ta = mo_ta
+                doc.ky = ky
+                if file_dinh_kem:
+                    doc.duong_dan_file = file_dinh_kem
+                doc.save()
+                messages.success(request, f'Đã cập nhật tài liệu "{tieu_de}" thành công!')
+            else:
+                messages.error(request, 'Không tìm thấy tài liệu hoặc kỳ thực tập.')
+        else:
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin bắt buộc.')
+    
+    return redirect('GiaoVu:giaovu_tailieu')
 
 
 def nhiem_vu_view(request):
@@ -789,5 +846,88 @@ def cap_nhat_diem_dn(request, ma_sv):
              messages.error(request, "Vui lòng nhập điểm.")
 
     return redirect(f"{reverse('GiaoVu:giaovu_diem')}?ky={ky_id}")
+
+def edit_nhiem_vu_view(request):
+    """View xử lý cập nhật nhiệm vụ."""
+    if request.method == 'POST':
+        nv_id = request.POST.get('id')
+        ten_nhiem_vu = request.POST.get('ten_nhiem_vu', '').strip()
+        mo_ta = request.POST.get('mo_ta', '').strip()
+        ky_id = request.POST.get('ky_id')
+        han_nop = request.POST.get('han_nop')
+
+        if nv_id and ten_nhiem_vu and ky_id and han_nop:
+            nv = NhiemVu.objects.filter(id=nv_id).first()
+            ky = KyThucTap.objects.filter(id=ky_id).first()
+            if nv and ky:
+                try:
+                    han_nop_dt = datetime.strptime(han_nop, '%Y-%m-%dT%H:%M')
+                    nv.ten_nhiem_vu = ten_nhiem_vu
+                    nv.mo_ta = mo_ta
+                    nv.ky = ky
+                    nv.han_nop = han_nop_dt
+                    nv.save()
+                    messages.success(request, f'Đã cập nhật nhiệm vụ "{ten_nhiem_vu}" thành công!')
+                except Exception as e:
+                    messages.error(request, f'Lỗi định dạng ngày giờ: {str(e)}')
+            else:
+                messages.error(request, 'Không tìm thấy nhiệm vụ hoặc kỳ thực tập.')
+        else:
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin bắt buộc.')
+            
+    return redirect(f"/giao-vu/nhiem-vu/?ky_id={ky_id}" if ky_id else "GiaoVu:giaovu_nhiemvu")
+
+def delete_nhiem_vu_view(request, nv_id):
+    """Xóa nhiệm vụ."""
+    nv = NhiemVu.objects.filter(id=nv_id).first()
+    ky_id = None
+    if nv:
+        ky_id = nv.ky.id
+        ten = nv.ten_nhiem_vu
+        nv.delete()
+        messages.success(request, f'Đã xóa nhiệm vụ "{ten}" thành công!')
+    else:
+        messages.error(request, 'Không tìm thấy nhiệm vụ để xóa.')
+        
+    return redirect(f"/giao-vu/nhiem-vu/?ky_id={ky_id}" if ky_id else "GiaoVu:giaovu_nhiemvu")
+
+def chi_tiet_nhiem_vu_view(request, nv_id):
+    """Trang chi tiết nhiệm vụ - xem danh sách nộp bài của sinh viên."""
+    nhiem_vu = get_object_or_404(NhiemVu, id=nv_id)
+    ky = nhiem_vu.ky
+    
+    # Lấy danh sách toàn bộ sinh viên trong kỳ này
+    sinh_vien_list = SinhVien.objects.filter(ky_hien_tai=ky).order_by('ma_sv')
+    
+    # Lấy danh sách bài nộp của nhiệm vụ này
+    bai_nop_list = BaiNop.objects.filter(nhiem_vu=nhiem_vu).select_related('sinh_vien')
+    bai_nop_dict = {bn.sinh_vien.ma_sv: bn for bn in bai_nop_list}
+    
+    # Kết hợp dữ liệu
+    data = []
+    for sv in sinh_vien_list:
+        bn = bai_nop_dict.get(sv.ma_sv)
+        data.append({
+            'sinh_vien': sv,
+            'bai_nop': bn,
+            'da_nop': True if bn else False
+        })
+        
+    # Xử lý lọc
+    filter_status = request.GET.get('status', 'all')
+    if filter_status == 'submitted':
+        data = [d for d in data if d['da_nop']]
+    elif filter_status == 'pending':
+        data = [d for d in data if not d['da_nop']]
+        
+    context = {
+        'current_page': 'nhiemvu',
+        'nhiem_vu': nhiem_vu,
+        'data': data,
+        'filter_status': filter_status,
+        'total_count': len(data),
+        'submitted_count': len([d for d in data if d['da_nop']]),
+    }
+    return render(request, 'GiaoVu/chi_tiet_nhiem_vu.html', context)
 
 

@@ -4,7 +4,7 @@
 {% block title %}Thiết lập nhiệm vụ{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'GiaoVu/css/nhiem_vu.css' %}">
+<link rel="stylesheet" href="{% static 'GiaoVu/css/nhiem_vu.css' %}?v=1.5">
 {% endblock %}
 
 {% block content %}
@@ -56,8 +56,12 @@
                     {% for nv in nhiem_vu_list %}
                     <tr>
                         <td class="task-name-cell">
-                            <div class="task-title">{{ nv.ten_nhiem_vu }}</div>
-                            <div class="task-desc">{{ nv.mo_ta }}</div>
+                            <a href="{% url 'GiaoVu:giaovu_chi_tiet_nhiem_vu' nv.id %}" style="text-decoration: none;">
+                                <div class="task-title">{{ nv.ten_nhiem_vu }}</div>
+                                {% if nv.mo_ta and nv.mo_ta != nv.ten_nhiem_vu %}
+                                    <div class="task-desc">{{ nv.mo_ta }}</div>
+                                {% endif %}
+                            </a>
                         </td>
                         <td class="task-date-cell">
                             <div class="date-wrapper">
@@ -66,10 +70,11 @@
                             </div>
                         </td>
                         <td class="task-action-cell">
-                            <button class="btn-icon btn-edit" title="Chỉnh sửa">
+                            <button class="btn-icon btn-edit" title="Chỉnh sửa" 
+                                onclick="event.stopPropagation(); openEditModal('{{ nv.id }}', '{{ nv.ten_nhiem_vu|escapejs }}', '{{ nv.mo_ta|escapejs }}', '{{ nv.ky.id }}', '{{ nv.han_nop|date:'Y-m-d\TH:i' }}')">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                             </button>
-                            <button class="btn-icon btn-delete" title="Xóa">
+                            <button class="btn-icon btn-delete" title="Xóa" onclick="event.stopPropagation(); confirmDelete('{{ nv.id }}', '{{ nv.ten_nhiem_vu|escapejs }}')">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
                         </td>
@@ -91,7 +96,7 @@
 <div id="addTaskModal" class="modal-backdrop">
     <div class="modal-container">
         <div class="modal-header">
-            <h2>Thiết lập nhiệm vụ mới</h2>
+            <h2 id="modalTitle">Thiết lập nhiệm vụ mới</h2>
             <button class="modal-close" type="button" onclick="closeModal()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -99,22 +104,23 @@
                 </svg>
             </button>
         </div>
-        <form method="POST" action="{% url 'GiaoVu:giaovu_nhiemvu' %}">
+        <form id="nhiemVuForm" method="POST" action="{% url 'GiaoVu:giaovu_nhiemvu' %}">
             {% csrf_token %}
+            <input type="hidden" name="id" id="task_id">
             <div class="modal-body">
                 <div class="form-group">
                     <label>Tiêu đề nhiệm vụ</label>
-                    <input type="text" name="ten_nhiem_vu" class="form-input" placeholder="VD: Báo cáo giữa kỳ" required autocomplete="off">
+                    <input type="text" name="ten_nhiem_vu" id="task_title" class="form-input" placeholder="VD: Báo cáo giữa kỳ" required autocomplete="off">
                 </div>
                 
                 <div class="form-group">
                     <label>Mô tả</label>
-                    <textarea name="mo_ta" class="form-input" rows="4" placeholder="Mô tả chi tiết yêu cầu nhiệm vụ..."></textarea>
+                    <textarea name="mo_ta" id="task_desc" class="form-input" rows="4" placeholder="Mô tả chi tiết yêu cầu nhiệm vụ..."></textarea>
                 </div>
                 
                 <div class="form-group">
                     <label>Chọn kỳ thực tập</label>
-                    <select name="ky_id" class="form-input form-select" required>
+                    <select name="ky_id" id="task_ky" class="form-input form-select" required>
                         {% for ky in all_ky %}
                         <option value="{{ ky.id }}" {% if selected_ky and selected_ky.id == ky.id %}selected{% endif %}>{{ ky.ten_ky }}</option>
                         {% endfor %}
@@ -123,13 +129,13 @@
                 
                 <div class="form-group">
                     <label>Thời gian hết hạn</label>
-                    <input type="datetime-local" name="han_nop" class="form-input" required>
+                    <input type="datetime-local" name="han_nop" id="task_han_nop" class="form-input" required>
                 </div>
             </div>
             
             <div class="modal-footer">
                 <button type="button" class="btn-cancel" onclick="closeModal()">Hủy</button>
-                <button type="submit" class="btn-submit">Lưu nhiệm vụ</button>
+                <button type="submit" id="btnSubmit" class="btn-submit">Lưu nhiệm vụ</button>
             </div>
         </form>
     </div>
@@ -137,20 +143,42 @@
 
 <script>
     function openModal() {
+        document.getElementById('nhiemVuForm').action = "{% url 'GiaoVu:giaovu_nhiemvu' %}";
+        document.getElementById('modalTitle').innerText = "Thiết lập nhiệm vụ mới";
+        document.getElementById('btnSubmit').innerText = "Lưu nhiệm vụ";
+        document.getElementById('task_id').value = "";
+        document.getElementById('task_title').value = "";
+        document.getElementById('task_desc').value = "";
+        document.getElementById('task_han_nop').value = "";
+        document.getElementById('addTaskModal').style.display = 'flex';
+    }
+
+    function openEditModal(id, title, desc, kyId, hanNop) {
+        document.getElementById('nhiemVuForm').action = "{% url 'GiaoVu:giaovu_edit_nhiemvu' %}";
+        document.getElementById('modalTitle').innerText = "Chỉnh sửa nhiệm vụ";
+        document.getElementById('btnSubmit').innerText = "Cập nhật nhiệm vụ";
+        
+        document.getElementById('task_id').value = id;
+        document.getElementById('task_title').value = title;
+        document.getElementById('task_desc').value = desc;
+        document.getElementById('task_ky').value = kyId;
+        document.getElementById('task_han_nop').value = hanNop;
+        
         document.getElementById('addTaskModal').style.display = 'flex';
     }
     
     function closeModal() {
         document.getElementById('addTaskModal').style.display = 'none';
     }
+
+    function confirmDelete(id, title) {
+        window.location.href = `/giao-vu/nhiem-vu/delete/${id}/`;
+    }
     
-    // Bấm ra ngoài vùng Modal để đóng lại Popup nhanh gọn
     document.getElementById('addTaskModal').addEventListener('click', function(e) {
         if(e.target === this) {
             closeModal();
         }
     });
-
-    // Nếu màn hình trả về lỗi hay thông báo thành công thì có thể hiển thị tự động bằng message Django (nếu cần sau này)
 </script>
 {% endblock %}

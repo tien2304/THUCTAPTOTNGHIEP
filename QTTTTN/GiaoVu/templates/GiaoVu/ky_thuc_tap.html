@@ -5,16 +5,6 @@
 <link rel="stylesheet" href="{% static 'GiaoVu/css/ky_thuc_tap.css' %}">
 {% endblock %}
 {% block content %}
-{% if messages %}
-<div class="toast-container" id="toastContainer">
-    {% for msg in messages %}
-    <div class="toast toast-{{ msg.tags }}">
-        {{ msg }}
-        <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
 <div class="page-container">
     <!-- Page Header -->
     <div class="page-header">
@@ -46,7 +36,8 @@
                     <td>{{ ky.ngay_bat_dau|date:"d/m/Y" }}</td>
                     <td>{{ ky.ngay_ket_thuc|date:"d/m/Y" }}</td>
                     <td>
-                        <button class="btn-edit" title="Chỉnh sửa">
+                        <button class="btn-edit" title="Chỉnh sửa" 
+                            onclick="openEditModal('{{ ky.id }}', '{{ ky.ten_ky }}', '{{ ky.ngay_bat_dau|date:'Y-m-d' }}', '{{ ky.ngay_ket_thuc|date:'Y-m-d' }}')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -140,20 +131,71 @@
     </div>
 </div>
 
+<!-- ===== MODAL CHỈNH SỬA KỲ THỰC TẬP ===== -->
+<div class="modal-overlay" id="modalEditOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Chỉnh sửa kỳ thực tập</h2>
+            <button class="modal-close" id="modalEditClose" type="button">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'GiaoVu:giaovu_edit_kythuctap' %}" id="formEditKy">
+                {% csrf_token %}
+                <input type="hidden" id="editKyId" name="id">
+                <div class="form-group">
+                    <label class="form-label" for="editTenKy">Tên kỳ thực tập</label>
+                    <input type="text" class="form-input" id="editTenKy" name="ten" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="editNgayBatDau">Ngày bắt đầu</label>
+                        <input type="date" class="form-input" id="editNgayBatDau" name="bat_dau" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editNgayKetThuc">Ngày kết thúc</label>
+                        <input type="date" class="form-input" id="editNgayKetThuc" name="ket_thuc" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" id="btnEditHuy" type="button">Hủy</button>
+            <button class="btn-save" type="submit" form="formEditKy">Lưu thay đổi</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const overlay = document.getElementById('modalOverlay');
+    const editOverlay = document.getElementById('modalEditOverlay');
     const btnThem = document.getElementById('btnThemKy');
     const btnClose = document.getElementById('modalClose');
+    const btnEditClose = document.getElementById('modalEditClose');
     const btnHuy = document.getElementById('btnHuy');
+    const btnEditHuy = document.getElementById('btnEditHuy');
 
     function openModal() { overlay.classList.add('active'); }
     function closeModal() { overlay.classList.remove('active'); }
+    
+    function openEditModal(id, ten, bat_dau, ket_thuc) {
+        document.getElementById('editKyId').value = id;
+        document.getElementById('editTenKy').value = ten;
+        document.getElementById('editNgayBatDau').value = bat_dau;
+        document.getElementById('editNgayKetThuc').value = ket_thuc;
+        editOverlay.classList.add('active');
+    }
+    function closeEditModal() { editOverlay.classList.remove('active'); }
 
     btnThem.addEventListener('click', openModal);
     btnClose.addEventListener('click', closeModal);
     btnHuy.addEventListener('click', closeModal);
-    overlay.addEventListener('click', function (e) {
+    
+    btnEditClose.addEventListener('click', closeEditModal);
+    btnEditHuy.addEventListener('click', closeEditModal);
+
+    window.addEventListener('click', function (e) {
         if (e.target === overlay) closeModal();
+        if (e.target === editOverlay) closeEditModal();
     });
 </script>
 

@@ -12,13 +12,14 @@
 }
 
 .page-title {
-    font-size: 1.25rem;
-    font-weight: 800;
+    font-size: 26px;
+    font-weight: 700;
     color: #0f172a;
     display: flex;
     align-items: center;
     gap: 0.75rem;
     margin: 0;
+    letter-spacing: -0.5px;
 }
 
 .page-title svg {
@@ -186,15 +187,15 @@
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    padding: 1rem;
+    padding: 2rem; /* Tăng padding để cách xa lề màn hình */
 }
 
 .modal-container {
     background: #ffffff;
     width: 100%;
-    max-width: 440px;  /* Giảm thêm chiều ngang cho thật gọn */
-    max-height: 85vh;  /* Khống chế cứng giới hạn chiều cao ở 85% màn hình */
-    border-radius: 0.75rem;
+    max-width: 400px; /* Nới rộng ra 400px theo ý bạn */
+    max-height: 80vh;
+    border-radius: 0.5rem; /* Bo góc ít hơn cho gọn */
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
@@ -251,10 +252,10 @@
 }
 
 .modal-body {
-    padding: 1rem 1.25rem; /* Thu nhỏ khoảng trắng lề body */
+    padding: 0.75rem 1rem; /* Ép mỏng lề */
     display: flex;
     flex-direction: column;
-    gap: 0.875rem; /* Giảm gap gắt gao giữa các mục */
+    gap: 0.75rem; /* Giảm gap */
     overflow-y: auto; /* Kích hoạt thanh trượt cho nội dung dài */
 }
 
@@ -272,7 +273,7 @@
 
 .form-input {
     width: 100%;
-    padding: 0.5rem 0.75rem; /* Giảm chiều cao thanh nhập text */
+    padding: 0.4rem 0.75rem; /* Ép mỏng thêm ô nhập liệu */
     border: 1px solid #cbd5e1;
     border-radius: 0.5rem;
     font-size: 0.875rem; /* Giảm size font nhập liệp */
@@ -375,7 +376,7 @@ textarea.form-input {
 }
 
 .modal-footer {
-    padding: 0.875rem 1.25rem; /* Thu gọn thanh footer cực đại */
+    padding: 0.625rem 1rem; /* Thu hẹp lề dưới cực mỏng */
     border-top: 1px solid #e2e8f0;
     display: flex;
     justify-content: flex-end;
@@ -414,3 +415,95 @@ textarea.form-input {
     background-color: #2563eb;
     border-color: #2563eb;
 }
+
+.btn-edit {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-edit:hover {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.current-file-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.current-file-card:hover {
+    background: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+}
+
+.file-icon-box {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #3b82f6;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+}
+
+.file-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.file-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.btn-remove-file {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-remove-file:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fecaca;
+    transform: scale(1.05);
+}

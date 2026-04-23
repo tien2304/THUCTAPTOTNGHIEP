@@ -23,17 +23,24 @@ def groups_required(*group_names):
        return False
    return user_passes_test(in_groups, login_url='login')
 
-def sync_user_account(username, full_name, role_name, password="123456789"):
+def sync_user_account(username, full_name, role_name, password=None):
     """
     Đảm bảo có User và NguoiDung tương ứng với username (ma_sv hoặc ma_gv).
-    - Mật khẩu mặc định: 123456789 (nếu tạo mới).
+    - Mật khẩu mặc định: 123456789 (nếu tạo mới và không cung cấp mật khẩu).
     """
-    # 1. Lấy hoặc tạo VaiTro (ID sẽ tự động nếu chưa có, nhưng tốt nhất là init db trước)
+    # 1. Lấy hoặc tạo VaiTro
     role_obj, _ = VaiTro.objects.get_or_create(ten_vai_tro=role_name)
     
     # 2. Tạo hoặc cập nhật User
     user, created = User.objects.get_or_create(username=username)
+    
+    # Xử lý mật khẩu
     if created:
+        if not password:
+            password = "123456789"
+        user.set_password(password)
+    elif password:
+        # Nếu user đã tồn tại và có cung cấp password mới -> Cập nhật
         user.set_password(password)
     
     # Luôn cập nhật họ tên theo thứ tự tiếng Việt (Họ lót -> Tên)
@@ -51,7 +58,7 @@ def sync_user_account(username, full_name, role_name, password="123456789"):
         defaults={
             'role': role_obj,
             'username': username,
-            'password': password
+            'password': password if password else "123456789" # Lưu lại để tham khảo (tùy thiết kế cũ)
         }
     )
     return user

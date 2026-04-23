@@ -12,10 +12,10 @@
         <h1 class="page-title">Quản lý Điểm Sinh Viên</h1>
         {% if selected_ky %}
         <div style="display: flex; gap: 12px; align-items: center;">
-            <a href="{% url 'TruongBoMon:truongboomon_cong_bo_diem' selected_ky.id %}" 
-               style="background: #2563eb; color: white; border: none; padding: 10px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s;"
-               onmouseover="this.style.transform='translateY(-1px)'; this.style.background='#1d4ed8'; this.style.boxShadow='0 6px 12px rgba(37,99,235,0.3)'" 
-               onmouseout="this.style.transform='none'; this.style.background='#2563eb'; this.style.boxShadow='0 4px 6px rgba(37,99,235,0.2)'">
+            <a href="{% url 'TruongBoMon:truongboomon_cong_bo_diem' selected_ky.id %}"
+                style="background: #2563eb; color: white; border: none; padding: 10px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s;"
+                onmouseover="this.style.transform='translateY(-1px)'; this.style.background='#1d4ed8'; this.style.boxShadow='0 6px 12px rgba(37,99,235,0.3)'"
+                onmouseout="this.style.transform='none'; this.style.background='#2563eb'; this.style.boxShadow='0 4px 6px rgba(37,99,235,0.2)'">
                 Công bố điểm
             </a>
         </div>
@@ -23,11 +23,11 @@
     </div>
 
     <div class="filter-bar">
-        <label class="filter-label">Học kỳ thực tập</label>
+        <label class="filter-label">Học kỳ</label>
         <form method="GET" id="filterForm">
             <select name="ky_id" class="select-ky" onchange="this.form.submit()">
                 {% for ky in all_ky %}
-                <option value="{{ ky.id }}" {% if selected_ky_id == ky.id|stringformat:"s" %}selected{% endif %}>
+                <option value="{{ ky.id }}" {% if selected_ky_id==ky.id|stringformat:"s" %}selected{% endif %}>
                     {{ ky.ten_ky }}
                 </option>
                 {% endfor %}
@@ -95,11 +95,15 @@
             <div class="pagination-btns" style="gap: 8px; display: flex; align-items: center;">
                 {% if page_obj.has_previous %}
                 <a href="?ky_id={{ selected_ky_id }}&page={{ page_obj.previous_page_number }}" class="pg-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                 </a>
                 {% else %}
                 <button class="pg-btn" style="opacity: 0.3; cursor: not-allowed;" disabled>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                 </button>
                 {% endif %}
 
@@ -107,11 +111,15 @@
 
                 {% if page_obj.has_next %}
                 <a href="?ky_id={{ selected_ky_id }}&page={{ page_obj.next_page_number }}" class="pg-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
                 </a>
                 {% else %}
                 <button class="pg-btn" style="opacity: 0.3; cursor: not-allowed;" disabled>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
                 </button>
                 {% endif %}
             </div>

@@ -1,6 +1,6 @@
 .page-container {
-    padding: 2.5rem 3rem;
-    max-width: 1400px;
+    padding: 1.5rem 2.5rem;
+    max-width: 1100px;
     margin: 0 auto;
 }
 
@@ -128,7 +128,7 @@
 
 .task-table th {
     background: #f8fafc;
-    padding: 1rem 2rem;
+    padding: 1.25rem 2rem;
     text-align: left;
     font-size: 0.875rem;
     font-weight: 800;
@@ -230,14 +230,14 @@
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    padding: 1rem;
+    padding: 2rem; /* Tăng padding lề ngoài */
 }
 
 .modal-container {
     background: #ffffff;
     width: 100%;
-    max-width: 480px;
-    max-height: 90vh;
+    max-width: 400px; /* Nới rộng bự hơn một chút */
+    max-height: 80vh;
     border-radius: 0.75rem;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -261,7 +261,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.5rem;
+    padding: 0.875rem 1.25rem; /* Ép mỏng lại */
     border-bottom: 1px solid #e2e8f0;
 }
 
@@ -296,10 +296,10 @@
 }
 
 .modal-body {
-    padding: 1.25rem 1.5rem;
+    padding: 0.875rem 1rem; /* Giảm bớt padding */
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
     overflow-y: auto;
 }
 
@@ -368,7 +368,7 @@ textarea.form-input {
 }
 
 .modal-footer {
-    padding: 1rem 1.5rem;
+    padding: 0.625rem 1rem; /* Thu hẹp sát lề dưới */
     border-top: 1px solid #e2e8f0;
     display: flex;
     justify-content: flex-end;
