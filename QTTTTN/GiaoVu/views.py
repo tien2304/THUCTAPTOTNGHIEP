@@ -26,6 +26,13 @@ def ky_thuc_tap(request):
         bat_dau  = request.POST.get('bat_dau', '')
         ket_thuc = request.POST.get('ket_thuc', '')
         if ten_ky and bat_dau and ket_thuc:
+            try:
+                if datetime.strptime(bat_dau, '%Y-%m-%d') >= datetime.strptime(ket_thuc, '%Y-%m-%d'):
+                    messages.error(request, 'Ngày kết thúc phải lớn hơn ngày bắt đầu.')
+                    return redirect('GiaoVu:giaovu_kythuctap')
+            except ValueError:
+                pass
+
             KyThucTap.objects.create(
                 ten_ky=ten_ky, ngay_bat_dau=bat_dau,
                 ngay_ket_thuc=ket_thuc, gv_phu_trach=None,
@@ -65,7 +72,7 @@ def ql_sinh_vien_view(request):
                 mat_khau = "123456789"
                 
             sync_user_account(ma_sv, ho_ten, 'SinhVien', password=mat_khau)
-            messages.success(request, f'Đã thêm sinh viên "{ho_ten}" và tạo tài khoản đăng nhập thành công!')
+            messages.success(request, f'Đã thêm sinh viên "{ho_ten}" thành công!')
         else:
             messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
         return redirect('GiaoVu:giaovu_qlsinhvien')
@@ -125,7 +132,7 @@ def ql_giang_vien_view(request):
                 
             sync_user_account(ma_gv, ho_ten, role_name, password=mat_khau)
             
-            messages.success(request, f'Đã thêm giảng viên "{ho_ten}" và tạo tài khoản đăng nhập thành công!')
+            messages.success(request, f'Đã thêm giảng viên "{ho_ten}" thành công!')
         else:
             messages.error(request, 'Vui lòng điền đầy đủ thông tin bắt buộc.')
         return redirect('GiaoVu:giaovu_qlgiangvien')
@@ -392,6 +399,13 @@ def edit_ky_thuc_tap_view(request):
         ket_thuc = request.POST.get('ket_thuc', '')
 
         if ky_id and ten_ky and bat_dau and ket_thuc:
+            try:
+                if datetime.strptime(bat_dau, '%Y-%m-%d') >= datetime.strptime(ket_thuc, '%Y-%m-%d'):
+                    messages.error(request, 'Ngày kết thúc phải lớn hơn ngày bắt đầu.')
+                    return redirect('GiaoVu:giaovu_kythuctap')
+            except ValueError:
+                pass
+
             ky = KyThucTap.objects.filter(id=ky_id).first()
             if ky:
                 ky.ten_ky = ten_ky
@@ -833,13 +847,16 @@ def cap_nhat_diem_dn(request, ma_sv):
                 diem_dn = diem_dn.replace(',', '.')
                 diem_dn_val = float(diem_dn)
                 
-                sv = SinhVien.objects.get(ma_sv=ma_sv)
-                ky = KyThucTap.objects.get(id=ky_id)
-                bd, _ = BangDiem.objects.get_or_create(sinh_vien=sv, ky=ky)
-                bd.diem_doanh_nghiep = diem_dn_val
-                bd.save()
-                if hasattr(bd, 'calculate_total'):
-                    bd.calculate_total()
+                if not (0 <= diem_dn_val <= 10):
+                    messages.error(request, "Điểm phải nằm trong khoảng từ 0 đến 10.")
+                else:
+                    sv = SinhVien.objects.get(ma_sv=ma_sv)
+                    ky = KyThucTap.objects.get(id=ky_id)
+                    bd, _ = BangDiem.objects.get_or_create(sinh_vien=sv, ky=ky)
+                    bd.diem_doanh_nghiep = diem_dn_val
+                    bd.save()
+                    if hasattr(bd, 'calculate_total'):
+                        bd.calculate_total()
             except Exception as e:
                 messages.error(request, f"Lỗi cập nhật: {str(e)}")
         else:

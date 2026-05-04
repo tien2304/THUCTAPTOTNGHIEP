@@ -130,12 +130,8 @@
 }
 
 .tag-gvhd {
-    background: #eff6ff;
-    color: #3b82f6;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
+    color: #0f172a;
     font-weight: 600;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     display: inline-block;
-    border: 1px solid #dbeafe;
 }

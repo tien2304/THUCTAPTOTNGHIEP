@@ -193,9 +193,9 @@
 .modal-container {
     background: #ffffff;
     width: 100%;
-    max-width: 400px; /* Nới rộng ra 400px theo ý bạn */
-    max-height: 80vh;
-    border-radius: 0.5rem; /* Bo góc ít hơn cho gọn */
+    max-width: 480px;
+    max-height: 95vh;
+    border-radius: 0.5rem;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
@@ -251,12 +251,21 @@
     height: 20px;
 }
 
+.modal-container form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+}
+
 .modal-body {
     padding: 0.75rem 1rem; /* Ép mỏng lề */
     display: flex;
     flex-direction: column;
     gap: 0.75rem; /* Giảm gap */
-    overflow-y: auto; /* Kích hoạt thanh trượt cho nội dung dài */
+    overflow-y: visible; /* Hiển thị full */
+    flex: 1;
+    min-height: 0;
 }
 
 .form-group {
@@ -382,6 +391,9 @@ textarea.form-input {
     justify-content: flex-end;
     gap: 0.75rem;
     background-color: #f8fafc;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    flex-shrink: 0;
 }
 
 .btn-cancel, .btn-submit {

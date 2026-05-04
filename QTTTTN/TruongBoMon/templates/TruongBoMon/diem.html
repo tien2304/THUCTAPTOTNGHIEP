@@ -27,7 +27,7 @@
         <form method="GET" id="filterForm">
             <select name="ky_id" class="select-ky" onchange="this.form.submit()">
                 {% for ky in all_ky %}
-                <option value="{{ ky.id }}" {% if selected_ky_id==ky.id|stringformat:"s" %}selected{% endif %}>
+                <option value="{{ ky.id }}" {% if selected_ky_id|stringformat:"s" == ky.id|stringformat:"s" %}selected{% endif %}>
                     {{ ky.ten_ky }}
                 </option>
                 {% endfor %}

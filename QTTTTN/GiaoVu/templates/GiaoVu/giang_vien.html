@@ -192,7 +192,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="matKhauGV">Mật khẩu</label>
-                    <input type="password" class="form-input" id="matKhauGV" name="mat_khau" placeholder="Nhập mật khẩu" required>
+                    <input type="password" class="form-input" id="matKhauGV" name="mat_khau" placeholder="Nhập mật khẩu">
                 </div>
             </form>
         </div>
@@ -378,14 +378,7 @@
         }
     }
 
-    var searchInput = document.getElementById('searchInput');
-    var searchTimer;
-    searchInput.addEventListener('input', function () {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(function () {
-            document.getElementById('searchForm').submit();
-        }, 400);
-    });
+
 
     // Logic: Multi-select Dropdown (Add & Edit)
     function setupMultiSelect(dropdownId, selectedId, checkboxName) {
@@ -455,9 +448,38 @@
 
     // === LOGIC: DELETE ===
     function confirmDeleteGV(ma, ten) {
-        if (confirm(`Bạn có chắc chắn muốn xóa giảng viên ${ten} (Mã: ${ma}) không?`)) {
-            window.location.href = `/giao-vu/quan-ly-giang-vien/delete/${ma}/`;
-        }
+        window.location.href = `/giao-vu/quan-ly-giang-vien/delete/${ma}/`;
+    }
+
+    // Live Search (AJAX)
+    var searchInput = document.getElementById('searchInput');
+    var searchTimer;
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function () {
+                var url = new URL(window.location.href);
+                url.searchParams.set('q', searchInput.value);
+                url.searchParams.set('page', 1); // Reset to page 1
+                
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        var parser = new DOMParser();
+                        var doc = parser.parseFromString(html, 'text/html');
+                        
+                        var newTbody = doc.querySelector('.gv-table tbody');
+                        var oldTbody = document.querySelector('.gv-table tbody');
+                        if (newTbody && oldTbody) oldTbody.innerHTML = newTbody.innerHTML;
+                        
+                        var newPagination = doc.querySelector('.pagination-bar');
+                        var oldPagination = document.querySelector('.pagination-bar');
+                        if (newPagination && oldPagination) oldPagination.innerHTML = newPagination.innerHTML;
+                        
+                        window.history.pushState({}, '', url);
+                    });
+            }, 400);
+        });
     }
 </script>
 {% endblock %}

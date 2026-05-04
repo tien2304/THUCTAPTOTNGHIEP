@@ -27,13 +27,13 @@ def phan_cong_gvpt_view(request):
             ky = KyThucTap.objects.filter(id=ky_id).first()
 
             if gv and ky:
-                # Kiểm tra xem đã phân công chưa
-                exists = PhanCongGVPT.objects.filter(giang_vien=gv, ky=ky).exists()
-                if not exists:
+                phan_congs = PhanCongGVPT.objects.filter(ky=ky)
+                if phan_congs.exists():
+                    pc = phan_congs.first()
+                    messages.warning(request, f"{ky.ten_ky} đã được phân công cho {pc.giang_vien.ho_ten}. Mỗi kỳ chỉ được phép có 1 Giảng viên phụ trách!")
+                else:
                     PhanCongGVPT.objects.create(giang_vien=gv, ky=ky)
                     messages.success(request, f"Đã phân công {gv.ho_ten} phụ trách {ky.ten_ky}!")
-                else:
-                    messages.warning(request, "Giảng viên này đã được phân công phụ trách kỳ này rồi.")
             else:
                 messages.error(request, "Dữ liệu không hợp lệ.")
         else:
@@ -576,10 +576,11 @@ def cau_hinh_diem_view(request):
         hoidong_weight = float(request.POST.get('hoidong', 40))
         dn_weight = float(request.POST.get('dn', 20))
 
-        # Kiểm tra tổng trọng số (thường là 100)
+        # Kiểm tra tổng trọng số (không được lớn hơn 100)
         total = gvhd_weight + hoidong_weight + dn_weight
-        if total != 100:
-            messages.warning(request, f"Lưu ý: Tổng tỷ lệ là {total}%, có thể không phải là 100%.")
+        if total > 100:
+            messages.error(request, f"Tổng tỷ lệ không được lớn hơn 100%.")
+            return redirect('TruongBoMon:cau_hinh_diem')
 
         if ky_id:
             ky = KyThucTap.objects.filter(id=ky_id).first()

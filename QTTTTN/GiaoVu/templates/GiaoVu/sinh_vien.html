@@ -190,7 +190,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="matKhauSV">Mật khẩu</label>
-                    <input type="password" class="form-input" id="matKhauSV" name="mat_khau" placeholder="Nhập mật khẩu" required>
+                    <input type="password" class="form-input" id="matKhauSV" name="mat_khau" placeholder="Nhập mật khẩu">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="kyHienTai">Học kỳ</label>
@@ -337,17 +337,21 @@
     btnClose.addEventListener('click', closeModal);
     btnHuy.addEventListener('click', closeModal);
 
-    // Logic: Edit Student Modal
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.addEventListener('click', function () {
-            document.getElementById('originalMaSV').value = this.dataset.ma;
-            document.getElementById('editMaSV').value = this.dataset.ma;
-            document.getElementById('editHoTenSV').value = this.dataset.hoten;
-            document.getElementById('editLopSV').value = this.dataset.lop;
-            document.getElementById('editKyHienTai').value = this.dataset.ky;
-            editOverlay.classList.add('active');
+    // Logic: Edit Student Modal (Event Delegation for AJAX)
+    var svTable = document.querySelector('.sv-table');
+    if (svTable) {
+        svTable.addEventListener('click', function(e) {
+            var btn = e.target.closest('.btn-edit');
+            if (btn) {
+                document.getElementById('originalMaSV').value = btn.dataset.ma;
+                document.getElementById('editMaSV').value = btn.dataset.ma;
+                document.getElementById('editHoTenSV').value = btn.dataset.hoten;
+                document.getElementById('editLopSV').value = btn.dataset.lop;
+                document.getElementById('editKyHienTai').value = btn.dataset.ky;
+                editOverlay.classList.add('active');
+            }
         });
-    });
+    }
 
     function closeEditModal() { editOverlay.classList.remove('active'); }
     editClose.addEventListener('click', closeEditModal);
@@ -405,15 +409,37 @@
         kySelect.value = selectedKy;
     }
 
+    // Live Search (AJAX)
     var searchInput = document.getElementById('searchInput');
     var searchTimer;
     if (searchInput) {
         searchInput.addEventListener('input', function () {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(function () {
-                document.getElementById('searchForm').submit();
+                var url = new URL(window.location.href);
+                url.searchParams.set('q', searchInput.value);
+                url.searchParams.set('page', 1); // Reset to page 1
+                
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        var parser = new DOMParser();
+                        var doc = parser.parseFromString(html, 'text/html');
+                        
+                        var newTbody = doc.querySelector('.sv-table tbody');
+                        var oldTbody = document.querySelector('.sv-table tbody');
+                        if (newTbody && oldTbody) oldTbody.innerHTML = newTbody.innerHTML;
+                        
+                        var newPagination = doc.querySelector('.pagination-bar');
+                        var oldPagination = document.querySelector('.pagination-bar');
+                        if (newPagination && oldPagination) oldPagination.innerHTML = newPagination.innerHTML;
+                        
+                        window.history.pushState({}, '', url);
+                    });
             }, 400);
         });
     }
+
+
 </script>
 {% endblock %}

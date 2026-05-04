@@ -57,8 +57,9 @@
                     {% csrf_token %}
                     <input type="hidden" name="ky_id" value="{{ selected_ky }}">
                     <td style="padding: 16px 20px; text-align: center;">
-                        <input type="text" name="diem_dn" value="{{ d.diem_doanh_nghiep|default:'' }}" 
-                               style="width: 45px; text-align: center; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 2px; font-weight: 700; color: #475569; outline: none; background: #f8fafc; transition: all 0.2s;"
+                        <input type="text" name="diem_dn" value="{{ d.diem_doanh_nghiep|default:'' }}" required
+                               style="width: 55px; text-align: center; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 2px; font-weight: 700; color: #475569; outline: none; background: #f8fafc; transition: all 0.2s;"
+                               oninput="validateDiem(this)" oninvalid="validateDiem(this)"
                                onfocus="this.style.borderColor='#3b82f6'; this.style.background='#fff'"
                                onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'">
                     </td>
@@ -93,5 +94,33 @@
         {% endif %}
     </div>
     {% endif %}
+
+    <script>
+    function validateDiem(input) {
+        let valStr = input.value.replace(',', '.');
+        if (valStr === '') {
+            input.setCustomValidity('Vui lòng nhập điểm.');
+        } else if (isNaN(valStr) || valStr.trim() === '') {
+            input.setCustomValidity('Vui lòng nhập định dạng số hợp lệ.');
+        } else {
+            let v = parseFloat(valStr);
+            if (v > 10) {
+                input.setCustomValidity('Điểm phải nhỏ hơn hoặc bằng 10.');
+            } else if (v < 0) {
+                input.setCustomValidity('Điểm phải lớn hơn hoặc bằng 0.');
+            } else {
+                input.setCustomValidity('');
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('input[name="diem_dn"]').forEach(function(input) {
+            if(input.value !== '') {
+                validateDiem(input);
+            }
+        });
+    });
+    </script>
 </div>
 {% endblock %}

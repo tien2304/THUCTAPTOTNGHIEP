@@ -58,15 +58,7 @@
         <!-- BỘ LỌC (TƯƠNG TỰ BÊN GIẢNG VIÊN) -->
         <div class="table-filters" style="padding: 1.25rem; border-bottom: 1.5px solid #f1f5f9;">
             <div class="flex-wrap-container" style="display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: flex-end;">
-                <!-- Lọc Hình thức -->
-                <div class="filter-group">
-                    <span class="filter-label">Hình thức</span>
-                    <select class="filter-select" id="hinhthuc-filter" onchange="filterTable()" style="min-width: 120px;">
-                        <option value="all">Tất cả</option>
-                        <option value="Cá nhân">Cá nhân</option>
-                        <option value="Nhóm">Nhóm</option>
-                    </select>
-                </div>
+
 
                 <!-- Lọc GVHD -->
                 <div class="filter-group">
@@ -92,17 +84,7 @@
                     </select>
                 </div>
 
-                <!-- Lọc Trạng thái -->
-                <div class="filter-group">
-                    <span class="filter-label">Trạng thái</span>
-                    <select class="filter-select" id="status-filter" onchange="filterTable()" style="min-width: 160px;">
-                        <option value="all">Tất cả</option>
-                        <option value="0">Chưa phân công</option>
-                        <option value="1">Chờ duyệt</option>
-                        <option value="2">Đã duyệt</option>
-                        <option value="3">Bị từ chối</option>
-                    </select>
-                </div>
+
 
                 <!-- Lọc Lĩnh vực -->
                 <div class="filter-group">
@@ -128,7 +110,6 @@
                     <th>Lĩnh vực</th>
                     <th>GVHD TTNN</th>
                     <th>Giảng viên hướng dẫn</th>
-                    <th style="width: 120px; text-align: center;">Trạng thái</th>
                 </tr>
             </thead>
             <tbody>
@@ -169,33 +150,11 @@
                                 {% endfor %}
                             </select>
                         </td>
-                        <td style="text-align: center;">
-                            {% if item.trang_thai == 2 %}
-                                <span class="status-badge" style="background: #ecfdf5; color: #10b981;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    Đã duyệt
-                                </span>
-                            {% elif item.trang_thai == 1 %}
-                                <span class="status-badge" style="background: #fff7ed; color: #f97316;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                    Chờ duyệt
-                                </span>
-                            {% elif item.trang_thai == 3 %}
-                                <span class="status-badge" style="background: #fef2f2; color: #ef4444;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="15" x2="15" y2="9"></line></svg>
-                                    Bị từ chối
-                                </span>
-                            {% else %}
-                                <span class="status-badge" style="background: #f1f5f9; color: #64748b;">
-                                    Chưa phân công
-                                </span>
-                            {% endif %}
-                        </td>
                     </tr>
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 5rem 2rem; color: #94a3b8; background: #f8fafc;">
+                        <td colspan="7" style="text-align: center; padding: 5rem 2rem; color: #94a3b8; background: #f8fafc;">
                             <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                                 <span style="font-weight: 500;">Không tìm thấy dữ liệu sinh viên cho học kỳ này.</span>
@@ -315,27 +274,18 @@
     }
 
     function filterTable() {
-        const hinhthucValue = document.getElementById('hinhthuc-filter').value;
         const gvValue = document.getElementById('gvhd-filter').value;
         const gpaValue = document.getElementById('gpa-filter').value;
-        const statusValue = document.getElementById('status-filter').value;
         const fieldValue = document.getElementById('linhvuc-filter').value;
         
         const rows = document.querySelectorAll('.student-row');
         
         rows.forEach(row => {
-            const hinhthuc = row.getAttribute('data-hinhthuc');
             const gvId = row.getAttribute('data-gv');
             const gpa = parseFloat(row.getAttribute('data-diemtl')) || 0;
-            const status = row.getAttribute('data-status');
             const linhvuc = row.getAttribute('data-linhvuc');
 
             let show = true;
-
-            // 0. Filter by Hinh thuc
-            if (hinhthucValue !== 'all' && hinhthuc !== hinhthucValue) {
-                show = false;
-            }
 
             // 1. Filter by GVHD
             if (show && gvValue !== 'all') {
@@ -352,11 +302,6 @@
                 else if (gpaValue === '<3.2' && gpa >= 3.2) show = false;
                 else if (gpaValue === '<3.6' && gpa >= 3.6) show = false;
                 else if (gpaValue === '>=3.6' && gpa < 3.6) show = false;
-            }
-
-            // 3. Filter by Status
-            if (show && statusValue !== 'all') {
-                if (status !== statusValue) show = false;
             }
 
             // 4. Filter by Field
