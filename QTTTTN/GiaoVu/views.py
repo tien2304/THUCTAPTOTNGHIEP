@@ -644,6 +644,8 @@ def hoidong_view(request):
             ds_hoidong.append({
                 'id': hd.id,
                 'ten': hd.ten_hoi_dong,
+                'thoi_gian_bat_dau': hd.thoi_gian_bat_dau,
+                'thoi_gian_ket_thuc': hd.thoi_gian_ket_thuc,
                 'thoi_gian': f"{hd.thoi_gian_bat_dau.strftime('%H:%M')} - {hd.thoi_gian_ket_thuc.strftime('%H:%M')}" if hd.thoi_gian_bat_dau and hd.thoi_gian_ket_thuc else "Chưa thiết lập",
                 'ngay_bao_ve': hd.ngay_bao_ve,
                 'dia_diem': hd.dia_diem,
@@ -712,11 +714,9 @@ def cap_nhat_thoi_gian_hoi_dong(request, hd_id):
         data = json.loads(request.body)
         time_range = data.get("time_range", "").strip()
         dia_diem = data.get("dia_diem", "").strip()
-
-        bat_dau = None
-        ket_thuc = None
-
         if time_range and time_range != "":
+            bat_dau = None
+            ket_thuc = None
             try:
                 if '-' in time_range:
                     start_str, end_str = [x.strip() for x in time_range.split('-', 1)]
@@ -727,12 +727,13 @@ def cap_nhat_thoi_gian_hoi_dong(request, hd_id):
                 else:
                     h, m = map(int, time_range.split(':'))
                     bat_dau = time(hour=h, minute=m)
-            except Exception:
-                bat_dau = ket_thuc = None
+                
+                hoidong.thoi_gian_bat_dau = bat_dau
+                hoidong.thoi_gian_ket_thuc = ket_thuc
+            except Exception as e:
+                return JsonResponse({"status": "error", "message": f"Lỗi định dạng thời gian: {str(e)}"}, status=400)
 
-        hoidong.thoi_gian_bat_dau = bat_dau
-        hoidong.thoi_gian_ket_thuc = ket_thuc
-        hoidong.dia_diem = dia_diem if dia_diem else None
+        hoidong.dia_diem = dia_diem
         hoidong.save()
 
         return JsonResponse({

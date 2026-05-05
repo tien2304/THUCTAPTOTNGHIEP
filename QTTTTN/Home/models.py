@@ -118,9 +118,9 @@ class PhanCongGVPT(models.Model):
         unique_together = ('giang_vien', 'ky')
 class TyLeDiem(models.Model):
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
-    diem_gvhd = models.FloatField(default=0.4)
-    diem_hoidong = models.FloatField(default=0.4)
-    diem_doanhnghiep = models.FloatField(default=0.2)
+    diem_gvhd = models.FloatField(default=40.0)
+    diem_hoidong = models.FloatField(default=40.0)
+    diem_doanhnghiep = models.FloatField(default=20.0)
 class BangDiem(models.Model):
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE)
     ky = models.ForeignKey(KyThucTap, on_delete=models.CASCADE)
@@ -147,13 +147,11 @@ class BangDiem(models.Model):
                     (float(self.diem_doanh_nghiep) * tyle.diem_doanhnghiep / 100) +
                     (float(self.diem_bao_cao) * tyle.diem_hoidong / 100)
             )
+            # Lưu lại điểm tổng kết vừa tính
+            BangDiem.objects.filter(id=self.id).update(diem_tong_ket=self.diem_tong_ket)
         else:
             self.diem_tong_ket = None
-
-    def save(self, *args, **kwargs):
-        # Tự động tính điểm mỗi khi lưu
-        self.calculate_total()
-        super().save(*args, **kwargs)
+            BangDiem.objects.filter(id=self.id).update(diem_tong_ket=None)
 
 # --- NHÓM 5: CHUYÊN MÔN (NHIỆM VỤ, HỘI ĐỒNG, TÀI LIỆU) ---
 class NhiemVu(models.Model):

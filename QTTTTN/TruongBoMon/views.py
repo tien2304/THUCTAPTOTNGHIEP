@@ -351,6 +351,8 @@ def duyet_hoidong_view(request):
             ds_hoidong.append({
                 'id': hd.id,
                 'ten': hd.ten_hoi_dong,
+                'thoi_gian_bat_dau': hd.thoi_gian_bat_dau,
+                'thoi_gian_ket_thuc': hd.thoi_gian_ket_thuc,
                 'thoi_gian': f"{hd.thoi_gian_bat_dau.strftime('%H:%M')} - {hd.thoi_gian_ket_thuc.strftime('%H:%M')}" if hd.thoi_gian_bat_dau and hd.thoi_gian_ket_thuc else "Chưa thiết lập",
                 'ngay_bao_ve': hd.ngay_bao_ve,
                 'dia_diem': hd.dia_diem,
@@ -631,8 +633,8 @@ def sinhvien_huongdan(request):
     ma_gv = request.user.username
     gv = GiangVien.objects.filter(ma_gv=ma_gv).first()
     ky_id = request.GET.get("ky")
-    query = request.GET.get("q")
-    danh_sach = PhanCongGVHD.objects.filter(giang_vien=gv, trang_thai=2).select_related('sinh_vien', 'ky')
+    query = request.GET.get("q", "")
+    danh_sach = PhanCongGVHD.objects.filter(giang_vien=gv).select_related('sinh_vien', 'ky')
     if ky_id:
         danh_sach = danh_sach.filter(ky_id=ky_id)
     if query:
@@ -709,6 +711,7 @@ def save_diem(request, ma_sv):
     bd, _ = BangDiem.objects.get_or_create(sinh_vien=sv, ky=ky)
     bd.diem_qua_trinh = diem
     bd.save()
+    bd.calculate_total()
     return redirect("TruongBoMon:chi_tiet_sv", ma_sv=ma_sv)
 
 def chi_tiet_bai_nop(request, id):
@@ -777,7 +780,7 @@ def hoi_dong_detail(request, id):
             return redirect("TruongBoMon:hoi_dong_list")
     
     # Ở đây chúng ta tin tưởng vào database đã được fix sạch sẽ ở step trước
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     is_in_time = False
     
     # Lấy giờ phút giây hiện tại để so sánh
@@ -792,11 +795,30 @@ def hoi_dong_detail(request, id):
     data_sv = []
     for item in sv_list:
         sv = item.sinh_vien
-        bd = BangDiem.objects.filter(sinh_vien=sv, ky=hoidong.ky).first()
-        diem_value = bd.diem_bao_cao if bd else None
+        # Thử mọi cách để lấy được điểm: Chính mình chấm -> Người khác chấm -> Bảng điểm
+        cham_diem = ChamDiemHoiDong.objects.filter(
+            hoi_dong_id=hoidong.id,
+            sinh_vien_id=sv.ma_sv,
+            giang_vien_id=request.user.username
+        ).first()
+        
+        diem_value = cham_diem.diem if cham_diem else None
+
+        if diem_value is None:
+            # Lấy bất kỳ ai chấm trong hội đồng này
+            fallback_hd = ChamDiemHoiDong.objects.filter(hoi_dong_id=hoidong.id, sinh_vien_id=sv.ma_sv).first()
+            if fallback_hd:
+                diem_value = fallback_hd.diem
+
+        if diem_value is None:
+            # Lấy từ bảng điểm tổng (fallback cuối)
+            bd = BangDiem.objects.filter(sinh_vien_id=sv.ma_sv).order_by('-id').first()
+            if bd:
+                diem_value = bd.diem_bao_cao
+
         data_sv.append({
             "sv": sv,
-            "diem": diem_value,
+            "diem_db": diem_value,
         })
     context = {
         "hoidong": hoidong,
@@ -813,7 +835,7 @@ def hoi_dong_detail(request, id):
 def cham_diem_hoi_dong(request, id, ma_sv):
     hoidong = get_object_or_404(HoiDong, id=id)
     sv = get_object_or_404(SinhVien, ma_sv=ma_sv)
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     current_time = now.time()
     
     if not (hoidong.thoi_gian_bat_dau and hoidong.thoi_gian_ket_thuc):
@@ -825,14 +847,20 @@ def cham_diem_hoi_dong(request, id, ma_sv):
         return redirect("TruongBoMon:hoi_dong_detail", id=id)
     diem_str = request.POST.get("diem")
     if diem_str:
-        bd, _ = BangDiem.objects.update_or_create(
-            sinh_vien=sv,
-            ky=hoidong.ky,
-            defaults={'diem_bao_cao': float(diem_str)}
-        )
-        if hasattr(bd, 'calculate_total'):
-            bd.calculate_total()
-    return redirect("TruongBoMon:hoi_dong_detail", id=id)
+        try:
+            diem_val = float(diem_str)
+            bd, _ = BangDiem.objects.update_or_create(
+                sinh_vien=sv,
+                ky=hoidong.ky,
+                defaults={'diem_bao_cao': diem_val}
+            )
+            if hasattr(bd, 'calculate_total'):
+                bd.calculate_total()
+            return JsonResponse({"status": "success", "message": "Đã lưu điểm thành công."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+
+    return JsonResponse({"status": "error", "message": "Dữ liệu không hợp lệ."})
 
 
 from django.contrib.auth.decorators import login_required

@@ -62,7 +62,7 @@ def home(request):
 
         # 2. Lấy Khảo sát
         forms = MauKhaoSat.objects.filter(ky=ky_hien_tai)
-        now_date = timezone.now().date()
+        now_date = timezone.localdate()
         for f in forms:
             if (f.ngay_bat_dau and f.ngay_bat_dau > now_date) or (f.ngay_ket_thuc and f.ngay_ket_thuc < now_date):
                 continue
@@ -251,7 +251,7 @@ def xem_diem(request):
 
         # Lấy điểm (giữ nguyên logic đã sửa trước đó)
         bang_diem = BangDiem.objects.filter(sinh_vien=sinh_vien, ky=ky_hien_tai).first()
-        diem_tong_ket = bang_diem.diem_tong_ket if (bang_diem and bang_diem.diem_tong_ket is not None) else "Chưa có"
+        diem_tong_ket = bang_diem.diem_tong_ket if (bang_diem and bang_diem.diem_tong_ket is not None) else ""
 
     except (NguoiDung.DoesNotExist, SinhVien.DoesNotExist):
         return render(request, 'SinhVien/xem_diem.html', {'error': 'Không tìm thấy hồ sơ'})

@@ -82,20 +82,18 @@
 
 <script>
     function approveAllHoiDong() {
-        if (confirm("Bạn có chắc chắn muốn phê duyệt TẤT CẢ hội đồng trong học kỳ này không?")) {
-            fetch("{% url 'TruongBoMon:approve_all_hoidong_ajax' %}", {
-                method: "POST",
-                headers: { "X-CSRFToken": "{{ csrf_token }}" }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    location.reload();
-                } else {
-                    alert(data.message || "Đã có lỗi xảy ra");
-                }
-            });
-        }
+        fetch("{% url 'TruongBoMon:approve_all_hoidong_ajax' %}", {
+            method: "POST",
+            headers: { "X-CSRFToken": "{{ csrf_token }}" }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert(data.message || "Đã có lỗi xảy ra");
+            }
+        });
     }
 </script>
 {% endblock %}

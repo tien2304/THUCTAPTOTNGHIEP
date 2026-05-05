@@ -46,15 +46,14 @@
                     </svg></span>
                 <span class="nav-label">Hội đồng bảo vệ</span>
             </a>
-            {% if is_gvpt %}
-            <a href="{% url 'GiangVien:phan_cong' %}" class="nav-item {% if current_page == 'phan_cong' %}active{% endif %}">
+            <a href="{% url 'GiangVien:phan_cong' %}" class="nav-item gvpt-link {% if current_page == 'phan_cong' %}active{% endif %}" style="display: none;">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg></span>
                 <span class="nav-label">Quản lý GVHD</span>
             </a>
-            <a href="{% url 'GiangVien:form_list' %}" class="nav-item {% if current_page == 'form_list' %}active{% endif %}">
+            <a href="{% url 'GiangVien:form_list' %}" class="nav-item gvpt-link {% if current_page == 'form_list' %}active{% endif %}" style="display: none;">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -63,7 +62,6 @@
                     </svg></span>
                 <span class="nav-label">Quản lý biểu mẫu</span>
             </a>
-            {% endif %}
         </nav>
 
         <div class="sidebar-user" id="userMenuToggle" style="cursor: pointer; position: relative;">
@@ -210,6 +208,43 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Fix cứng tên người dùng cho từng tab (chống đè session khi mở nhiều tab)
+            const tabNameKey = "tab_user_name";
+            const tabGvptKey = "tab_is_gvpt";
+            const serverName = "{{ user.get_full_name|default:user.username|escapejs }}";
+            const serverRole = "{{ user.nguoidung_profile.role.ten_vai_tro }}";
+            const expectedRole = "GiangVien";
+            
+            let savedName = sessionStorage.getItem(tabNameKey);
+            let savedIsGvpt = sessionStorage.getItem(tabGvptKey);
+            
+            if (serverRole === expectedRole) {
+                sessionStorage.setItem(tabNameKey, serverName);
+                sessionStorage.setItem(tabGvptKey, "{{ is_gvpt|yesno:'true,false' }}");
+                savedName = serverName;
+                savedIsGvpt = "{{ is_gvpt|yesno:'true,false' }}";
+            } else if (savedName) {
+                const nameEl = document.querySelector('.user-name');
+                if (nameEl) nameEl.textContent = savedName;
+            }
+
+            if (savedIsGvpt === 'true') {
+                document.querySelectorAll('.gvpt-link').forEach(el => {
+                    el.style.display = 'flex';
+                });
+                document.querySelectorAll('.gvpt-action').forEach(el => {
+                    el.style.display = 'flex';
+                });
+            }
+
+            const logoutBtn = document.querySelector('a[href="{% url 'logout' %}"]');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    sessionStorage.removeItem(tabNameKey);
+                    sessionStorage.removeItem(tabGvptKey);
+                });
+            }
+
             const userMenuToggle = document.getElementById('userMenuToggle');
             if (userMenuToggle) {
                 const userDropdownMenu = document.getElementById('userDropdownMenu');

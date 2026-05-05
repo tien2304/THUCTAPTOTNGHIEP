@@ -30,8 +30,7 @@ def sinhvien_huongdan(request):
     query = request.GET.get("q")   # 🔥 THÊM DÒNG NÀY
 
     danh_sach = PhanCongGVHD.objects.filter(
-        giang_vien=gv,
-        trang_thai=2
+        giang_vien=gv
     ).select_related('sinh_vien', 'ky')
 
     # 🔥 FILTER KỲ
@@ -167,6 +166,7 @@ def save_diem(request, ma_sv):
 
     bd.diem_qua_trinh = diem
     bd.save()
+    bd.calculate_total()
 
     return redirect("GiangVien:chi_tiet_sv", ma_sv=ma_sv)
 def chi_tiet_bai_nop(request, id):
@@ -766,7 +766,8 @@ def phan_cong_dashboard(request):
         "ky_list": ky_list,
         "current_ky": ky,
         "unique_linh_vuc": sorted(list(unique_linh_vuc)),
-        "all_gv": GiangVien.objects.exclude(chuc_vu='Giáo vụ').order_by('ho_ten')
+        "all_gv": GiangVien.objects.exclude(chuc_vu='Giáo vụ').order_by('ho_ten'),
+        "current_page": "phan_cong"
     })
 
 # ========================
@@ -944,16 +945,15 @@ def tao_hoi_dong(request):
         gio_kt = request.POST.get("thoi_gian_ket_thuc")
 
         try:
-            # 🔥 GHÉP NGÀY + GIỜ
-            thoi_gian_bat_dau = datetime.strptime(f"{ngay} {gio_bd}", "%Y-%m-%d %H:%M")
-            thoi_gian_ket_thuc = datetime.strptime(f"{ngay} {gio_kt}", "%Y-%m-%d %H:%M")
+            thoi_gian_bat_dau = gio_bd if gio_bd else "07:00"
+            thoi_gian_ket_thuc = gio_kt if gio_kt else "11:00"
 
             hd = HoiDong.objects.create(
                 ten_hoi_dong=request.POST.get("ten"),
                 ngay_bao_ve=ngay,
-                thoi_gian_bat_dau=thoi_gian_bat_dau,   # ✅ ĐÚNG
-                thoi_gian_ket_thuc=thoi_gian_ket_thuc, # ✅ ĐÚNG
-                dia_diem=request.POST.get("dia_diem"),
+                thoi_gian_bat_dau=thoi_gian_bat_dau,
+                thoi_gian_ket_thuc=thoi_gian_ket_thuc,
+                dia_diem=request.POST.get("dia_diem") or "",
                 ky=KyThucTap.objects.last()
             )
 
@@ -1079,31 +1079,46 @@ def hoi_dong_detail(request, id):
             return redirect("GiangVien:hoi_dong_list")
 
     # Kiểm tra thời gian chấm điểm
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     is_in_time = False
     if hoidong.thoi_gian_bat_dau and hoidong.thoi_gian_ket_thuc:
-        is_in_time = (hoidong.thoi_gian_bat_dau <= now <= hoidong.thoi_gian_ket_thuc) and \
+        is_in_time = (hoidong.thoi_gian_bat_dau <= now.time() <= hoidong.thoi_gian_ket_thuc) and \
                      (hoidong.ngay_bao_ve == now.date())
 
     giangviens = HoiDong_GiangVien.objects.filter(hoi_dong=hoidong).select_related('giang_vien')
 
     sv_list = HoiDong_SinhVien.objects.filter(hoi_dong=hoidong).select_related('sinh_vien')
 
+
+
     data_sv = []
     for item in sv_list:
         sv = item.sinh_vien
-
-        # Lấy điểm báo cáo (diem_bao_cao)
-        bd = BangDiem.objects.filter(
-            sinh_vien=sv,
-            ky=hoidong.ky
+        
+        # Truy vấn TRỰC TIẾP từ Database
+        cham_diem = ChamDiemHoiDong.objects.filter(
+            hoi_dong_id=hoidong.id,
+            sinh_vien_id=sv.ma_sv,
+            giang_vien_id=request.user.username
         ).first()
 
-        diem_value = bd.diem_bao_cao if bd else None
+        diem_value = cham_diem.diem if cham_diem else None
+
+        # Nếu mình chưa chấm, lấy điểm của người bất kỳ trong hội đồng
+        if diem_value is None:
+            fb = ChamDiemHoiDong.objects.filter(hoi_dong_id=hoidong.id, sinh_vien_id=sv.ma_sv).first()
+            if fb:
+                diem_value = fb.diem
+        
+        # Vẫn không có thì lấy BangDiem
+        if diem_value is None:
+            bd = BangDiem.objects.filter(sinh_vien_id=sv.ma_sv).order_by('-id').first()
+            if bd:
+                diem_value = bd.diem_bao_cao
 
         data_sv.append({
             "sv": sv,
-            "diem": diem_value,     # <-- Đảm bảo là số hoặc None
+            "diem_db": diem_value,
         })
 
     context = {
@@ -1126,47 +1141,51 @@ def cham_diem_hoi_dong(request, id, ma_sv):
     ma_gv = request.user.username
     gv = get_object_or_404(GiangVien, ma_gv=ma_gv)
 
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
 
     # CHECK TIME
-    if not (hoidong.thoi_gian_bat_dau and hoidong.thoi_gian_ket_thuc):
-        return redirect("GiangVien:hoi_dong_detail", id=id)
-
-    if not (hoidong.thoi_gian_bat_dau <= now <= hoidong.thoi_gian_ket_thuc) or \
+    if not (hoidong.thoi_gian_bat_dau and hoidong.thoi_gian_ket_thuc) or \
+       not (hoidong.thoi_gian_bat_dau <= now.time() <= hoidong.thoi_gian_ket_thuc) or \
        hoidong.ngay_bao_ve != now.date():
-        return redirect("GiangVien:hoi_dong_detail", id=id)
+        return JsonResponse({"status": "error", "message": "Ngoài thời gian cho phép chấm điểm."})
 
     diem_str = request.POST.get("diem")
 
     if diem_str:
-        diem = float(diem_str)
+        try:
+            diem = float(diem_str)
 
-        # ✅ Lưu điểm từng giảng viên
-        ChamDiemHoiDong.objects.update_or_create(
-            hoi_dong=hoidong,
-            sinh_vien=sv,
-            giang_vien=gv,
-            defaults={'diem': diem}
-        )
+            # ✅ Lưu điểm từng giảng viên
+            ChamDiemHoiDong.objects.update_or_create(
+                hoi_dong=hoidong,
+                sinh_vien=sv,
+                giang_vien=gv,
+                defaults={'diem': diem}
+            )
 
-        # ✅ TÍNH TRUNG BÌNH
-        danh_sach_diem = ChamDiemHoiDong.objects.filter(
-            hoi_dong=hoidong,
-            sinh_vien=sv
-        )
+            # ✅ TÍNH TRUNG BÌNH
+            danh_sach_diem = ChamDiemHoiDong.objects.filter(
+                hoi_dong=hoidong,
+                sinh_vien=sv
+            )
 
-        avg = sum(d.diem for d in danh_sach_diem) / danh_sach_diem.count()
+            avg = sum(d.diem for d in danh_sach_diem) / danh_sach_diem.count()
 
-        # ✅ LƯU VÀO BangDiem
-        bd, _ = BangDiem.objects.get_or_create(
-            sinh_vien=sv,
-            ky=hoidong.ky
-        )
+            # ✅ LƯU VÀO BangDiem
+            bd, _ = BangDiem.objects.get_or_create(
+                sinh_vien=sv,
+                ky=hoidong.ky
+            )
 
-        bd.diem_bao_cao = round(avg, 2)
-        bd.save()
+            bd.diem_bao_cao = round(avg, 2)
+            bd.save()
+            bd.calculate_total()
 
-    return redirect("GiangVien:hoi_dong_detail", id=id)
+            return JsonResponse({"status": "success", "message": "Đã lưu điểm thành công."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": f"Lỗi: {str(e)}"})
+
+    return JsonResponse({"status": "error", "message": "Vui lòng nhập điểm hợp lệ."})
 
 
 from django.contrib.auth.decorators import login_required

@@ -217,6 +217,29 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Fix cứng tên người dùng cho từng tab (chống đè session khi mở nhiều tab)
+            const tabNameKey = "tab_user_name";
+            const serverName = "{{ user.get_full_name|default:user.username|escapejs }}";
+            const serverRole = "{{ user.nguoidung_profile.role.ten_vai_tro }}";
+            const expectedRole = "TruongBoMon";
+            
+            let savedName = sessionStorage.getItem(tabNameKey);
+            
+            if (serverRole === expectedRole) {
+                sessionStorage.setItem(tabNameKey, serverName);
+                savedName = serverName;
+            } else if (savedName) {
+                const nameEl = document.querySelector('.user-name');
+                if (nameEl) nameEl.textContent = savedName;
+            }
+
+            const logoutBtn = document.querySelector('a[href="{% url 'logout' %}"]');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    sessionStorage.removeItem(tabNameKey);
+                });
+            }
+
             const userMenuToggle = document.getElementById('userMenuToggle');
             if (userMenuToggle) {
                 const userDropdownMenu = document.getElementById('userDropdownMenu');

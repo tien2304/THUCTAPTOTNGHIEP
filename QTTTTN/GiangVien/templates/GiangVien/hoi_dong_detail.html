@@ -28,209 +28,123 @@
         class="pb-2 border-b-2 border-transparent text-gray-500 transition-all">
         Danh sách Sinh viên
     </button>
-</div>
-
-    <!-- GIẢNG VIÊN -->
-    <div id="tab-content-gv">
-        <table class="w-full text-sm">
-            <thead class="text-gray-500 border-b">
-                <tr>
-                    <th class="py-2 text-left">STT</th>
-                    <th>Mã GV</th>
-                    <th>Họ và tên</th>
-                    <th>Đơn vị</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for gv in giangviens %}
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="py-3">{{ forloop.counter }}</td>
-                    <td>{{ gv.giang_vien.ma_gv }}</td>
-                    <td>{{ gv.giang_vien.ho_ten }}</td>
-                    <td>{{ gv.giang_vien.khoa }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
 
-    <!-- SINH VIÊN -->
-    <div id="tab-content-sv" class="hidden">
-        <h2 class="text-lg font-semibold mb-6">Danh sách sinh viên bảo vệ</h2>
+    <!-- NỘI DUNG TAB GV -->
+    <div id="content-gv" class="tab-content">
+    <table class="w-full text-sm">
+        <thead>
+        <tr class="text-left text-gray-400 border-b">
+            <th class="pb-3 font-medium">STT</th>
+            <th class="pb-3 font-medium">Mã GV</th>
+            <th class="pb-3 font-medium">Họ và tên</th>
+            <th class="pb-3 font-medium">Đơn vị</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for gv in giangviens %}
+        <tr class="border-b last:border-0">
+            <td class="py-4">{{ forloop.counter }}</td>
+            <td class="py-4">{{ gv.giang_vien.ma_gv }}</td>
+            <td class="py-4 font-medium">{{ gv.giang_vien.ho_ten }}</td>
+            <td class="py-4 text-gray-500"></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
 
-        <table class="w-full text-sm table-fixed">
-            <thead class="text-gray-500 border-b">
-                <tr>
-                    <th class="py-3 text-left w-32">Mã SV</th>
-                    <th class="text-left w-48">Họ tên</th>
-                    <th class="text-left w-32">Lớp</th>
-                    <th class="text-left">Đề tài</th>
-                    <th class="text-center w-48">Điểm</th>
-                </tr>
-            </thead>
-
-            <tbody>
-            {% for item in sinhviens %}
-            <tr class="border-b hover:bg-gray-50">
-
-                <td class="py-4 font-medium text-blue-600">
-                    {{ item.sv.ma_sv }}
-                </td>
-
-                <td class="py-4">
-                    {{ item.sv.ho_ten }}
-                </td>
-
-                <td class="py-4">
-                    {{ item.sv.lop }}
-                </td>
-
-                <!-- ĐỀ TÀI -->
-                <td class="py-4">
-                    <div class="truncate max-w-full" title="{{ item.sv.ten_de_tai }}">
-                        {{ item.sv.ten_de_tai|default:"--" }}
-                    </div>
-                </td>
-
-                <!-- ĐIỂM -->
-                <td class="py-4 text-center">
-                    {% if is_in_time %}
-                    <!-- Thay form cũ bằng cái này -->
-<form method="POST"
-      action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
-      class="diem-form flex justify-center items-center gap-2"
-      data-sv="{{ item.sv.ma_sv }}">
-
-    {% csrf_token %}
-
-    <input type="number"
-           step="0.1"
-           min="0"
-           max="10"
-           name="diem"
-           value="{{ item.diem|default_if_none:'' }}"
-           class="border border-gray-300 focus:border-blue-500 px-3 py-2 rounded-xl w-24 text-center font-medium">
-
-    <button type="submit"
-            class="px-3 py-2 text-sm rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
-        Lưu
-    </button>
-</form>
-
+    <!-- NỘI DUNG TAB SV -->
+    <div id="content-sv" class="tab-content hidden">
+    <table class="w-full text-sm">
+        <thead>
+        <tr class="text-left text-gray-400 border-b">
+            <th class="pb-3 font-medium">Mã SV</th>
+            <th class="pb-3 font-medium">Họ tên</th>
+            <th class="pb-3 font-medium">Lớp</th>
+            <th class="pb-3 font-medium">Đề tài</th>
+            <th class="pb-3 font-medium text-center">Điểm</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in sinhviens %}
+        <tr class="border-b last:border-0">
+            <td class="py-4 text-blue-600 font-medium">{{ item.sv.ma_sv }}</td>
+            <td class="py-4">{{ item.sv.ho_ten }}</td>
+            <td class="py-4 text-gray-500">{{ item.sv.lop }}</td>
+            <td class="py-4 text-gray-500 truncate max-w-xs" title="{{ item.sv.ten_de_tai }}">{{ item.sv.ten_de_tai }}</td>
+            <td class="py-4 text-center">
+                {% if is_in_time %}
+                <form action="{% url 'GiangVien:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
+                      class="diem-form flex justify-center items-center gap-2">
+                    {% csrf_token %}
+                    <input type="number" step="0.1" min="0" max="10" name="diem"
+                           value="{{ item.diem_db|stringformat:".1f" }}"
+                           class="border border-gray-300 focus:border-blue-500 px-3 py-2 rounded-xl w-20 text-center font-medium">
+                    <button type="submit" class="px-3 py-2 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Lưu</button>
+                </form>
+                {% else %}
+                    {% if item.diem_db is not None %}
+                        <span class="font-bold text-lg text-blue-600">{{ item.diem_db|floatformat:1 }}</span>
                     {% else %}
-                        {% if item.diem is not None %}
-                            <span class="font-semibold text-gray-700">
-                                {{ item.diem|floatformat:1 }}
-                            </span>
-                        {% else %}
-                            <span class="text-gray-400">--</span>
-                        {% endif %}
+                        <span class="text-gray-300">--</span>
                     {% endif %}
-                </td>
-
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
     </div>
 
 </div>
-
 </div>
 
 <script>
-// TAB SWITCH
 function showTab(type) {
-    const tabGV = document.getElementById("tab-gv");
-    const tabSV = document.getElementById("tab-sv");
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('content-' + type).classList.remove('hidden');
 
-    const contentGV = document.getElementById("tab-content-gv");
-    const contentSV = document.getElementById("tab-content-sv");
-
-    // Ẩn hết
-    contentGV.classList.add("hidden");
-    contentSV.classList.add("hidden");
-
-    // reset style cả 2 tab
-    [tabGV, tabSV].forEach(tab => {
-        tab.classList.remove("text-blue-600", "border-blue-600", "font-semibold");
-        tab.classList.add("text-gray-500", "border-transparent");
+    document.querySelectorAll('[id^="tab-"]').forEach(el => {
+        el.classList.remove('border-blue-600', 'text-blue-600');
+        el.classList.add('border-transparent', 'text-gray-500');
     });
 
-    // bật tab được chọn
-    if (type === "gv") {
-        contentGV.classList.remove("hidden");
-
-        tabGV.classList.remove("text-gray-500", "border-transparent");
-        tabGV.classList.add("text-blue-600", "border-blue-600", "font-semibold");
-    } else {
-        contentSV.classList.remove("hidden");
-
-        tabSV.classList.remove("text-gray-500", "border-transparent");
-        tabSV.classList.add("text-blue-600", "border-blue-600", "font-semibold");
-    }
+    const activeTab = document.getElementById('tab-' + type);
+    activeTab.classList.remove('border-transparent', 'text-gray-500');
+    activeTab.classList.add('border-blue-600', 'text-blue-600');
 }
-document.addEventListener("DOMContentLoaded", function() {
-    showTab('gv'); // mặc định tab giảng viên
-});
 
-// ==================== AJAX CHẤM ĐIỂM (SỬA LẠI) ====================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function() {
+    showTab('gv');
+
     document.querySelectorAll('.diem-form').forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-
-            const url = this.action; // ✅ LẤY URL ĐÚNG TỪ FORM
+            const url = this.action;
             const input = this.querySelector('input[name="diem"]');
-            const diemValue = input.value.trim();
             const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
 
-            if (!diemValue) {
-                alert("Vui lòng nhập điểm (0-10)");
-                input.focus();
-                return;
-            }
-
-            fetch(url, {   // ✅ KHÔNG HARDCODE URL
+            fetch(url, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `diem=${encodeURIComponent(diemValue)}`
+                body: `diem=${input.value}`
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    input.classList.add('border-green-500');
-                    showToast(data.message, 'success');
+                    input.classList.remove('border-gray-300');
+                    input.classList.add('border-green-500', 'bg-green-50');
                 } else {
-                    showToast(data.message, 'error');
+                    alert(data.message);
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                showToast("Lỗi server", 'error');
             });
         });
     });
 });
-
-// Toast (giữ nguyên hoặc dùng lại của bạn)
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `fixed bottom-5 right-5 px-6 py-3 rounded-xl shadow-lg text-white text-sm z-50 ${
-        type === 'success' ? 'bg-green-600' : 'bg-red-600'
-    }`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.transition = 'opacity 0.4s';
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
-    }, 2500);
-}
 </script>
 
 {% endblock %}
