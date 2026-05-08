@@ -26,16 +26,13 @@ def ky_thuc_tap(request):
         bat_dau  = request.POST.get('bat_dau', '')
         ket_thuc = request.POST.get('ket_thuc', '')
         if ten_ky and bat_dau and ket_thuc:
-            try:
-                if datetime.strptime(bat_dau, '%Y-%m-%d') >= datetime.strptime(ket_thuc, '%Y-%m-%d'):
-                    messages.error(request, 'Ngày kết thúc phải lớn hơn ngày bắt đầu.')
-                    return redirect('GiaoVu:giaovu_kythuctap')
-            except ValueError:
-                pass
+            if bat_dau >= ket_thuc:
+                messages.error(request, 'Ngày kết thúc phải lớn hơn ngày bắt đầu.')
+                return redirect('GiaoVu:giaovu_kythuctap')
 
             KyThucTap.objects.create(
                 ten_ky=ten_ky, ngay_bat_dau=bat_dau,
-                ngay_ket_thuc=ket_thuc, gv_phu_trach=None,
+                ngay_ket_thuc=ket_thuc,
             )
             messages.success(request, f'Đã thêm kỳ thực tập "{ten_ky}" thành công!')
         else:
@@ -43,27 +40,111 @@ def ky_thuc_tap(request):
         return redirect('GiaoVu:giaovu_kythuctap')
 
     tat_ca_ky = KyThucTap.objects.all().order_by('-id')
-    # paginator = Paginator(all_ky, 10)
     so_trang = Paginator(tat_ca_ky, 10)
-    # page_obj  = paginator.get_page(request.GET.get('page', 1))
     trang_hien_tai = so_trang.get_page(request.GET.get('page', 1))
-    # context = {'current_page': 'kythuctap', 'page_obj': page_obj}
     context = {'current_page': 'kythuctap', 'trang_hien_tai': trang_hien_tai}
     return render(request, 'GiaoVu/ky_thuc_tap.html', context)
 
+# Chỉnh sửa kỳ thực tập
+def edit_ky_thuc_tap_view(request):
+    if request.method == 'POST':
+        ky_id = request.POST.get('id')
+        ten_ky = request.POST.get('ten', '').strip()
+        bat_dau = request.POST.get('bat_dau', '')
+        ket_thuc = request.POST.get('ket_thuc', '')
+        if ky_id and ten_ky and bat_dau and ket_thuc:
+            # Kiểm tra tính hợp lệ của ngày
+            if bat_dau >= ket_thuc:
+                messages.error(request, 'Ngày kết thúc phải lớn hơn ngày bắt đầu.')
+                return redirect('GiaoVu:giaovu_kythuctap')
+            ky = KyThucTap.objects.filter(id=ky_id).first()
+            if ky:
+                ky.ten_ky = ten_ky
+                ky.ngay_bat_dau = bat_dau
+                ky.ngay_ket_thuc = ket_thuc
+                ky.save()
+                messages.success(request, f'Đã cập nhật kỳ thực tập "{ten_ky}" thành công!')
+            else:
+                messages.error(request, 'Không tìm thấy kỳ thực tập để cập nhật.')
+        else:
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
+    return redirect('GiaoVu:giaovu_kythuctap')
 
+# Quản lý tài liệu
+def ql_tai_lieu_view(request):
+    if request.method == 'POST':
+        tieu_de = request.POST.get('tieu_de', '').strip()
+        mo_ta = request.POST.get('mo_ta', '').strip()
+        ky_id = request.POST.get('ky_id')
+        file_dinh_kem = request.FILES.get('file_dinh_kem')
+
+        if tieu_de and ky_id and file_dinh_kem:
+            gv = GiangVien.objects.filter(ma_gv=request.user.username).first()
+            ky = KyThucTap.objects.filter(id=ky_id).first()
+            if gv and ky:
+                TaiLieu.objects.create(
+                    ten_tai_lieu=tieu_de,
+                    mo_ta=mo_ta,
+                    ky=ky,
+                    duong_dan_file=file_dinh_kem,
+                    gv_dang=gv
+                )
+                messages.success(request, f'Đã thêm tài liệu "{tieu_de}" thành công!')
+            else:
+                messages.error(request, 'Dữ liệu không hợp lệ (Giáo vụ sinh hoặc Kỳ thực tập không tồn tại).')
+        else:
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin và chọn tệp đính kèm.')
+
+        return redirect('GiaoVu:giaovu_tailieu')
+
+    all_ky = KyThucTap.objects.all().order_by('-id')
+    tai_lieu_list = TaiLieu.objects.all().order_by('-ngay_cap_nhat')
+
+    paginator = Paginator(tai_lieu_list, 10)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+
+    context = {
+        'current_page': 'tailieu',
+        'page_obj': page_obj,
+        'all_ky': all_ky,
+    }
+    return render(request, 'GiaoVu/tai_lieu.html', context)
+
+# Chỉnh sửa tài liệu
+def edit_tai_lieu_view(request):
+    if request.method == 'POST':
+        doc_id = request.POST.get('id')
+        tieu_de = request.POST.get('tieu_de', '').strip()
+        mo_ta = request.POST.get('mo_ta', '').strip()
+        ky_id = request.POST.get('ky_id')
+        file_dinh_kem = request.FILES.get('file_dinh_kem')
+
+        if doc_id and tieu_de and ky_id:
+            doc = TaiLieu.objects.filter(id=doc_id).first()
+            ky = KyThucTap.objects.filter(id=ky_id).first()
+            if doc and ky:
+                doc.ten_tai_lieu = tieu_de
+                doc.mo_ta = mo_ta
+                doc.ky = ky
+                if file_dinh_kem:
+                    doc.duong_dan_file = file_dinh_kem
+                doc.save()
+                messages.success(request, f'Đã cập nhật tài liệu "{tieu_de}" thành công!')
+            else:
+                messages.error(request, 'Không tìm thấy tài liệu hoặc kỳ thực tập.')
+        else:
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin bắt buộc.')
+
+    return redirect('GiaoVu:giaovu_tailieu')
+
+# Quản lý sinh viên
 def ql_sinh_vien_view(request):
-    """Trang Quản lý sinh viên – Giáo Vụ."""
     if request.method == 'POST':
         ma_sv  = request.POST.get('ma_sv', '').strip()
         ho_ten = request.POST.get('ho_ten', '').strip()
         lop    = request.POST.get('lop', '').strip()
         ky_id  = request.POST.get('ky_hien_tai', '')
         if ma_sv and ho_ten and lop:
-            # Tự động sửa lỗi .0 nếu nhập/paste từ Excel
-            if ma_sv.endswith('.0'):
-                ma_sv = ma_sv[:-2]
-                
             ky = KyThucTap.objects.filter(id=ky_id).first() if ky_id else None
             sv = SinhVien.objects.create(ma_sv=ma_sv, ho_ten=ho_ten, lop=lop, ky_hien_tai=ky)
             
@@ -104,6 +185,109 @@ def ql_sinh_vien_view(request):
     }
     return render(request, 'GiaoVu/sinh_vien.html', context)
 
+# Import sinh viên
+def import_sinh_vien_view(request):
+    """View xử lý import sinh viên từ file Excel."""
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        excel_file = request.FILES['excel_file']
+
+        # 1. Lấy kỳ thực tập mới nhất
+        ky_moi_nhat = KyThucTap.objects.order_by('-id').first()
+        if not ky_moi_nhat:
+            messages.error(request, 'Hệ thống chưa có Kỳ thực tập nào. Vui lòng tạo kỳ thực tập trước khi import.')
+            return redirect('GiaoVu:giaovu_qlsinhvien')
+
+        try:
+            # 2. Đọc file Excel
+            workbook = openpyxl.load_workbook(excel_file, data_only=True)
+            sheet = workbook.active
+
+            success_count = 0
+            # Giả định: Cột A: MSSV, Cột B: Họ tên, Cột C: Lớp
+            # Đọc từ hàng thứ 2 (bỏ qua tiêu đề)
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                if not row[0]: continue  # Bỏ qua dòng trống MSSV
+
+                ma_sv = str(row[0]).strip()
+
+                ho_ten = str(row[1]).strip() if row[1] else "Chưa có tên"
+                lop = str(row[2]).strip() if row[2] else "N/A"
+
+                # 3. Lưu vào database (Update nếu trùng MSSV)
+                SinhVien.objects.update_or_create(
+                    ma_sv=ma_sv,
+                    defaults={
+                        'ho_ten': ho_ten,
+                        'lop': lop,
+                        'ky_hien_tai': ky_moi_nhat
+                    }
+                )
+                sync_user_account(ma_sv, ho_ten, 'SinhVien')
+                success_count += 1
+
+            messages.success(request, f'Đã import thành công {success_count} sinh viên vào "{ky_moi_nhat.ten_ky}".')
+        except Exception as e:
+            messages.error(request, f'Lỗi khi xử lý file: {str(e)}')
+
+    return redirect('GiaoVu:giaovu_qlsinhvien')
+
+
+def edit_sinh_vien_view(request):
+    """View xử lý cập nhật thông tin sinh viên (bao gồm cả việc đổi MSSV)."""
+    if request.method == 'POST':
+        original_ma = request.POST.get('original_ma_sv', '').strip()
+        new_ma = request.POST.get('ma_sv', '').strip()
+        ho_ten = request.POST.get('ho_ten', '').strip()
+        lop = request.POST.get('lop', '').strip()
+        ky_id = request.POST.get('ky_hien_tai', '')
+
+        if original_ma and new_ma and ho_ten and lop:
+            sinh_vien = SinhVien.objects.filter(ma_sv=original_ma).first()
+            if sinh_vien:
+                ky = KyThucTap.objects.filter(id=ky_id).first() if ky_id else None
+                if original_ma != new_ma:
+                    # Nếu đổi MSSV (Primary Key)
+                    # 1. Tạo bản ghi mới dựa trên bản ghi cũ
+                    SinhVien.objects.create(
+                        ma_sv=new_ma,
+                        ho_ten=ho_ten,
+                        lop=lop,
+                        ky_hien_tai=ky
+                    )
+                    # 2. Xóa bản ghi cũ
+                    sinh_vien.delete()
+                else:
+                    # Nếu giữ nguyên MSSV
+                    sinh_vien.ho_ten = ho_ten
+                    sinh_vien.lop = lop
+                    sinh_vien.ky_hien_tai = ky
+                    sinh_vien.save()
+
+                # Cập nhật tài khoản (và mật khẩu nếu có)
+                mat_khau_moi = request.POST.get('mat_khau', '').strip()
+                if mat_khau_moi:
+                    sync_user_account(new_ma, ho_ten, 'SinhVien', password=mat_khau_moi)
+                else:
+                    # Chỉ cập nhật họ tên nếu không đổi mật khẩu
+                    sync_user_account(new_ma, ho_ten, 'SinhVien')
+
+                messages.success(request, f'Cập nhật sinh viên "{ho_ten}" thành công!')
+            else:
+                messages.error(request, 'Không tìm thấy sinh viên để cập nhật.')
+        else:
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
+
+    return redirect('GiaoVu:giaovu_qlsinhvien')
+
+def delete_sinh_vien_view(request, ma_sv):
+    sinh_vien = SinhVien.objects.filter(ma_sv=ma_sv).first()
+    if sinh_vien:
+        ho_ten = sinh_vien.ho_ten
+        sinh_vien.delete()
+        messages.success(request, f'Đã xóa sinh viên "{ho_ten}" thành công!')
+    else:
+        messages.error(request, 'Không tìm thấy sinh viên để xóa.')
+    return redirect('GiaoVu:giaovu_qlsinhvien')
 
 def ql_giang_vien_view(request):
     """Trang Quản lý giảng viên – Giáo Vụ."""
@@ -164,33 +348,22 @@ def ql_giang_vien_view(request):
 
 
 def import_giang_vien_view(request):
-    """View xử lý import giảng viên từ file Excel."""
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
         try:
             workbook = openpyxl.load_workbook(excel_file, data_only=True)
             sheet = workbook.active
             success_count = 0
-
-            # Giả định thứ tự cột: A: MaGV, B: HoTen, C: HocVi, D: ChucVu, E: ChuyenMon, F: SDT
             for row in sheet.iter_rows(min_row=2, values_only=True):
                 ma_gv_raw = row[0]
                 if not ma_gv_raw: continue
-
                 # Làm sạch MaGV
                 ma_gv = str(ma_gv_raw).strip()
-                if ma_gv.endswith('.0'): ma_gv = ma_gv[:-2]
-
                 ho_ten      = str(row[1]).strip() if row[1] else "Chưa rõ"
                 hoc_vi      = str(row[2]).strip() if row[2] else "Thạc sĩ"
                 chuc_vu     = str(row[3]).strip() if row[3] else "Giảng viên"
                 chuyen_mon  = str(row[4]).strip() if row[4] else ""
-                
-                # Làm sạch SDT
                 sdt = str(row[5]).strip() if row[5] else ""
-                if sdt.endswith('.0'): sdt = sdt[:-2]
-                if sdt and not sdt.startswith('0') and sdt.isdigit():
-                    sdt = '0' + sdt
 
                 GiangVien.objects.update_or_create(
                     ma_gv=ma_gv,
@@ -277,224 +450,7 @@ def delete_giang_vien_view(request, ma_gv):
         messages.error(request, 'Không tìm thấy giảng viên.')
     return redirect('GiaoVu:giaovu_qlgiangvien')
 
-
-def import_sinh_vien_view(request):
-    """View xử lý import sinh viên từ file Excel."""
-    if request.method == 'POST' and request.FILES.get('excel_file'):
-        excel_file = request.FILES['excel_file']
-
-        # 1. Lấy kỳ thực tập mới nhất
-        ky_moi_nhat = KyThucTap.objects.order_by('-id').first()
-        if not ky_moi_nhat:
-            messages.error(request, 'Hệ thống chưa có Kỳ thực tập nào. Vui lòng tạo kỳ thực tập trước khi import.')
-            return redirect('GiaoVu:giaovu_qlsinhvien')
-
-        try:
-            # 2. Đọc file Excel
-            workbook = openpyxl.load_workbook(excel_file, data_only=True)
-            sheet = workbook.active
-
-            success_count = 0
-            # Giả định: Cột A: MSSV, Cột B: Họ tên, Cột C: Lớp
-            # Đọc từ hàng thứ 2 (bỏ qua tiêu đề)
-            for row in sheet.iter_rows(min_row=2, values_only=True):
-                if not row[0]: continue  # Bỏ qua dòng trống MSSV
-
-                ma_sv = str(row[0]).strip()
-                if ma_sv.endswith('.0'): ma_sv = ma_sv[:-2]
-
-                ho_ten  = str(row[1]).strip() if row[1] else "Chưa có tên"
-                lop     = str(row[2]).strip() if row[2] else "N/A"
-
-                # 3. Lưu vào database (Update nếu trùng MSSV)
-                SinhVien.objects.update_or_create(
-                    ma_sv=ma_sv,
-                    defaults={
-                        'ho_ten': ho_ten,
-                        'lop': lop,
-                        'ky_hien_tai': ky_moi_nhat
-                    }
-                )
-                sync_user_account(ma_sv, ho_ten, 'SinhVien')
-                success_count += 1
-
-            messages.success(request, f'Đã import thành công {success_count} sinh viên vào "{ky_moi_nhat.ten_ky}".')
-        except Exception as e:
-            messages.error(request, f'Lỗi khi xử lý file: {str(e)}')
-
-    return redirect('GiaoVu:giaovu_qlsinhvien')
-
-
-def edit_sinh_vien_view(request):
-    """View xử lý cập nhật thông tin sinh viên (bao gồm cả việc đổi MSSV)."""
-    if request.method == 'POST':
-        original_ma = request.POST.get('original_ma_sv', '').strip()
-        new_ma      = request.POST.get('ma_sv', '').strip()
-        ho_ten      = request.POST.get('ho_ten', '').strip()
-        lop         = request.POST.get('lop', '').strip()
-        ky_id       = request.POST.get('ky_hien_tai', '')
-
-        if original_ma and new_ma and ho_ten and lop:
-            # Sửa lỗi .0 nếu có
-            if new_ma.endswith('.0'): new_ma = new_ma[:-2]
-            if original_ma.endswith('.0'): original_ma = original_ma[:-2]
-
-            sinh_vien = SinhVien.objects.filter(ma_sv=original_ma).first()
-            
-            if sinh_vien:
-                ky = KyThucTap.objects.filter(id=ky_id).first() if ky_id else None
-                
-                if original_ma != new_ma:
-                    # Nếu đổi MSSV (Primary Key)
-                    # 1. Tạo bản ghi mới dựa trên bản ghi cũ
-                    SinhVien.objects.create(
-                        ma_sv=new_ma,
-                        ho_ten=ho_ten,
-                        lop=lop,
-                        ky_hien_tai=ky
-                    )
-                    # 2. Xóa bản ghi cũ
-                    sinh_vien.delete()
-                else:
-                    # Nếu giữ nguyên MSSV
-                    sinh_vien.ho_ten = ho_ten
-                    sinh_vien.lop = lop
-                    sinh_vien.ky_hien_tai = ky
-                    sinh_vien.save()
-                
-                # Cập nhật tài khoản (và mật khẩu nếu có)
-                mat_khau_moi = request.POST.get('mat_khau', '').strip()
-                if mat_khau_moi:
-                    sync_user_account(new_ma, ho_ten, 'SinhVien', password=mat_khau_moi)
-                else:
-                    # Chỉ cập nhật họ tên nếu không đổi mật khẩu
-                    sync_user_account(new_ma, ho_ten, 'SinhVien')
-                
-                messages.success(request, f'Cập nhật sinh viên "{ho_ten}" thành công!')
-            else:
-                messages.error(request, 'Không tìm thấy sinh viên để cập nhật.')
-        else:
-            messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
-
-    return redirect('GiaoVu:giaovu_qlsinhvien')
-
-
-def delete_sinh_vien_view(request, ma_sv):
-    """View xử lý xóa sinh viên."""
-    sinh_vien = SinhVien.objects.filter(ma_sv=ma_sv).first()
-    if sinh_vien:
-        ho_ten = sinh_vien.ho_ten
-        sinh_vien.delete()
-        messages.success(request, f'Đã xóa sinh viên "{ho_ten}" thành công!')
-    else:
-        messages.error(request, 'Không tìm thấy sinh viên để xóa.')
-    return redirect('GiaoVu:giaovu_qlsinhvien')
-
-def edit_ky_thuc_tap_view(request):
-    """View xử lý việc chỉnh sửa thông tin Kỳ thực tập."""
-    if request.method == 'POST':
-        ky_id    = request.POST.get('id')
-        ten_ky   = request.POST.get('ten', '').strip()
-        bat_dau  = request.POST.get('bat_dau', '')
-        ket_thuc = request.POST.get('ket_thuc', '')
-
-        if ky_id and ten_ky and bat_dau and ket_thuc:
-            try:
-                if datetime.strptime(bat_dau, '%Y-%m-%d') >= datetime.strptime(ket_thuc, '%Y-%m-%d'):
-                    messages.error(request, 'Ngày kết thúc phải lớn hơn ngày bắt đầu.')
-                    return redirect('GiaoVu:giaovu_kythuctap')
-            except ValueError:
-                pass
-
-            ky = KyThucTap.objects.filter(id=ky_id).first()
-            if ky:
-                ky.ten_ky = ten_ky
-                ky.ngay_bat_dau = bat_dau
-                ky.ngay_ket_thuc = ket_thuc
-                ky.save()
-                messages.success(request, f'Đã cập nhật kỳ thực tập "{ten_ky}" thành công!')
-            else:
-                messages.error(request, 'Không tìm thấy kỳ thực tập để cập nhật.')
-        else:
-            messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
-    
-    return redirect('GiaoVu:giaovu_kythuctap')
-
-
-def ql_tai_lieu_view(request):
-    """Trang Quản lý Tài liệu – Giáo Vụ."""
-    
-    # Xử lý khi ấn nút "Lưu" (POST form thêm tài liệu)
-    if request.method == 'POST':
-        tieu_de = request.POST.get('tieu_de', '').strip()
-        mo_ta = request.POST.get('mo_ta', '').strip()
-        ky_id = request.POST.get('ky_id')
-        file_dinh_kem = request.FILES.get('file_dinh_kem')
-        
-        if tieu_de and ky_id and file_dinh_kem:
-            gv = GiangVien.objects.filter(ma_gv=request.user.username).first()
-            ky = KyThucTap.objects.filter(id=ky_id).first()
-            if gv and ky:
-                TaiLieu.objects.create(
-                    ten_tai_lieu=tieu_de,
-                    mo_ta=mo_ta,
-                    ky=ky,
-                    duong_dan_file=file_dinh_kem,
-                    gv_dang=gv
-                )
-                messages.success(request, f'Đã thêm tài liệu "{tieu_de}" thành công!')
-            else:
-                messages.error(request, 'Dữ liệu không hợp lệ (Giáo vụ sinh hoặc Kỳ thực tập không tồn tại).')
-        else:
-            messages.error(request, 'Vui lòng điền đầy đủ thông tin và chọn tệp đính kèm.')
-            
-        return redirect('GiaoVu:giaovu_tailieu')
-
-    all_ky = KyThucTap.objects.all().order_by('-id')
-    tai_lieu_list = TaiLieu.objects.all().order_by('-ngay_cap_nhat')
-    
-    paginator = Paginator(tai_lieu_list, 10)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
-    
-    context = {
-        'current_page': 'tailieu',
-        'page_obj': page_obj,
-        'all_ky': all_ky,
-    }
-    return render(request, 'GiaoVu/tai_lieu.html', context)
-
-
-def edit_tai_lieu_view(request):
-    """View xử lý cập nhật tài liệu."""
-    if request.method == 'POST':
-        doc_id = request.POST.get('id')
-        tieu_de = request.POST.get('tieu_de', '').strip()
-        mo_ta = request.POST.get('mo_ta', '').strip()
-        ky_id = request.POST.get('ky_id')
-        file_dinh_kem = request.FILES.get('file_dinh_kem')
-
-        if doc_id and tieu_de and ky_id:
-            doc = TaiLieu.objects.filter(id=doc_id).first()
-            ky = KyThucTap.objects.filter(id=ky_id).first()
-            if doc and ky:
-                doc.ten_tai_lieu = tieu_de
-                doc.mo_ta = mo_ta
-                doc.ky = ky
-                if file_dinh_kem:
-                    doc.duong_dan_file = file_dinh_kem
-                doc.save()
-                messages.success(request, f'Đã cập nhật tài liệu "{tieu_de}" thành công!')
-            else:
-                messages.error(request, 'Không tìm thấy tài liệu hoặc kỳ thực tập.')
-        else:
-            messages.error(request, 'Vui lòng điền đầy đủ thông tin bắt buộc.')
-    
-    return redirect('GiaoVu:giaovu_tailieu')
-
-
 def nhiem_vu_view(request):
-    """Trang Thiết lập Nhiệm vụ – Giáo Vụ."""
-    
     if request.method == 'POST':
         ky_id = request.POST.get('ky_id')
         ten_nhiem_vu = request.POST.get('ten_nhiem_vu', '').strip()
@@ -582,45 +538,6 @@ def giang_vien_hd_view(request):
     }
     return render(request, 'GiaoVu/giang_vien_hd.html', context)
 
-
-def chi_tiet_gvhd_view(request, ma_gv):
-    """Trang xem danh sách sinh viên được hướng dẫn bởi 1 giảng viên cụ thể của Giáo vụ"""
-    ky_id = request.GET.get('ky_id')
-    giang_vien = GiangVien.objects.filter(ma_gv=ma_gv).first()
-    
-    if not giang_vien:
-        messages.error(request, "Không tìm thấy giảng viên này.")
-        return redirect('GiaoVu:giaovu_giangvienhd')
-        
-    ky = None
-    ds_phan_cong = []
-    
-    if ky_id:
-        ky = KyThucTap.objects.filter(id=ky_id).first()
-        if ky:
-            ds_phan_cong = PhanCongGVHD.objects.filter(giang_vien=giang_vien, ky=ky).select_related('sinh_vien', 'ky')
-            
-    raw_hoc_vi = giang_vien.hoc_vi
-    if raw_hoc_vi == 'Thạc sĩ':
-        hoc_vi_tat = 'ThS'
-    elif raw_hoc_vi == 'Tiến sĩ':
-        hoc_vi_tat = 'TS'
-    elif raw_hoc_vi == 'Phó Giáo sư':
-        hoc_vi_tat = 'PGS'
-    elif raw_hoc_vi == 'Giáo sư':
-        hoc_vi_tat = 'GS'
-    else:
-        hoc_vi_tat = raw_hoc_vi
-            
-    context = {
-        'current_page': 'giangvienhd',
-        'giang_vien': giang_vien,
-        'hoc_vi_tat': hoc_vi_tat,
-        'ky': ky,
-        'ds_phan_cong': ds_phan_cong,
-    }
-    return render(request, 'GiaoVu/chi_tiet_gvhd.html', context)
-
 def hoidong_view(request):
     """Trang Quản lý Hội đồng – Giáo Vụ."""
     all_ky = KyThucTap.objects.all().order_by('-id')
@@ -641,12 +558,15 @@ def hoidong_view(request):
             gv_list = HoiDong_GiangVien.objects.filter(hoi_dong=hd).select_related('giang_vien')
             sv_list = HoiDong_SinhVien.objects.filter(hoi_dong=hd).select_related('sinh_vien')
             
+            # Kiểm tra xem đã đủ thông tin chưa
+            is_ready = hd.thoi_gian_bat_dau and hd.thoi_gian_ket_thuc and hd.dia_diem
+            
             ds_hoidong.append({
                 'id': hd.id,
                 'ten': hd.ten_hoi_dong,
                 'thoi_gian_bat_dau': hd.thoi_gian_bat_dau,
                 'thoi_gian_ket_thuc': hd.thoi_gian_ket_thuc,
-                'thoi_gian': f"{hd.thoi_gian_bat_dau.strftime('%H:%M')} - {hd.thoi_gian_ket_thuc.strftime('%H:%M')}" if hd.thoi_gian_bat_dau and hd.thoi_gian_ket_thuc else "Chưa thiết lập",
+                'thoi_gian': f"{hd.thoi_gian_bat_dau.strftime('%H:%M')} - {hd.thoi_gian_ket_thuc.strftime('%H:%M')}" if is_ready else "Chưa thiết lập",
                 'ngay_bao_ve': hd.ngay_bao_ve,
                 'dia_diem': hd.dia_diem,
                 'gv_count': gv_list.count(),
@@ -786,7 +706,6 @@ def ql_diem_view(request):
         diem_list = diem_list.filter(ky__id=selected_ky)
 
     # Lấy thêm thông tin doanh nghiệp từ khảo sát
-    from Home.models import ChiTietTraLoi
     for d in diem_list:
         # Tìm các câu trả lời liên quan đến doanh nghiệp của SV này trong kỳ này
         answers = ChiTietTraLoi.objects.filter(

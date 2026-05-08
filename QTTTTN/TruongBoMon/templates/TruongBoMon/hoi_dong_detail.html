@@ -20,17 +20,17 @@
 
     <div class="flex gap-6 border-b mb-6">
         <button onclick="showTab('gv')" id="tab-gv"
-                class="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">
+                class="pb-2 text-gray-500 font-semibold">
             Thành viên Hội đồng
         </button>
         <button onclick="showTab('sv')" id="tab-sv"
-                class="pb-2 text-gray-500 font-semibold">
+                class="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">
             Danh sách Sinh viên
         </button>
     </div>
 
     <!-- GIẢNG VIÊN -->
-    <div id="tab-content-gv">
+    <div id="tab-content-gv" class="hidden">
         <table class="w-full text-sm">
             <thead class="text-gray-500 border-b">
                 <tr>
@@ -54,7 +54,7 @@
     </div>
 
     <!-- SINH VIÊN -->
-    <div id="tab-content-sv" class="hidden">
+    <div id="tab-content-sv">
         <h2 class="text-lg font-semibold mb-6">Danh sách sinh viên bảo vệ</h2>
 
         <table class="w-full text-sm table-fixed">
@@ -71,63 +71,39 @@
             <tbody>
             {% for item in sinhviens %}
             <tr class="border-b hover:bg-gray-50">
-
                 <td class="py-4 font-medium text-blue-600">
                     {{ item.sv.ma_sv }}
                 </td>
-
                 <td class="py-4">
                     {{ item.sv.ho_ten }}
                 </td>
-
                 <td class="py-4">
                     {{ item.sv.lop }}
                 </td>
-
-                <!-- ĐỀ TÀI -->
                 <td class="py-4">
-                    <div class="truncate max-w-full" title="{{ item.sv.ten_de_tai }}">
+                    <div class="truncate" title="{{ item.sv.ten_de_tai }}">
                         {{ item.sv.ten_de_tai|default:"--" }}
                     </div>
                 </td>
-
-                <!-- ĐIỂM -->
                 <td class="py-4 text-center">
-                    {% if is_in_time %}
-
                     <form method="POST"
                           action="{% url 'TruongBoMon:cham_diem_hoi_dong' hoidong.id item.sv.ma_sv %}"
                           onsubmit="handleSubmit(event, this)"
                           class="flex justify-center items-center gap-2">
-
                         {% csrf_token %}
-
                         <input type="number"
                                step="0.1"
                                min="0"
                                max="10"
                                name="diem"
-                               value="{{ item.diem|default_if_none:'' }}"
+                               value="{{ item.diem|default:'' }}"
                                class="border border-gray-300 focus:border-blue-500 px-3 py-2 rounded-xl w-24 text-center font-medium">
-
                         <button type="submit"
                                 class="px-3 py-2 text-sm rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
                             Lưu
                         </button>
-
                     </form>
-
-                    {% else %}
-                        {% if item.diem is not None %}
-                            <span class="font-semibold text-gray-700">
-                                {{ item.diem|floatformat:1 }}
-                            </span>
-                        {% else %}
-                            <span class="text-gray-400">--</span>
-                        {% endif %}
-                    {% endif %}
                 </td>
-
             </tr>
             {% endfor %}
             </tbody>
@@ -135,18 +111,14 @@
     </div>
 
 </div>
-
 </div>
 
 <script>
-// TAB SWITCH
 function showTab(type) {
     document.getElementById("tab-content-gv").classList.add("hidden");
     document.getElementById("tab-content-sv").classList.add("hidden");
-
     document.getElementById("tab-gv").classList.remove("border-blue-600", "text-blue-600");
     document.getElementById("tab-sv").classList.remove("border-blue-600", "text-blue-600");
-    
     document.getElementById("tab-sv").classList.add("text-gray-500");
     document.getElementById("tab-gv").classList.add("text-gray-500");
 
@@ -161,13 +133,10 @@ function showTab(type) {
     }
 }
 
-// SAVE ĐIỂM KHÔNG RELOAD
 function handleSubmit(e, form) {
     e.preventDefault();
-
     const input = form.querySelector('input[name="diem"]');
     const value = input.value;
-
     fetch(form.action, {
         method: "POST",
         body: new FormData(form),
@@ -175,16 +144,16 @@ function handleSubmit(e, form) {
             'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
         }
     })
-    .then(res => {
-        if (res.ok) {
-            input.value = value;
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
             input.classList.add("border-green-500", "bg-green-50");
-            setTimeout(() => {
-                input.classList.remove("bg-green-50");
-            }, 800);
+            setTimeout(() => { input.classList.remove("bg-green-50"); }, 800);
+        } else {
+            alert("Lỗi: " + data.message);
+            input.classList.add("border-red-500");
         }
     });
 }
 </script>
-
 {% endblock %}

@@ -46,8 +46,7 @@
                 </a>
 
                 <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <form action="{% url 'GiangVien:xoa_form' f.public_id %}" method="POST"
-                          onsubmit="return confirm('Xóa biểu mẫu này?');">
+                    <form action="{% url 'GiangVien:xoa_form' f.public_id %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="p-2 bg-white/90 hover:bg-red-50 text-red-500 rounded-full shadow-sm border border-gray-100">
                             <span class="material-icons text-sm">delete_outline</span>

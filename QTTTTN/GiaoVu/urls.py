@@ -1,8 +1,6 @@
 from django.urls import path
 from . import views
-
 app_name = 'GiaoVu'
-
 urlpatterns = [
     path('', views.home_view, name='giaovu_home'),
     path('ky-thuc-tap/', views.ky_thuc_tap, name='giaovu_kythuctap'),
@@ -22,7 +20,6 @@ urlpatterns = [
     path('nhiem-vu/edit/', views.edit_nhiem_vu_view, name='giaovu_edit_nhiemvu'),
     path('nhiem-vu/delete/<int:nv_id>/', views.delete_nhiem_vu_view, name='giaovu_delete_nhiemvu'),
     path('giang-vien-huong-dan/', views.giang_vien_hd_view, name='giaovu_giangvienhd'),
-    path('giang-vien-huong-dan/<str:ma_gv>/', views.chi_tiet_gvhd_view, name='chi_tiet_gvhd'),
     path('hoi-dong/', views.hoidong_view, name='giaovu_hoidong'),
     path('hoi-dong/<int:hd_id>/', views.chi_tiet_hoidong_view, name='chi_tiet_hoidong'),
     path('update-thoi-gian-hoi-dong/<int:hd_id>/', views.cap_nhat_thoi_gian_hoi_dong, name='update_thoi_gian_hoi_dong'),

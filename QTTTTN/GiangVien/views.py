@@ -30,7 +30,8 @@ def sinhvien_huongdan(request):
     query = request.GET.get("q")   # 🔥 THÊM DÒNG NÀY
 
     danh_sach = PhanCongGVHD.objects.filter(
-        giang_vien=gv
+        giang_vien=gv,
+        trang_thai=2 # 🔥 Chỉ hiện sinh viên đã được Trưởng bộ môn duyệt
     ).select_related('sinh_vien', 'ky')
 
     # 🔥 FILTER KỲ
@@ -945,14 +946,11 @@ def tao_hoi_dong(request):
         gio_kt = request.POST.get("thoi_gian_ket_thuc")
 
         try:
-            thoi_gian_bat_dau = gio_bd if gio_bd else "07:00"
-            thoi_gian_ket_thuc = gio_kt if gio_kt else "11:00"
-
             hd = HoiDong.objects.create(
                 ten_hoi_dong=request.POST.get("ten"),
                 ngay_bao_ve=ngay,
-                thoi_gian_bat_dau=thoi_gian_bat_dau,
-                thoi_gian_ket_thuc=thoi_gian_ket_thuc,
+                thoi_gian_bat_dau=gio_bd or None,
+                thoi_gian_ket_thuc=gio_kt or None,
                 dia_diem=request.POST.get("dia_diem") or "",
                 ky=KyThucTap.objects.last()
             )
